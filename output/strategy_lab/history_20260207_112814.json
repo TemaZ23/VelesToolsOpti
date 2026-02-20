@@ -1,0 +1,23 @@
+[
+  {
+    "round": 1,
+    "best_score": -Infinity,
+    "round_best": 0,
+    "n_candidates": 0,
+    "time_s": 8.013519763946533
+  },
+  {
+    "round": 2,
+    "best_score": -Infinity,
+    "round_best": 0,
+    "n_candidates": 0,
+    "time_s": 17.04028058052063
+  },
+  {
+    "round": 3,
+    "best_score": -Infinity,
+    "round_best": 0,
+    "n_candidates": 0,
+    "time_s": 8.15270709991455
+  }
+]

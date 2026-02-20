@@ -1,0 +1,451 @@
+import {
+  ControlOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  InfoCircleOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
+import type { SelectProps } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Form,
+  InputNumber,
+  Modal,
+  message,
+  Popconfirm,
+  Row,
+  Select,
+  Slider,
+  Space,
+  Statistic,
+  Typography,
+} from 'antd';
+import { useMemo, useState } from 'react';
+import { useDealsRefresh } from '../context/DealsRefreshContext';
+import { useDynamicBlocks } from '../context/DynamicBlocksContext';
+import { DEFAULT_DYNAMIC_BLOCK_CONFIG } from '../storage/dynamicPositionBlocksStore';
+import type { DynamicBlockConfig } from '../types/positionConstraints';
+
+interface DynamicBlocksPageProps {
+  extensionReady: boolean;
+}
+
+interface AddFormValues {
+  apiKeyId: number | null;
+  minPositionsBlock: number;
+  maxPositionsBlock: number;
+  timeoutBetweenChangesMin: number;
+}
+
+const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
+
+const resolveApiKeyLabel = (apiKeyId: number, apiKeys: { id: number; name: string; exchange: string }[]): string => {
+  const key = apiKeys.find((item) => item.id === apiKeyId);
+  if (!key) {
+    return `API key ${apiKeyId}`;
+  }
+  return key.name ? `${key.name}` : `API key ${apiKeyId}`;
+};
+
+const formatTimestamp = (value: number | null | undefined): string => {
+  if (!value) {
+    return '—';
+  }
+  return new Date(value).toLocaleTimeString();
+};
+
+const DynamicBlocksPage = ({ extensionReady }: DynamicBlocksPageProps) => {
+  const { refreshInterval: dealsRefreshInterval } = useDealsRefresh();
+  const {
+    activeConfigs,
+    constraints,
+    openPositionsByKey,
+    automationStatuses,
+    loadingSnapshot,
+    snapshotError,
+    automationError,
+    lastSnapshotAt,
+    apiKeys,
+    refreshSnapshot,
+    manualRun,
+    upsertConfig,
+    disableConfig,
+  } = useDynamicBlocks();
+  const [manualRunPending, setManualRunPending] = useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<DynamicBlockConfig | null>(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [addForm] = Form.useForm<AddFormValues>();
+
+  const availableApiKeysForAdd = useMemo(() => {
+    const usedIds = new Set(activeConfigs.map((config) => config.apiKeyId));
+    return apiKeys.filter((key) => !usedIds.has(key.id));
+  }, [activeConfigs, apiKeys]);
+
+  const apiKeyOptions: SelectProps['options'] = useMemo(() => {
+    if (editingConfig) {
+      return [
+        {
+          value: editingConfig.apiKeyId,
+          label: resolveApiKeyLabel(editingConfig.apiKeyId, apiKeys),
+        },
+      ];
+    }
+    return availableApiKeysForAdd.map((key) => ({
+      value: key.id,
+      label: key.name ? `${key.name}` : `API key ${key.id}`,
+    }));
+  }, [availableApiKeysForAdd, apiKeys, editingConfig]);
+
+  const openAddModal = () => {
+    addForm.setFieldsValue({
+      apiKeyId: availableApiKeysForAdd[0]?.id ?? null,
+      minPositionsBlock: DEFAULT_DYNAMIC_BLOCK_CONFIG.minPositionsBlock,
+      maxPositionsBlock: DEFAULT_DYNAMIC_BLOCK_CONFIG.maxPositionsBlock,
+      timeoutBetweenChangesMin: Math.round(DEFAULT_DYNAMIC_BLOCK_CONFIG.timeoutBetweenChangesSec / 60),
+    });
+    setEditingConfig(null);
+    setConfigModalOpen(true);
+  };
+
+  const openEditModal = (config: DynamicBlockConfig) => {
+    addForm.setFieldsValue({
+      apiKeyId: config.apiKeyId,
+      minPositionsBlock: config.minPositionsBlock,
+      maxPositionsBlock: config.maxPositionsBlock,
+      timeoutBetweenChangesMin: Math.round(config.timeoutBetweenChangesSec / 60),
+    });
+    setEditingConfig(config);
+    setConfigModalOpen(true);
+  };
+
+  const closeConfigModal = () => {
+    setConfigModalOpen(false);
+    setEditingConfig(null);
+  };
+
+  const handleConfigSubmit = async () => {
+    try {
+      const values = await addForm.validateFields();
+      const apiKeyId = editingConfig?.apiKeyId ?? values.apiKeyId;
+      if (!apiKeyId) {
+        message.error('Выберите API-ключ.');
+        return;
+      }
+      if (values.minPositionsBlock <= 0 || values.maxPositionsBlock < values.minPositionsBlock) {
+        message.error('Проверьте диапазон блокировки.');
+        return;
+      }
+
+      const nextConfig: DynamicBlockConfig = {
+        apiKeyId,
+        minPositionsBlock: Math.trunc(values.minPositionsBlock),
+        maxPositionsBlock: Math.trunc(values.maxPositionsBlock),
+        timeoutBetweenChangesSec: Math.max(60, Math.trunc(values.timeoutBetweenChangesMin * 60)),
+        checkPeriodSec: dealsRefreshInterval,
+        enabled: editingConfig?.enabled ?? true,
+        lastChangeAt: editingConfig?.lastChangeAt ?? null,
+      };
+
+      upsertConfig(nextConfig);
+      message.success(editingConfig ? 'Настройки обновлены.' : 'Динамическая блокировка добавлена.');
+      closeConfigModal();
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error);
+      message.error(text);
+    }
+  };
+
+  const handleManualRun = async () => {
+    setManualRunPending(true);
+    try {
+      await manualRun();
+      message.success('Проверка выполнена.');
+    } catch (error) {
+      const text = error instanceof Error ? error.message : String(error);
+      message.error(text);
+    } finally {
+      setManualRunPending(false);
+    }
+  };
+
+  const computeCurrentBlockValue = (config: DynamicBlockConfig): { actualLimit: number; displayLimit: number } => {
+    const constraint = constraints.find((item) => item.apiKeyId === config.apiKeyId);
+    const rawLimit =
+      constraint && constraint.limit !== null && constraint.limit !== undefined
+        ? constraint.limit
+        : config.maxPositionsBlock;
+    return {
+      actualLimit: rawLimit,
+      displayLimit: clamp(rawLimit, config.minPositionsBlock, config.maxPositionsBlock),
+    };
+  };
+
+  const renderConfigCard = (config: DynamicBlockConfig) => {
+    const { actualLimit, displayLimit } = computeCurrentBlockValue(config);
+    const openPositions = openPositionsByKey.get(config.apiKeyId) ?? 0;
+    const isOverLimit = openPositions > config.maxPositionsBlock;
+    const apiKeyLabel = resolveApiKeyLabel(config.apiKeyId, apiKeys);
+    const isLimitOutOfRange = actualLimit !== displayLimit;
+
+    return (
+      <Card
+        key={config.apiKeyId}
+        title={
+          <Space>
+            <ControlOutlined />
+            <span>{apiKeyLabel}</span>
+          </Space>
+        }
+        className="dynamic-blocks-card card--full-height"
+        size="small"
+        extra={
+          <Space size={4}>
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => openEditModal(config)}
+              aria-label="Редактировать блокировку"
+            />
+            <Popconfirm
+              title="Удалить блокировку?"
+              okText="Удалить"
+              cancelText="Отмена"
+              onConfirm={() => disableConfig(config.apiKeyId)}
+            >
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} aria-label="Удалить блокировку" />
+            </Popconfirm>
+          </Space>
+        }
+      >
+        <Space direction="vertical" size={12} className="u-full-width">
+          <div className="dynamic-blocks-card__stats">
+            <Statistic
+              title="Позиции"
+              value={openPositions}
+              className={isOverLimit ? 'statistic--danger' : undefined}
+            />
+            <Statistic
+              title="Лимит"
+              value={actualLimit}
+              suffix="поз."
+              className={isLimitOutOfRange ? 'statistic--danger' : 'statistic--highlight'}
+            />
+            <Statistic title="Диапазон" value={`${config.minPositionsBlock} – ${config.maxPositionsBlock}`} />
+          </div>
+
+          <Slider
+            min={config.minPositionsBlock}
+            max={config.maxPositionsBlock}
+            value={displayLimit}
+            marks={{
+              [config.minPositionsBlock]: 'MIN',
+              ...(displayLimit !== config.minPositionsBlock && displayLimit !== config.maxPositionsBlock
+                ? { [displayLimit]: 'Текущая' }
+                : {}),
+              [config.maxPositionsBlock]: 'MAX',
+            }}
+            tooltip={{ open: false }}
+          />
+
+          {automationStatuses[config.apiKeyId]?.state === 'error' && (
+            <Alert
+              type="error"
+              showIcon
+              message={automationStatuses[config.apiKeyId]?.note ?? 'Ошибка обновления лимита'}
+              description={
+                <>
+                  <div>Последняя проверка: {formatTimestamp(automationStatuses[config.apiKeyId]?.lastCheckedAt)}</div>
+                  <div>Последнее изменение: {formatTimestamp(automationStatuses[config.apiKeyId]?.lastChangeAt)}</div>
+                </>
+              }
+            />
+          )}
+        </Space>
+      </Card>
+    );
+  };
+
+  return (
+    <section className="page">
+      <header className="page__header">
+        <h1 className="page__title">Динамическая блокировка по ботам</h1>
+        <p className="page__subtitle">
+          Автоматически регулирует максимальное количество одновременных позиций для выбранных API-ключей на основе
+          текущего числа открытых сделок.
+        </p>
+        <div>
+          <Button type="default" size="small" icon={<InfoCircleOutlined />} onClick={() => setInfoModalOpen(true)}>
+            Как это работает
+          </Button>
+        </div>
+      </header>
+
+      {!extensionReady && (
+        <Alert
+          type="warning"
+          showIcon
+          message="Расширение неактивно"
+          description="Подключите интерфейс через расширение Veles Tools, чтобы управлять блокировкой позиций."
+          className="u-mb-16"
+        />
+      )}
+
+      <Space direction="vertical" size={16} className="u-full-width">
+        <Card
+          title="Управление"
+          extra={
+            <Space>
+              <Button
+                icon={<PlusOutlined />}
+                type="primary"
+                onClick={openAddModal}
+                disabled={!extensionReady || availableApiKeysForAdd.length === 0}
+              >
+                Добавить блокировку
+              </Button>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => refreshSnapshot()}
+                loading={loadingSnapshot}
+                disabled={!extensionReady}
+              >
+                Обновить данные
+              </Button>
+              <Button
+                type="default"
+                icon={<ThunderboltOutlined />}
+                onClick={handleManualRun}
+                loading={manualRunPending}
+                disabled={!extensionReady || activeConfigs.length === 0}
+              >
+                Установить сейчас
+              </Button>
+            </Space>
+          }
+        >
+          <Space direction="vertical" size={12} className="u-full-width">
+            <Row gutter={[16, 16]} align="middle">
+              <Col xs={24} md={12} lg={8}>
+                <Statistic
+                  title="Последняя синхронизация"
+                  value={lastSnapshotAt ? new Date(lastSnapshotAt).toLocaleTimeString() : '—'}
+                />
+              </Col>
+              <Col xs={24} md={12} lg={8}>
+                <Statistic title="Активных блокировок" value={activeConfigs.length} />
+              </Col>
+            </Row>
+            {snapshotError && <Alert type="error" showIcon message={snapshotError} />}
+            {automationError && <Alert type="warning" showIcon message={automationError} />}
+          </Space>
+        </Card>
+
+        {activeConfigs.length === 0 ? (
+          <Card>
+            <Empty description="Пока нет активных динамических блокировок." image={Empty.PRESENTED_IMAGE_SIMPLE}>
+              <Button
+                type="primary"
+                onClick={openAddModal}
+                icon={<PlusOutlined />}
+                disabled={!extensionReady || availableApiKeysForAdd.length === 0}
+              >
+                Добавить блокировку
+              </Button>
+            </Empty>
+          </Card>
+        ) : (
+          <div className="dynamic-blocks-grid">
+            {activeConfigs.map((config) => (
+              <div key={config.apiKeyId} className="dynamic-blocks-grid__item">
+                {renderConfigCard(config)}
+              </div>
+            ))}
+          </div>
+        )}
+      </Space>
+
+      <Modal
+        title={editingConfig ? 'Редактировать динамическую блокировку' : 'Добавить динамическую блокировку'}
+        open={configModalOpen}
+        onCancel={closeConfigModal}
+        onOk={handleConfigSubmit}
+        okText="Сохранить"
+        okButtonProps={{ disabled: !editingConfig && apiKeyOptions.length === 0 }}
+      >
+        <Form form={addForm} layout="vertical" size="small">
+          <Form.Item label="API-ключ" name="apiKeyId" rules={[{ required: true, message: 'Выберите ключ' }]}>
+            <Select
+              placeholder="Выберите ключ"
+              options={apiKeyOptions}
+              showSearch
+              optionFilterProp="label"
+              disabled={Boolean(editingConfig) || apiKeyOptions.length === 0}
+            />
+          </Form.Item>
+          <Form.Item label="Мин. блок" name="minPositionsBlock" rules={[{ required: true, type: 'number', min: 1 }]}>
+            <InputNumber min={1} className="u-full-width" size="small" />
+          </Form.Item>
+          <Form.Item
+            label="Макс. блок"
+            name="maxPositionsBlock"
+            dependencies={['minPositionsBlock']}
+            rules={[
+              { required: true, type: 'number', min: 1 },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const min = getFieldValue('minPositionsBlock');
+                  if (typeof value === 'number' && typeof min === 'number' && value < min) {
+                    return Promise.reject(new Error('Максимум не может быть меньше минимума.'));
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+          >
+            <InputNumber min={1} className="u-full-width" size="small" />
+          </Form.Item>
+          <Form.Item
+            label="Таймаут (мин)"
+            name="timeoutBetweenChangesMin"
+            rules={[{ required: true, type: 'number', min: 1 }]}
+          >
+            <InputNumber min={1} className="u-full-width" size="small" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Как работает динамическая блокировка"
+        open={infoModalOpen}
+        onCancel={() => setInfoModalOpen(false)}
+        footer={null}
+      >
+        <Space direction="vertical" size={12}>
+          <Typography.Text>
+            Динамическая блокировка автоматически подстраивает лимит открытых позиций для каждого API-ключа в пределах
+            заданного диапазона.
+          </Typography.Text>
+          <Typography.Text>
+            Лимит открытых сделок плавно увеличивается и уменьшается в зависимости от текущего числа открытых позиций,
+            позволяя избегать резкой нагрузки на баланс аккаунта. Изменения происходят не чаще указанного таймаута.
+          </Typography.Text>
+          <Typography.Text type="secondary">
+            Установите минимальную и максимальную блокировку, а также таймаут между изменениями. Чем чаще обновляется
+            информация о сделках (настройка в общем разделе), тем точнее будет регулировка блокировки. Имейте в виду,
+            что данный механизм работает только при активном расширении и открытом интерфейсе.
+          </Typography.Text>
+        </Space>
+      </Modal>
+    </section>
+  );
+};
+
+export default DynamicBlocksPage;

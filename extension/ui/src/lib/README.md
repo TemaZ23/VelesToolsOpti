@@ -1,0 +1,121 @@
+# `extension/ui/src/lib`
+
+This directory contains shared utilities used across the UI. Every exported helper must be documented here.
+
+## `tableHelpers.ts`
+- `resolveSortableNumber(value, fallback?)` – normalises numbers for sorting, replacing `null`/`undefined`/`NaN` with a configurable fallback.
+- `buildNumberSorter(selector, fallback?)` – generic sorter factory for AntD tables that compares rows using a numeric selector.
+- `formatDurationDays(value, suffix?)` – formats day-based durations with Russian locale rounding and an optional suffix (defaults to `д`).
+
+## `dateTime.ts`
+- `MS_IN_SECOND`, `MS_IN_MINUTE`, `MS_IN_HOUR`, `MS_IN_DAY` – base time unit constants in milliseconds.
+- `toTimestamp(value)` – safely parses ISO date strings into milliseconds since epoch or returns `null` for invalid inputs.
+- `resolvePeriodDays(from, to)` – counts inclusive days between two ISO dates, returning `null` for invalid ranges.
+
+## `backtestAnalytics.ts`
+- `calculateMaxDrawdown(values)` – scans an equity series and returns the maximum peak-to-trough drop before a new high.
+
+## `activeDealsHistory.ts`
+- `ACTIVE_DEALS_HISTORY_POINT_LIMIT`, `DEAL_HISTORY_WINDOW_MS` – retention constants for stored history (currently only the point cap is enforced).
+- `filterDealHistoryByTimeWindow(points, windowMs, now)` – keeps only deal history points newer than `now - windowMs`.
+- `isDealHistorySnapshot(value)` / `snapshotHistoryToMap(snapshot)` – runtime validation and conversion helpers for deal history snapshots.
+- `mapExecutedOrdersToSnapshot(history)` / `snapshotExecutedOrdersToMap(snapshot)` / `mergeExecutedOrdersHistory(current, incoming, startTimestamp, limit?)` – utilities for validating, storing and deduplicating executed order history with trimming by the earliest chart timestamp.
+- `getSeriesStartTimestamp(series)` – returns the earliest timestamp in a portfolio equity series or `null` when empty.
+- `createEmptyPortfolioEquitySeries()` / `buildPortfolioEquitySeries(points)` – normalise portfolio equity series with recomputed min/max values.
+- `sortPortfolioEquityPoints(points)` – sorts equity points chronologically without mutating the original array.
+- `compressTimedPoints(points)` – sorts timed points and removes every other entry to halve the history size.
+- `thinTimedPointsFromEnd(points, limit)` – sorts timed points then removes every other entry from the end until the series fits the limit.
+
+## `activeDeals.ts`
+- `computeDealMetrics(deal)` – derives exposure, P&L, average/mark prices, executed order counts, and the nearest open averaging order price (BUY for long, SELL for short) for a deal snapshot.
+- `aggregateDeals(deals)` – wraps `computeDealMetrics` for a whole collection, returning sorted positions plus aggregate exposure/P&L stats.
+- `getDealBaseAsset(deal)` – extracts the base asset ticker from the pair/symbol for UI labels.
+- `buildExecutedOrdersIndex(deals)` – collects executed entry/DCA orders per deal into a sorted map alongside a flattened list for chart markers/tooltips.
+
+## `activeDealsZoom.ts`
+- `calculateZoomRangeForPreset(series, presetKey)` – builds data zoom bounds using absolute timestamps (startValue/endValue) for the requested trailing window, falling back to full range when not applicable.
+- `areZoomRangesEqual(left?, right?)` – compares two zoom ranges by `start`/`end` values.
+- `ACTIVE_DEALS_ZOOM_PRESET_OPTIONS` – available preset definitions for the zoom segmented control.
+- `isActiveDealsZoomPreset(value)` – runtime guard for persisted preset keys.
+
+## `chartOptions.ts`
+- `DataZoomRange` – shape describing optional zoom bounds for ECharts data zoom components.
+- `createPortfolioEquityChartOptions(series, range?, groupedSeries?, executedOrders?, legendSelection?, filterMode?, themeMode?)` – builds ECharts options for portfolio equity charts with optional grouped series, executed orders, zoom range handling, and theme mode.
+- `createAggregateRiskChartOptions(series, range?, filterMode?, themeMode?)` – builds ECharts options for aggregated risk charts with optional zoom range handling and theme mode.
+- `LimitImpactPoint` – shape describing points used in limit impact/efficiency charts.
+- `createLimitImpactChartOptions(points, themeMode?)` – builds ECharts options for limit impact charts with optional theme mode.
+- `createLimitEfficiencyChartOptions(points, themeMode?)` – builds ECharts options for limit efficiency charts with optional theme mode.
+- `createDailyConcurrencyChartOptions(records, stats?, range?, filterMode?, themeMode?)` – builds ECharts options for daily concurrency charts with optional summary stats, zoom range handling, and theme mode.
+
+## `botUpdatePayload.ts`
+- `buildBotUpdatePayload(bot, overrides)` – creates a DTO payload for updating an existing bot while applying deposit/leverage overrides and keeping other config fields intact.
+
+## `cabinetUrls.ts`
+- `buildVelesUrl(path?)` – builds an absolute URL to the active veles.* origin derived from the stored connection or current location, normalising slashes.
+- `buildCabinetUrl(path?)` – constructs a `cabinet` URL on the active origin; defaults to the cabinet root when the path is empty.
+- `buildBotDetailsUrl(botId)` – produces a cabinet URL pointing to a bot details page using a validated numeric ID (number or numeric string).
+- `buildDealStatisticsUrl(dealId)` – produces a cabinet URL for a deal statistics page using a validated numeric ID.
+## `indicatorCatalog.ts`
+Каталог индикаторов Veles для AI оптимизатора:
+- `IndicatorCategory` – тип категории индикатора: trend, channel, oscillator, volatility, volume.
+- `IndicatorDefinition` – определение индикатора с id, названиями, категорией, типом значения, диапазонами и операциями.
+- `INDICATOR_CATALOG` – массив всех доступных индикаторов (~25 шт).
+- `INDICATORS_BY_ID` – словарь индикаторов по id.
+- `INDICATORS_BY_CATEGORY` – группировка индикаторов по категориям.
+- `CATEGORY_LABELS` – русские названия категорий.
+- `getIndicatorById(id)` – получение индикатора по id.
+- `getRandomIndicator(category?)` – случайный выбор индикатора, опционально из категории.
+- `mutateIndicatorValue(indicator, currentValue)` – мутация порогового значения индикатора.
+- `getRandomOperation(indicator)` – случайный выбор операции сравнения для индикатора.
+
+## `geneticEngine.ts`
+Генетический алгоритм для оптимизации параметров ботов:
+- `createRandomGenome(config, generation?)` – создание случайного генома с заданной конфигурацией.
+- `mutateGenome(genome, config)` – мутация генома (условия входа, DCA, TP, SL).
+- `crossover(parent1, parent2, generation)` – скрещивание двух геномов (чередование генов).
+- `tournamentSelection(population, tournamentSize)` – турнирный отбор лучших особей.
+- `createNextGeneration(evaluatedPopulation, config, nextGenNumber)` – создание нового поколения с элитизмом, скрещиванием и мутациями.
+- `createInitialPopulation(config)` – создание начальной популяции.
+- `calculateScore(fitness, config)` – расчёт итогового score по метрикам.
+
+## `genomeConverter.ts`
+Конвертер между геномом оптимизатора и API Veles:
+- `FullBotStrategy` – расширенный тип BotStrategy с полями conditions, profit, deposit, stopLoss, pullUp, portion.
+- `genomeToStrategy(genome, options)` – преобразование генома в FullBotStrategy для отправки бэктеста.
+- `strategyToGenome(strategy, generation?)` – преобразование стратегии бота в геном для стартовой точки оптимизации.
+- `conditionGeneToDto(gene)` – конвертация гена условия в DTO.
+- `gridOrderGeneToDto(gene)` – конвертация гена ордера в DTO.
+- `takeProfitGeneToDto(gene, currency)` – конвертация гена тейк-профита в DTO.
+- `stopLossGeneToDto(gene)` – конвертация гена стоп-лосса в DTO.
+- `dtoToConditionGene(dto)` – обратная конвертация условия из DTO.
+- `dtoToGridOrderGene(dto)` – обратная конвертация ордера из DTO.
+
+## `walkForward.ts`
+Walk-forward разбиение периода для кросс-валидации стратегий:
+- `buildWalkForwardWindows(config)` – разбивает период на N окон (train+test), поддерживает sliding и anchored режимы.
+- `periodTotalDays(from, to)` – подсчёт дней в периоде.
+- `formatWindow(window)` – текстовое представление WF-окна для логов.
+
+## `indicatorImportance.ts`
+Трекер важности индикаторов (адаптация Python IndicatorImportanceTracker):
+- `IndicatorImportanceTracker` – класс, отслеживающий использование и средний score каждого индикатора.
+  - `update(genomes)` – обновление статистики на основании оценённых геномов.
+  - `getTopIndicators(n, minUsage)` – топ-N индикаторов по среднему score.
+  - `getUnderexplored(n)` – наименее исследованные индикаторы.
+  - `getBestPairs(n)` – лучшие пары индикаторов.
+  - `getImportanceWeights()` – веса вероятности выбора.
+  - `summary()` – текстовый отчёт.
+
+## `robustnessScoring.ts`
+Scoring для walk-forward валидации:
+- `aggregateWalkForwardResults(results)` – агрегация результатов WF окон: median, std, robustness, overfit ratio.
+- `calculateRobustScore(fitness)` – composite score с штрафами за мало сделок и отрицательный PnL.
+
+## `extensionMessaging.ts`
+- `isExtensionRuntime()` – проверяет, доступен ли chrome.runtime API.
+- `isConnectionLostError(error)` – определяет, является ли ошибка потерей связи с расширением ("Receiving end does not exist").
+- `sendRuntimeMessage(message, retries?)` – отправка сообщения в background script с retry логикой (по умолчанию 3 попытки).
+- `proxyHttpRequest(payload)` – проксирование HTTP запросов через background script.
+- `pingConnection()` – проверка связи с background script.
+- `readConnectionStatus()` – получение статуса подключения к Veles.
+- `updateRequestDelay(delayMs)` – обновление задержки между запросами.

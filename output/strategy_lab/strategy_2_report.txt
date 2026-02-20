@@ -1,0 +1,75 @@
+============================================================
+STRATEGY BACKTEST REPORT
+============================================================
+
+── PERFORMANCE ──
+Total Return:        +13.96%
+Avg Monthly Return:  +1.43%
+Min Monthly Return:  -20.27%
+Max Drawdown:        -53.27%
+Sharpe Ratio:        0.39
+Sortino Ratio:       0.82
+Calmar Ratio:        0.32
+
+── TRADES ──
+Total Trades:        504
+Win Rate:            43.3%
+Avg Win:             +3.03%
+Avg Loss:            -2.12%
+Profit Factor:       1.06
+Risk/Reward:         1.43
+Max Consec Losses:   12
+
+Long:  255 trades, WR 42.4%
+Short: 249 trades, WR 44.2%
+
+Time in Market:      87.6%
+Total Fees:          $2910.46
+Total Funding:       $-5.32
+
+── STRATEGY CONFIG ──
+Leverage:            4.9x
+Stop Loss:           4.25%
+Take Profit:         3.27%
+Trailing Stop:       3.51%
+Max Hold:            579 bars
+Risk per Trade:      19.5%
+Combine Mode:        weighted (thr=0.76)
+
+── INDICATORS ──
+  • adx: params={'period': 19}
+    weight=0.97, long_thr=0.770, short_thr=-0.652
+  • hull_ma: params={'period': 41}
+    weight=0.93, long_thr=-0.226, short_thr=0.144
+  • aroon: params={'period': 42}
+    weight=2.39, long_thr=-0.322, short_thr=-0.167
+  • stochastic: params={'k': 15, 'd': 5, 'low': 15, 'high': 73}
+    weight=0.26, long_thr=0.912, short_thr=-0.958
+  • macd_cross: params={'fast': 20, 'slow': 31, 'signal': 7}
+    weight=1.85, long_thr=0.357, short_thr=-0.974
+
+── MONTHLY RETURNS ──
+  Month   1:  -14.69% ██████████████
+  Month   2: +   1.59% █
+  Month   3: +  15.96% ███████████████
+  Month   4:  -18.06% ██████████████████
+  Month   5:  -15.77% ███████████████
+  Month   6:  -20.27% ████████████████████
+  Month   7: +   6.91% ██████
+  Month   8: +  10.86% ██████████
+  Month   9: +   9.07% █████████
+  Month  10:  -10.07% ██████████
+  Month  11:   -4.83% ████
+  Month  12:   -2.50% ██
+  Month  13: +  16.64% ████████████████
+  Month  14: +   6.36% ██████
+  Month  15:  -10.03% ██████████
+  Month  16: +  13.73% █████████████
+  Month  17:  -14.14% ██████████████
+  Month  18:   -3.80% ███
+  Month  19: +   5.40% █████
+  Month  20: +  20.71% ████████████████████
+  Month  21: +  13.01% █████████████
+  Month  22:   -3.83% ███
+  Month  23: +   9.48% █████████
+  Month  24: +  22.53% ██████████████████████

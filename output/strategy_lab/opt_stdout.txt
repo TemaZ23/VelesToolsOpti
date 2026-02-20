@@ -1,0 +1,211 @@
+======================================================================
+🔬 STRATEGY LAB — Self-Improving Trading Strategy
+======================================================================
+
+📡 Loading 2y data for BTCUSDT...
+   💾 Кеш BTCUSDT_futures_15m: 70,080 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_futures_1h: 17,520 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_futures_4h: 4,380 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_futures_1d: 730 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_spot_15m: 70,080 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_funding: 2,190 строк (возраст: 14.8ч)
+   💾 Кеш BTCUSDT_oi: 0 строк (возраст: 14.7ч)
+   💾 Кеш BTCUSDT_ls_ratio: 0 строк (возраст: 14.7ч)
+   💾 Кеш BTCUSDT_taker_vol: 0 строк (возраст: 14.7ч)
+   💾 Кеш fear_greed: 2,000 строк (возраст: 14.7ч)
+   ⏱️ Data loaded in 1s
+
+📊 Prepared DataFrame: 70,080 bars × 22 columns
+   Period: 2024-02-08 03:30:00+00:00 → 2026-02-07 03:15:00+00:00
+   Columns: timestamp, open, high, low, close, volume, quote_volume, trades, taker_buy_volume, taker_sell_volume, taker_buy_quote, spot_close, basis, funding_rate, fear_greed...
+
+📊 Walk-Forward: 5 split(s)
+   Split 0: Train=34,944 bars (12.1mo), Test=7,008 bars (2.4mo)
+   Split 1: Train=41,952 bars (14.6mo), Test=7,008 bars (2.4mo)
+   Split 2: Train=48,960 bars (17.0mo), Test=7,008 bars (2.4mo)
+   Split 3: Train=55,968 bars (19.4mo), Test=7,008 bars (2.4mo)
+   Split 4: Train=62,976 bars (21.9mo), Test=7,008 bars (2.4mo)
+
+======================================================================
+🚀 STRATEGY LAB v2 — CROSS-VALIDATED OPTIMIZER
+   Target: 15.0% monthly return
+   Max Drawdown: -60.0%
+   Min trades per split: 30
+   Rounds: 10, Trials/round: 300
+   Walk-Forward splits: 5
+======================================================================
+
+
+──────────────────────────────────────────────────
+ROUND 1/10
+──────────────────────────────────────────────────
+
+  📈 Round 1 Best: -0.02%/month (cross-validated)
+     Median Return: -0.02%
+     Mean Return:   0.04%
+     Std Return:    0.19%
+     Min Return:    -0.16% (worst split)
+     Median Sharpe: -2.38
+     Worst DD:      -1.7%
+     Median WR:     30.3%
+     Total Trades:  103
+     Median PF:     0.84
+     Leverage:      2.4x
+     Exit Mode:     fixed
+     Exit Inds:     0
+     Indicators:    7
+     Per-split:     ['0.3%', '-0.2%', '-0.0%']
+
+  ✅ NEW BEST: -0.02%/month
+
+  ⏱️ Round time: 1343s (4.5s/trial)
+
+──────────────────────────────────────────────────
+ROUND 2/10
+──────────────────────────────────────────────────
+
+  📈 Round 2 Best: 3.10%/month (cross-validated)
+     Median Return: 4.20%
+     Mean Return:   4.05%
+     Std Return:    0.38%
+     Min Return:    3.53% (worst split)
+     Median Sharpe: 9.93
+     Worst DD:      -21.4%
+     Median WR:     39.0%
+     Total Trades:  139
+     Median PF:     1.29
+     Leverage:      4.2x
+     Exit Mode:     fixed
+     Exit Inds:     0
+     Indicators:    7
+     Per-split:     ['3.5%', '4.2%', '4.4%']
+
+  ✅ NEW BEST: 3.10%/month
+
+  ⏱️ Round time: 1896s (6.3s/trial)
+
+──────────────────────────────────────────────────
+ROUND 3/10
+──────────────────────────────────────────────────
+
+  📈 Round 3 Best: 4.20%/month (cross-validated)
+     Median Return: 6.54%
+     Mean Return:   6.55%
+     Std Return:    2.17%
+     Min Return:    3.90% (worst split)
+     Median Sharpe: 3.41
+     Worst DD:      -17.5%
+     Median WR:     39.4%
+     Total Trades:  101
+     Median PF:     1.60
+     Leverage:      4.4x
+     Exit Mode:     fixed
+     Exit Inds:     0
+     Indicators:    7
+     Per-split:     ['3.9%', '9.2%', '6.5%']
+
+  ✅ NEW BEST: 4.20%/month
+
+  ⏱️ Round time: 1763s (5.9s/trial)
+
+──────────────────────────────────────────────────
+ROUND 4/10
+──────────────────────────────────────────────────
+
+  📈 Round 4 Best: 13.46%/month (cross-validated)
+     Median Return: 15.69%
+     Mean Return:   15.81%
+     Std Return:    8.34%
+     Min Return:    6.76% (worst split)
+     Median Sharpe: 7.01
+     Worst DD:      -10.5%
+     Median WR:     44.9%
+     Total Trades:  697
+     Median PF:     2.02
+     Leverage:      4.7x
+     Exit Mode:     fixed
+     Exit Inds:     0
+     Indicators:    7
+     Per-split:     ['15.7%', '7.2%', '6.8%', '28.8%', '20.6%']
+
+  ✅ NEW BEST: 13.46%/month
+
+  ⏱️ Round time: 1913s (6.4s/trial)
+
+──────────────────────────────────────────────────
+ROUND 5/10
+──────────────────────────────────────────────────
+
+  📈 Round 5 Best: 37.08%/month (cross-validated)
+     Median Return: 39.48%
+     Mean Return:   38.46%
+     Std Return:    16.19%
+     Min Return:    18.35% (worst split)
+     Median Sharpe: 8.99
+     Worst DD:      -9.0%
+     Median WR:     59.3%
+     Total Trades:  786
+     Median PF:     3.65
+     Leverage:      6.0x
+     Exit Mode:     fixed
+     Exit Inds:     0
+     Indicators:    7
+     Per-split:     ['64.4%', '24.8%', '18.3%', '45.2%', '39.5%']
+
+  ✅ NEW BEST: 37.08%/month
+
+  🎯 TARGET ACHIEVED! 37.08% >= 15.0%
+
+======================================================================
+OPTIMIZATION COMPLETE
+  Total time: 135.4 min
+  Best cross-validated monthly return: 37.08%
+  Top strategies found: 50
+======================================================================
+
+💾 Strategies saved: output\strategy_lab\strategies_20260208_032619.json
+💾 History saved: output\strategy_lab\history_20260208_032619.json
+
+======================================================================
+📊 FINAL VALIDATION — Top Strategies
+======================================================================
+
+── Strategy #1 ──
+   📊 strategy_1_equity.png
+   📊 strategy_1_monthly.png
+   📊 strategy_1_drawdown.png
+   📊 strategy_1_trades.png
+   📝 strategy_1_report.txt
+   Return:  +166696.89%
+   Monthly: +39.46%
+   DD:      -67.38%
+   Sharpe:  4.79
+   Trades:  1593
+
+── Strategy #2 ──
+   📊 strategy_2_equity.png
+   📊 strategy_2_monthly.png
+   📊 strategy_2_drawdown.png
+   📊 strategy_2_trades.png
+   📝 strategy_2_report.txt
+   Return:  +170647.41%
+   Monthly: +39.30%
+   DD:      -73.10%
+   Sharpe:  4.67
+   Trades:  1518
+
+── Strategy #3 ──
+   📊 strategy_3_equity.png
+   📊 strategy_3_monthly.png
+   📊 strategy_3_drawdown.png
+   📊 strategy_3_trades.png
+   📝 strategy_3_report.txt
+   Return:  +686253.69%
+   Monthly: +44.24%
+   DD:      -28.15%
+   Sharpe:  6.77
+   Trades:  1518
+   📊 optimization_progress.png
+   📝 optimization_summary.txt
+
+✅ Done! Results saved to: output\strategy_lab

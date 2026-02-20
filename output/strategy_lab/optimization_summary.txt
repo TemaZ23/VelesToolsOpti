@@ -1,0 +1,27 @@
+============================================================
+OPTIMIZATION SUMMARY
+============================================================
+
+── PROGRESS ──
+  Round   1: best=  -0.02%, round_best=  -0.02%, candidates=20, time=1800s
+  Round   2: best=  +3.10%, round_best=  +3.10%, candidates=20, time=2277s
+  Round   3: best=  +9.55%, round_best=  +9.55%, candidates=20, time=2677s
+  Round   4: best=  +9.55%, round_best=  +2.89%, candidates=20, time=3276s
+  Round   5: best=  +9.55%, round_best=  +8.80%, candidates=20, time=1958s
+  Round   6: best=  +9.55%, round_best=  +7.15%, candidates=20, time=2201s
+  Round   7: best=  +9.55%, round_best=  +5.29%, candidates=20, time=3852s
+  Round   8: best=  +9.55%, round_best=  +1.61%, candidates=20, time=6257s
+  Round   9: best=  +9.55%, round_best=  +3.54%, candidates=20, time=2092s
+  Round  10: best=  +9.55%, round_best=  +2.90%, candidates=20, time=3631s
+
+── TOP 10 STRATEGIES ──
+  #1: +9.55%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #2: +8.80%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #3: +7.15%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #4: +7.10%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #5: +6.79%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #6: +6.67%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #7: +6.60%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #8: +6.29%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #9: +6.21%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00
+  #10: +6.18%/month | Sharpe=0.00 | WR=0.0% | DD=0.0% | Trades=0 | PF=0.00

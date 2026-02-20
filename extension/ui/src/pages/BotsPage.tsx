@@ -1,0 +1,617 @@
+import type { TableProps } from 'antd';
+import { Button, Card, Input, Modal, Select, Space, Table, Tag, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import type { TableRowSelection } from 'antd/es/table/interface';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { fetchApiKeys } from '../api/apiKeys';
+import { fetchBots } from '../api/bots';
+import BacktestModal, { type BacktestVariant } from '../components/BacktestModal';
+import BulkActionsMenu from '../components/bots/BulkActionsMenu';
+import SelectionSummaryBar from '../components/ui/SelectionSummaryBar';
+import { TableColumnSettingsButton } from '../components/ui/TableColumnSettingsButton';
+import { buildBotDetailsUrl } from '../lib/cabinetUrls';
+import { resolveBotStatusColor } from '../lib/statusColors';
+import { parseSortDescriptor, serializeSortDescriptor } from '../lib/tableSort';
+import { useTableColumnSettings } from '../lib/useTableColumnSettings';
+import type { ApiKey } from '../types/apiKeys';
+import type { BotAlgorithm, BotStatus, BotSummary, BotsListFilters, BotsListResponse, TradingBot } from '../types/bots';
+import { BOT_STATUS_VALUES } from '../types/bots';
+
+interface BotsPageProps {
+  extensionReady: boolean;
+}
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+const DEFAULT_SORT = 'createdAt,desc';
+
+const STATUS_OPTIONS: readonly BotStatus[] = BOT_STATUS_VALUES;
+
+const ALGORITHM_OPTIONS: BotAlgorithm[] = ['LONG', 'SHORT'];
+
+const formatStatusLabel = (status: BotStatus): string => {
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((chunk) => (chunk ? `${chunk[0].toUpperCase()}${chunk.slice(1)}` : ''))
+    .join(' ')
+    .trim();
+};
+
+const formatAlgorithmLabel = (algorithm: BotAlgorithm): string => {
+  if (algorithm === 'LONG') {
+    return 'Лонг';
+  }
+  if (algorithm === 'SHORT') {
+    return 'Шорт';
+  }
+  return algorithm;
+};
+
+const formatExchangeLabel = (exchange: string): string => {
+  return exchange
+    .toLowerCase()
+    .split('_')
+    .map((chunk) => (chunk ? `${chunk[0].toUpperCase()}${chunk.slice(1)}` : ''))
+    .join(' ')
+    .trim();
+};
+
+const getBotsNoun = (count: number): string => {
+  const abs = Math.abs(count) % 100;
+  const last = abs % 10;
+  if (abs > 10 && abs < 20) {
+    return 'ботов';
+  }
+  if (last === 1) {
+    return 'бот';
+  }
+  if (last >= 2 && last <= 4) {
+    return 'бота';
+  }
+  return 'ботов';
+};
+
+const _createSummary = (bot: TradingBot): BotSummary => ({
+  id: bot.id,
+  name: bot.name,
+  exchange: bot.exchange,
+  algorithm: bot.algorithm,
+  status: bot.status,
+  substatus: bot.substatus,
+  origin: 'account',
+});
+
+const BotsPage = ({ extensionReady }: BotsPageProps) => {
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[3]);
+  const [sort, setSort] = useState(DEFAULT_SORT);
+  const [data, setData] = useState<BotsListResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selection, setSelection] = useState<TradingBot[]>([]);
+  const [activeModal, setActiveModal] = useState<BacktestVariant | null>(null);
+  const [nameFilter, setNameFilter] = useState('');
+  const [apiKeyFilter, setApiKeyFilter] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<BotStatus[]>([]);
+  const [algorithmFilter, setAlgorithmFilter] = useState<BotAlgorithm | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<BotsListFilters>({});
+  const [filtersError, setFiltersError] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [apiKeysError, setApiKeysError] = useState<string | null>(null);
+  const [reloadCounter, setReloadCounter] = useState(0);
+  const [selectionDetailsOpen, setSelectionDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    void reloadCounter;
+
+    if (!extensionReady) {
+      setData(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
+    let isActive = true;
+    setLoading(true);
+    setError(null);
+
+    fetchBots({ page, size: pageSize, sort, filters: appliedFilters })
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+        setData(response);
+      })
+      .catch((requestError: unknown) => {
+        if (!isActive) {
+          return;
+        }
+        const message = requestError instanceof Error ? requestError.message : String(requestError);
+        setError(message);
+      })
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [extensionReady, page, pageSize, sort, appliedFilters, reloadCounter]);
+
+  useEffect(() => {
+    if (!extensionReady) {
+      setSelection([]);
+      setActiveModal(null);
+    }
+  }, [extensionReady]);
+
+  useEffect(() => {
+    if (!extensionReady) {
+      setApiKeys([]);
+      setApiKeysError(null);
+      setApiKeysLoading(false);
+      return;
+    }
+
+    let isActive = true;
+    setApiKeysLoading(true);
+    setApiKeysError(null);
+
+    fetchApiKeys({ size: 100 })
+      .then((keys) => {
+        if (!isActive) {
+          return;
+        }
+        setApiKeys(keys);
+      })
+      .catch((requestError: unknown) => {
+        if (!isActive) {
+          return;
+        }
+        const message = requestError instanceof Error ? requestError.message : String(requestError);
+        setApiKeysError(message);
+      })
+      .finally(() => {
+        if (isActive) {
+          setApiKeysLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [extensionReady]);
+
+  useEffect(() => {
+    setSelection([]);
+    setActiveModal(null);
+  }, []);
+
+  const apiKeyOptions = useMemo(
+    () =>
+      apiKeys.map((key) => ({
+        value: key.id,
+        label: key.name ? `${key.name} · ${formatExchangeLabel(key.exchange)}` : `#${key.id}`,
+      })),
+    [apiKeys],
+  );
+  const forceReloadBots = useCallback(() => {
+    setReloadCounter((value) => value + 1);
+  }, []);
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(
+      appliedFilters.name ||
+        appliedFilters.apiKey ||
+        (appliedFilters.statuses && appliedFilters.statuses.length > 0) ||
+        (appliedFilters.algorithms && appliedFilters.algorithms.length > 0),
+    );
+  }, [appliedFilters]);
+  const hasFilterDraft =
+    nameFilter.trim().length > 0 || apiKeyFilter !== null || statusFilter.length > 0 || Boolean(algorithmFilter);
+  const isResetDisabled = !(hasActiveFilters || hasFilterDraft);
+
+  const selectedRowKeys = useMemo(() => selection.map((s) => s.id), [selection]);
+
+  const totalSelected = selection.length;
+  const bots = data?.content ?? [];
+  const totalElements = data?.totalElements ?? bots.length;
+
+  const currentSortDescriptor = useMemo(() => parseSortDescriptor(sort), [sort]);
+
+  const rowSelection: TableRowSelection<TradingBot> = {
+    selectedRowKeys,
+    type: 'checkbox',
+    preserveSelectedRowKeys: true,
+    onChange: (_nextSelectedRowKeys, nextSelectedRows) => {
+      setSelection(nextSelectedRows);
+    },
+  };
+
+  const handleTableChange = useCallback<NonNullable<TableProps<TradingBot>['onChange']>>(
+    (pagination, _filters, sorter) => {
+      const nextPageSize = pagination?.pageSize ?? pageSize;
+      const isPageSizeChanged = nextPageSize !== pageSize;
+      if (isPageSizeChanged) {
+        setPageSize(nextPageSize);
+        setPage(0);
+      } else {
+        const pageIndex = Math.max((pagination?.current ?? 1) - 1, 0);
+        setPage(pageIndex);
+      }
+
+      if (!Array.isArray(sorter)) {
+        if (sorter?.order && typeof sorter.field === 'string') {
+          setSort(
+            serializeSortDescriptor({
+              field: sorter.field,
+              order: sorter.order,
+            }),
+          );
+        } else if (!sorter?.order) {
+          setSort(DEFAULT_SORT);
+        }
+      }
+    },
+    [pageSize],
+  );
+
+  const baseColumns: ColumnsType<TradingBot> = useMemo(
+    () => [
+      {
+        title: 'Название',
+        dataIndex: 'name',
+        key: 'name',
+        sorter: true,
+        sortOrder: currentSortDescriptor?.field === 'name' ? currentSortDescriptor.order : undefined,
+        render: (_value, botRecord) => (
+          <div>
+            <div>{botRecord.name}</div>
+            <div className="panel__description">
+              ID:{' '}
+              <a href={buildBotDetailsUrl(botRecord.id)} target="_blank" rel="noreferrer noopener">
+                {botRecord.id}
+              </a>
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: 'Биржа',
+        dataIndex: 'exchange',
+        key: 'exchange',
+        render: (value: string) => formatExchangeLabel(value),
+      },
+      {
+        title: 'Алгоритм',
+        dataIndex: 'algorithm',
+        key: 'algorithm',
+        render: (value: BotAlgorithm) => formatAlgorithmLabel(value),
+      },
+      {
+        title: 'Статус',
+        dataIndex: 'status',
+        key: 'status',
+        render: (_value, botRecord) => (
+          <div>
+            <Tag
+              color={resolveBotStatusColor(botRecord.status)}
+              className={botRecord.substatus ? 'tag--with-substatus' : undefined}
+            >
+              {formatStatusLabel(botRecord.status)}
+            </Tag>
+            {botRecord.substatus && <div className="panel__description">{botRecord.substatus}</div>}
+          </div>
+        ),
+      },
+      {
+        title: 'Тикеры',
+        dataIndex: 'symbols',
+        key: 'symbols',
+        render: (value: string[]) => (value && value.length > 0 ? value.join(', ') : '—'),
+      },
+      {
+        title: 'Создан',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        sorter: true,
+        sortOrder: currentSortDescriptor?.field === 'createdAt' ? currentSortDescriptor.order : undefined,
+        render: (value: string | null | undefined) => (value ? new Date(value).toLocaleString() : '—'),
+      },
+      {
+        title: 'Обновлён',
+        dataIndex: 'updatedAt',
+        key: 'updatedAt',
+        sorter: true,
+        sortOrder: currentSortDescriptor?.field === 'updatedAt' ? currentSortDescriptor.order : undefined,
+        render: (value: string | null | undefined) => (value ? new Date(value).toLocaleString() : '—'),
+      },
+    ],
+    [currentSortDescriptor],
+  );
+
+  const {
+    columns: visibleColumns,
+    settings: columnSettings,
+    moveColumn,
+    setColumnVisibility,
+    reset: resetColumnSettings,
+    hasCustomSettings,
+  } = useTableColumnSettings<TradingBot>({
+    tableKey: 'bots-table',
+    columns: baseColumns,
+  });
+
+  const tablePagination = useMemo(
+    () => ({
+      current: page + 1,
+      pageSize,
+      showSizeChanger: true,
+      pageSizeOptions: PAGE_SIZE_OPTIONS.map((option) => String(option)),
+      total: totalElements,
+      showTotal: (total: number, range: [number, number]) => `${range[0]}–${range[1]} из ${total}`,
+    }),
+    [page, pageSize, totalElements],
+  );
+
+  const selectedBotsList = useMemo(() => Array.from(selection.values()), [selection]);
+
+  const handleFiltersApply = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const nextFilters: BotsListFilters = {};
+    const normalizedName = nameFilter.trim();
+    if (normalizedName) {
+      nextFilters.name = normalizedName;
+    }
+
+    if (apiKeyFilter !== null) {
+      if (!Number.isSafeInteger(apiKeyFilter) || apiKeyFilter <= 0) {
+        setFiltersError('Некорректный выбор API-ключа.');
+        return;
+      }
+
+      nextFilters.apiKey = apiKeyFilter;
+    }
+
+    setFiltersError(null);
+    if (statusFilter.length > 0) {
+      nextFilters.statuses = statusFilter;
+    }
+
+    if (algorithmFilter) {
+      nextFilters.algorithms = [algorithmFilter];
+    }
+
+    setError(null);
+    setAppliedFilters(nextFilters);
+    setPage(0);
+  };
+
+  const handleFiltersReset = () => {
+    setNameFilter('');
+    setApiKeyFilter(null);
+    setStatusFilter([]);
+    setAlgorithmFilter(null);
+    setAppliedFilters({});
+    setFiltersError(null);
+    setError(null);
+    setPage(0);
+  };
+
+  useEffect(() => {
+    if (totalSelected === 0) {
+      if (activeModal) {
+        setActiveModal(null);
+      }
+      if (selectionDetailsOpen) {
+        setSelectionDetailsOpen(false);
+      }
+    }
+  }, [totalSelected, activeModal, selectionDetailsOpen]);
+
+  const openModal = (variant: BacktestVariant) => {
+    if (totalSelected === 0) {
+      return;
+    }
+    setActiveModal(variant);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+  };
+
+  return (
+    <section className="page">
+      <header className="page__header">
+        <h1 className="page__title">Мои боты</h1>
+        <p className="page__subtitle">
+          Список всех ботов аккаунта veles.finance с пагинацией и возможностью выбора строк.
+        </p>
+      </header>
+
+      {!extensionReady && (
+        <div className="banner banner--warning">
+          Расширение Veles Tools неактивно. Запустите интерфейс из меню расширения, чтобы подгрузить список ботов.
+        </div>
+      )}
+
+      <Card>
+        {hasActiveFilters && (
+          <div className="panel__filters-state">
+            <span className="badge">Фильтры: активны</span>
+          </div>
+        )}
+
+        <form className="panel__filters" onSubmit={handleFiltersApply}>
+          <div className="filter-field">
+            <label htmlFor="bots-filter-name">Название</label>
+            <Input
+              id="bots-filter-name"
+              className="u-full-width"
+              type="text"
+              placeholder="Например, BTC"
+              value={nameFilter}
+              onChange={(event) => {
+                setNameFilter(event.target.value);
+                setFiltersError(null);
+              }}
+              autoComplete="off"
+            />
+          </div>
+          <div className="filter-field">
+            <label htmlFor="bots-filter-api-key">API-ключ</label>
+            <Select<number>
+              id="bots-filter-api-key"
+              allowClear
+              placeholder="Все ключи"
+              className="u-full-width"
+              value={apiKeyFilter ?? undefined}
+              options={apiKeyOptions}
+              onChange={(value) => {
+                setApiKeyFilter(value ?? null);
+                setFiltersError(null);
+              }}
+              loading={apiKeysLoading}
+            />
+            {apiKeysError && <span className="form-error">{apiKeysError}</span>}
+          </div>
+          <div className="filter-field">
+            <label htmlFor="bots-filter-status">Статус</label>
+            <Select<BotStatus[]>
+              id="bots-filter-status"
+              mode="multiple"
+              allowClear
+              placeholder="Все статусы"
+              className="u-min-w-160"
+              value={statusFilter}
+              options={STATUS_OPTIONS.map((status) => ({
+                value: status,
+                label: formatStatusLabel(status),
+              }))}
+              onChange={(values) => {
+                setStatusFilter(values ?? []);
+                setFiltersError(null);
+              }}
+            />
+          </div>
+          <div className="filter-field">
+            <label htmlFor="bots-filter-algorithm">Тип</label>
+            <Select<BotAlgorithm>
+              id="bots-filter-algorithm"
+              allowClear
+              placeholder="Все"
+              className="u-full-width"
+              value={algorithmFilter ?? undefined}
+              options={ALGORITHM_OPTIONS.map((algorithm) => ({
+                value: algorithm,
+                label: formatAlgorithmLabel(algorithm),
+              }))}
+              onChange={(value) => {
+                setAlgorithmFilter(value ?? null);
+                setFiltersError(null);
+              }}
+            />
+          </div>
+          <Space className="panel__filters-actions">
+            <Button type="primary" htmlType="submit">
+              Применить
+            </Button>
+            <Button type="default" onClick={handleFiltersReset} disabled={isResetDisabled}>
+              Сбросить фильтры
+            </Button>
+          </Space>
+          <div className="panel__filters-actions panel__filters-actions--right">
+            <TableColumnSettingsButton
+              settings={columnSettings}
+              moveColumn={moveColumn}
+              setColumnVisibility={setColumnVisibility}
+              reset={resetColumnSettings}
+              hasCustomSettings={hasCustomSettings}
+            />
+          </div>
+        </form>
+        {filtersError && <div className="form-error u-mt-8">{filtersError}</div>}
+
+        {totalSelected > 0 ? (
+          <SelectionSummaryBar
+            message={
+              <>
+                Выбрано {totalSelected}{' '}
+                <Button type="link" size="small" onClick={() => setSelectionDetailsOpen(true)}>
+                  {getBotsNoun(totalSelected)}
+                </Button>
+              </>
+            }
+            actions={
+              <>
+                <Button type="primary" onClick={() => openModal('single')}>
+                  Бэктест
+                </Button>
+                <Button onClick={() => openModal('multiCurrency')}>Мультивалютный бэктест</Button>
+                <BulkActionsMenu
+                  bots={selection}
+                  apiKeys={apiKeys}
+                  onReloadRequested={forceReloadBots}
+                  onSelectionUpdate={setSelection}
+                />
+              </>
+            }
+          />
+        ) : null}
+
+        <div className="table-container">
+          <Table<TradingBot>
+            columns={visibleColumns}
+            dataSource={bots}
+            rowKey={(botRecord) => botRecord.id}
+            rowSelection={rowSelection}
+            pagination={tablePagination}
+            loading={loading}
+            onChange={handleTableChange}
+            scroll={{ x: true }}
+            size="middle"
+            locale={{
+              emptyText: loading ? 'Загружаем данные…' : 'Нет данных для отображения.',
+            }}
+            sticky
+          />
+        </div>
+
+        {error && <div className="banner banner--warning">Ошибка загрузки: {error}</div>}
+      </Card>
+
+      {activeModal && <BacktestModal variant={activeModal} selectedBots={selectedBotsList} onClose={closeModal} />}
+
+      <Modal
+        title={`Выбрано ${totalSelected} ${getBotsNoun(totalSelected)}`}
+        open={selectionDetailsOpen}
+        onCancel={() => setSelectionDetailsOpen(false)}
+        footer={null}
+      >
+        {selection.length === 0 ? (
+          <Typography.Text type="secondary">Список пуст — выберите ботов в таблице.</Typography.Text>
+        ) : (
+          <ul className="panel__list--compact panel__list--scroll">
+            {selection.map((bot) => (
+              <li key={bot.id}>
+                <span className="chip">
+                  <strong>{bot.name}</strong>
+                  <span>
+                    {bot.exchange} · {bot.algorithm}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
+
+      {activeModal && <BacktestModal variant={activeModal} selectedBots={selectedBotsList} onClose={closeModal} />}
+    </section>
+  );
+};
+
+export default BotsPage;

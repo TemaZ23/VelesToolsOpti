@@ -1,0 +1,2249 @@
+[
+  {
+    "score": 10.224911620989696,
+    "round": 9,
+    "median_monthly_return": 12.16990286185804,
+    "mean_monthly_return": 12.302139325353144,
+    "std_monthly_return": 1.104368681740839,
+    "min_monthly_return": 11.020544525292097,
+    "max_monthly_return": 13.715970588909297,
+    "median_sharpe": 13.999573012449723,
+    "worst_drawdown": -9.773054706926509,
+    "median_pf": 2.136069565987515,
+    "median_wr": 62.16216216216216,
+    "total_trades": 109,
+    "n_indicators": 7,
+    "leverage": 3.844414075066431,
+    "split_returns": [
+      12.16990286185804,
+      13.715970588909297,
+      11.020544525292097
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.836741181585145
+          },
+          "weight": 2.4463118514147144,
+          "long_threshold": 0.39595391223338766,
+          "short_threshold": -0.4515882787963293
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6392746229083204,
+          "long_threshold": 0.36088404468609614,
+          "short_threshold": -0.9382553616533753
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 14
+          },
+          "weight": 0.2683086547700373,
+          "long_threshold": 0.38404820188858385,
+          "short_threshold": -0.9027101509385511
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.6876765009657837,
+          "long_threshold": 0.39540151550703356,
+          "short_threshold": -0.3609537003405917
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 28
+          },
+          "weight": 0.23280363888756933,
+          "long_threshold": -0.07470540433091952,
+          "short_threshold": 0.27638668360078433
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 32
+          },
+          "weight": 2.619629884306646,
+          "long_threshold": 0.5636610071938427,
+          "short_threshold": -0.2882121195378963
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.4111402145236775,
+          "long_threshold": 0.5891905304883975,
+          "short_threshold": -0.9454507831265954
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2184331032640813,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 18.66477278378348,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 68,
+      "vol_filter_min_zscore": -1.2918061431052397,
+      "time_filter_enabled": true,
+      "trade_hours_start": 12,
+      "trade_hours_end": 22,
+      "leverage": 3.844414075066431,
+      "stop_loss_pct": 4.857936276967237,
+      "take_profit_pct": 4.912077292777137,
+      "trailing_stop_pct": 4.812786932047321,
+      "max_hold_bars": 261,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.224099217730046,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 10.142530919498382,
+    "round": 10,
+    "median_monthly_return": 12.432896653609804,
+    "mean_monthly_return": 12.739971247137126,
+    "std_monthly_return": 1.8390075558000265,
+    "min_monthly_return": 10.656948220336515,
+    "max_monthly_return": 15.130068867465052,
+    "median_sharpe": 6.743621153559193,
+    "worst_drawdown": -9.982326557437068,
+    "median_pf": 2.3566056280331553,
+    "median_wr": 54.054054054054056,
+    "total_trades": 101,
+    "n_indicators": 7,
+    "leverage": 3.6180049566797905,
+    "split_returns": [
+      12.432896653609804,
+      15.130068867465052,
+      10.656948220336515
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.8832742580528667
+          },
+          "weight": 2.8006357780536137,
+          "long_threshold": 0.4883463342031207,
+          "short_threshold": -0.5913068867285332
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.488070231219959,
+          "long_threshold": 0.3022114902634547,
+          "short_threshold": -0.9606939574400065
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.19949530622326428,
+          "long_threshold": 0.3646998424992873,
+          "short_threshold": -0.9656106374178758
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.8503904021243853,
+          "long_threshold": 0.5569846755292044,
+          "short_threshold": -0.4730127524983351
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 47
+          },
+          "weight": 0.19041721723169885,
+          "long_threshold": -0.10053606496217082,
+          "short_threshold": 0.0638340351007975
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 13
+          },
+          "weight": 2.627956851334803,
+          "long_threshold": 0.376939809420926,
+          "short_threshold": -0.3530454884196263
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.623998469770911,
+          "long_threshold": 0.47443346280713405,
+          "short_threshold": -0.9381262490300837
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24440147504759246,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 27.667657811255886,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 77,
+      "vol_filter_min_zscore": 0.34707841359811487,
+      "time_filter_enabled": true,
+      "trade_hours_start": 3,
+      "trade_hours_end": 21,
+      "leverage": 3.6180049566797905,
+      "stop_loss_pct": 6.806804840523847,
+      "take_profit_pct": 6.788385769259129,
+      "trailing_stop_pct": 4.734639131381392,
+      "max_hold_bars": 310,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.547436779673024,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 9.773391429942295,
+    "round": 10,
+    "median_monthly_return": 11.344425299355766,
+    "mean_monthly_return": 11.538855814155548,
+    "std_monthly_return": 0.7057947168387817,
+    "min_monthly_return": 10.7882109093457,
+    "max_monthly_return": 12.483931233765176,
+    "median_sharpe": 32.19019720450841,
+    "worst_drawdown": -11.732728077045863,
+    "median_pf": 2.0262557268585266,
+    "median_wr": 55.88235294117647,
+    "total_trades": 105,
+    "n_indicators": 7,
+    "leverage": 3.799418578835126,
+    "split_returns": [
+      11.344425299355766,
+      12.483931233765176,
+      10.7882109093457
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.703514520481323
+          },
+          "weight": 2.360468998096657,
+          "long_threshold": 0.3602248014966495,
+          "short_threshold": -0.3714828454155153
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6990085326476683,
+          "long_threshold": 0.315769341265426,
+          "short_threshold": -0.944223396503147
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.15544955007632655,
+          "long_threshold": 0.29751099773689244,
+          "short_threshold": -0.872925823363575
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.773362593905158,
+          "long_threshold": 0.4625108009392074,
+          "short_threshold": -0.37046976766981804
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 30
+          },
+          "weight": 0.10429712449062956,
+          "long_threshold": -0.12569054568176444,
+          "short_threshold": 0.39078756855123853
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.4724313513084186,
+          "long_threshold": 0.5717132614375499,
+          "short_threshold": -0.17056140198967676
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 48
+          },
+          "weight": 2.4784418635912373,
+          "long_threshold": 0.6090431107172346,
+          "short_threshold": -0.9992939820010178
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24483842067027678,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 18.12267804150566,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 44,
+      "vol_filter_min_zscore": -0.595621781759641,
+      "time_filter_enabled": true,
+      "trade_hours_start": 5,
+      "trade_hours_end": 21,
+      "leverage": 3.799418578835126,
+      "stop_loss_pct": 4.1857573984946725,
+      "take_profit_pct": 7.097595995418008,
+      "trailing_stop_pct": 4.7411936186971975,
+      "max_hold_bars": 283,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.857019522387294,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 9.614762199308721,
+    "round": 7,
+    "median_monthly_return": 11.626167933942112,
+    "mean_monthly_return": 11.797983844092192,
+    "std_monthly_return": 0.5730853889226306,
+    "min_monthly_return": 11.19796194542169,
+    "max_monthly_return": 12.569821652912772,
+    "median_sharpe": 4.966634877869391,
+    "worst_drawdown": -8.72685826983886,
+    "median_pf": 1.9797608887191935,
+    "median_wr": 51.515151515151516,
+    "total_trades": 102,
+    "n_indicators": 7,
+    "leverage": 3.6180049566797905,
+    "split_returns": [
+      11.626167933942112,
+      12.569821652912772,
+      11.19796194542169
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.8832742580528667
+          },
+          "weight": 2.8006357780536137,
+          "long_threshold": 0.4883463342031207,
+          "short_threshold": -0.5913068867285332
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.488070231219959,
+          "long_threshold": 0.3022114902634547,
+          "short_threshold": -0.9606939574400065
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.19949530622326428,
+          "long_threshold": 0.3646998424992873,
+          "short_threshold": -0.9656106374178758
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.8503904021243853,
+          "long_threshold": 0.5569846755292044,
+          "short_threshold": -0.4730127524983351
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 47
+          },
+          "weight": 0.19041721723169885,
+          "long_threshold": -0.10053606496217082,
+          "short_threshold": 0.0638340351007975
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 13
+          },
+          "weight": 2.627956851334803,
+          "long_threshold": 0.376939809420926,
+          "short_threshold": -0.3530454884196263
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.623998469770911,
+          "long_threshold": 0.47443346280713405,
+          "short_threshold": -0.9381262490300837
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24440147504759246,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 23.006523270873334,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 71,
+      "vol_filter_min_zscore": -1.1745286143918006,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 23,
+      "leverage": 3.6180049566797905,
+      "stop_loss_pct": 6.806804840523847,
+      "take_profit_pct": 6.788385769259129,
+      "trailing_stop_pct": 4.734639131381392,
+      "max_hold_bars": 310,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.547436779673024,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 8.642644677978778,
+    "round": 8,
+    "median_monthly_return": 10.28126338571752,
+    "mean_monthly_return": 11.565260370505385,
+    "std_monthly_return": 2.3416449907161274,
+    "min_monthly_return": 9.56368822811184,
+    "max_monthly_return": 14.85082949768679,
+    "median_sharpe": 20.498311378914305,
+    "worst_drawdown": -10.036397575950685,
+    "median_pf": 2.0882927671352984,
+    "median_wr": 61.76470588235294,
+    "total_trades": 111,
+    "n_indicators": 7,
+    "leverage": 3.844414075066431,
+    "split_returns": [
+      10.28126338571752,
+      14.85082949768679,
+      9.56368822811184
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.836741181585145
+          },
+          "weight": 2.4463118514147144,
+          "long_threshold": 0.39595391223338766,
+          "short_threshold": -0.4515882787963293
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6392746229083204,
+          "long_threshold": 0.36088404468609614,
+          "short_threshold": -0.9382553616533753
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 14
+          },
+          "weight": 0.2683086547700373,
+          "long_threshold": 0.38404820188858385,
+          "short_threshold": -0.9027101509385511
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.6876765009657837,
+          "long_threshold": 0.39540151550703356,
+          "short_threshold": -0.3609537003405917
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 28
+          },
+          "weight": 0.23280363888756933,
+          "long_threshold": -0.07470540433091952,
+          "short_threshold": 0.27638668360078433
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 32
+          },
+          "weight": 2.619629884306646,
+          "long_threshold": 0.5636610071938427,
+          "short_threshold": -0.2882121195378963
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.4111402145236775,
+          "long_threshold": 0.5891905304883975,
+          "short_threshold": -0.9454507831265954
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2184331032640813,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 23.12056881063897,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 80,
+      "vol_filter_min_zscore": -0.03258111071274783,
+      "time_filter_enabled": true,
+      "trade_hours_start": 11,
+      "trade_hours_end": 22,
+      "leverage": 3.844414075066431,
+      "stop_loss_pct": 4.857936276967237,
+      "take_profit_pct": 4.912077292777137,
+      "trailing_stop_pct": 4.812786932047321,
+      "max_hold_bars": 261,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.224099217730046,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 8.625386855810067,
+    "round": 7,
+    "median_monthly_return": 10.431680080856035,
+    "mean_monthly_return": 10.646846280676144,
+    "std_monthly_return": 0.42150796912836463,
+    "min_monthly_return": 10.272992903053279,
+    "max_monthly_return": 11.235865858119121,
+    "median_sharpe": 11.049229926248378,
+    "worst_drawdown": -9.317701065924307,
+    "median_pf": 1.8153705207538415,
+    "median_wr": 59.375,
+    "total_trades": 110,
+    "n_indicators": 7,
+    "leverage": 3.844414075066431,
+    "split_returns": [
+      10.272992903053279,
+      11.235865858119121,
+      10.431680080856035
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.836741181585145
+          },
+          "weight": 2.4463118514147144,
+          "long_threshold": 0.39595391223338766,
+          "short_threshold": -0.4515882787963293
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6392746229083204,
+          "long_threshold": 0.36088404468609614,
+          "short_threshold": -0.9382553616533753
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 14
+          },
+          "weight": 0.2683086547700373,
+          "long_threshold": 0.38404820188858385,
+          "short_threshold": -0.9027101509385511
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.6876765009657837,
+          "long_threshold": 0.39540151550703356,
+          "short_threshold": -0.3609537003405917
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 28
+          },
+          "weight": 0.23280363888756933,
+          "long_threshold": -0.07470540433091952,
+          "short_threshold": 0.27638668360078433
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 32
+          },
+          "weight": 2.619629884306646,
+          "long_threshold": 0.5636610071938427,
+          "short_threshold": -0.2882121195378963
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.4111402145236775,
+          "long_threshold": 0.5891905304883975,
+          "short_threshold": -0.9454507831265954
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2184331032640813,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 24.470161258763984,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 72,
+      "vol_filter_min_zscore": -0.916595729520762,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 20,
+      "leverage": 3.844414075066431,
+      "stop_loss_pct": 4.857936276967237,
+      "take_profit_pct": 4.912077292777137,
+      "trailing_stop_pct": 4.812786932047321,
+      "max_hold_bars": 261,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.224099217730046,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 8.33814451664538,
+    "round": 7,
+    "median_monthly_return": 10.691572583784419,
+    "mean_monthly_return": 10.84331654597989,
+    "std_monthly_return": 2.0993585803223955,
+    "min_monthly_return": 8.351370386980317,
+    "max_monthly_return": 13.487006667174938,
+    "median_sharpe": 15.967518623111483,
+    "worst_drawdown": -12.013461749999536,
+    "median_pf": 2.422427588853713,
+    "median_wr": 55.88235294117647,
+    "total_trades": 101,
+    "n_indicators": 7,
+    "leverage": 3.799418578835126,
+    "split_returns": [
+      13.487006667174938,
+      8.351370386980317,
+      10.691572583784419
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.703514520481323
+          },
+          "weight": 2.360468998096657,
+          "long_threshold": 0.3602248014966495,
+          "short_threshold": -0.3714828454155153
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6990085326476683,
+          "long_threshold": 0.315769341265426,
+          "short_threshold": -0.944223396503147
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.15544955007632655,
+          "long_threshold": 0.29751099773689244,
+          "short_threshold": -0.872925823363575
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.773362593905158,
+          "long_threshold": 0.4625108009392074,
+          "short_threshold": -0.37046976766981804
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 30
+          },
+          "weight": 0.10429712449062956,
+          "long_threshold": -0.12569054568176444,
+          "short_threshold": 0.39078756855123853
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.4724313513084186,
+          "long_threshold": 0.5717132614375499,
+          "short_threshold": -0.17056140198967676
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 48
+          },
+          "weight": 2.4784418635912373,
+          "long_threshold": 0.6090431107172346,
+          "short_threshold": -0.9992939820010178
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24483842067027678,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 23.433911051043296,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 67,
+      "vol_filter_min_zscore": -1.1140286941677757,
+      "time_filter_enabled": true,
+      "trade_hours_start": 6,
+      "trade_hours_end": 20,
+      "leverage": 3.799418578835126,
+      "stop_loss_pct": 4.1857573984946725,
+      "take_profit_pct": 7.097595995418008,
+      "trailing_stop_pct": 4.7411936186971975,
+      "max_hold_bars": 283,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.857019522387294,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 8.298448503205087,
+    "round": 8,
+    "median_monthly_return": 12.238106266117299,
+    "mean_monthly_return": 11.203661577272422,
+    "std_monthly_return": 3.1958591070105893,
+    "min_monthly_return": 6.876227127588094,
+    "max_monthly_return": 14.496651338111876,
+    "median_sharpe": 17.508150903434448,
+    "worst_drawdown": -13.352022766754382,
+    "median_pf": 2.083885096982348,
+    "median_wr": 54.285714285714285,
+    "total_trades": 103,
+    "n_indicators": 7,
+    "leverage": 3.6906482486384053,
+    "split_returns": [
+      14.496651338111876,
+      12.238106266117299,
+      6.876227127588094
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 6,
+            "mult": 3.8317867325769
+          },
+          "weight": 2.3760837991191273,
+          "long_threshold": 0.5150574270269199,
+          "short_threshold": 0.2631465547452906
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 27
+          },
+          "weight": 2.488329703347082,
+          "long_threshold": 0.48335527078667306,
+          "short_threshold": -0.8730452833144705
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 14
+          },
+          "weight": 0.5093623731797305,
+          "long_threshold": 0.7141458752051637,
+          "short_threshold": -0.35411658201760987
+        },
+        {
+          "name": "rsi",
+          "params": {
+            "period": 19
+          },
+          "weight": 2.830268074894229,
+          "long_threshold": 0.07506478890912388,
+          "short_threshold": -0.8522059409372157
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 34,
+            "signal": 14
+          },
+          "weight": 0.6377447624996627,
+          "long_threshold": 0.7562871730231742,
+          "short_threshold": -0.3876448185335147
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 31
+          },
+          "weight": 0.2660217029838671,
+          "long_threshold": -0.13104853814769454,
+          "short_threshold": 0.3354766162130302
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 20
+          },
+          "weight": 2.4304124696455403,
+          "long_threshold": 0.7940855572204075,
+          "short_threshold": -0.18478337832530345
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.23001462313855808,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 27,
+      "adx_filter_min": 18.124312717467777,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 52,
+      "vol_filter_min_zscore": -1.2600494025883635,
+      "time_filter_enabled": true,
+      "trade_hours_start": 9,
+      "trade_hours_end": 20,
+      "leverage": 3.6906482486384053,
+      "stop_loss_pct": 4.0569656246377415,
+      "take_profit_pct": 6.320939327388733,
+      "trailing_stop_pct": 4.7516407277566595,
+      "max_hold_bars": 258,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.415086652469473,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.985777815504859,
+    "round": 10,
+    "median_monthly_return": 10.356694409901095,
+    "mean_monthly_return": 12.957471151067493,
+    "std_monthly_return": 5.1313061316619635,
+    "min_monthly_return": 8.390796867970963,
+    "max_monthly_return": 20.12492217533042,
+    "median_sharpe": 20.79610650076048,
+    "worst_drawdown": -9.354122993299145,
+    "median_pf": 2.0225514574454686,
+    "median_wr": 57.49999999999999,
+    "total_trades": 126,
+    "n_indicators": 7,
+    "leverage": 4.171827159140213,
+    "split_returns": [
+      8.390796867970963,
+      20.12492217533042,
+      10.356694409901095
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 15,
+            "mult": 3.861866100274185
+          },
+          "weight": 2.4001536731384445,
+          "long_threshold": 0.25943579623136354,
+          "short_threshold": -0.34585944938669877
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 23
+          },
+          "weight": 2.063029130208548,
+          "long_threshold": 0.1349475493601328,
+          "short_threshold": -0.9647606085335397
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 17
+          },
+          "weight": 0.1931426477759072,
+          "long_threshold": 0.3078183361840765,
+          "short_threshold": -0.9250555382917904
+        },
+        {
+          "name": "rsi",
+          "params": {
+            "period": 27
+          },
+          "weight": 0.1995747633728544,
+          "long_threshold": 0.9452733753160137,
+          "short_threshold": -0.853932699152184
+        },
+        {
+          "name": "rsi_signal",
+          "params": {
+            "period": 16,
+            "oversold": 17,
+            "overbought": 76
+          },
+          "weight": 1.689268099167881,
+          "long_threshold": 0.04059660544255411,
+          "short_threshold": -0.7117731094525145
+        },
+        {
+          "name": "macd_signal",
+          "params": {
+            "fast": 19,
+            "slow": 32,
+            "signal": 12
+          },
+          "weight": 2.506378833840466,
+          "long_threshold": -0.2533632887403238,
+          "short_threshold": -0.8026067061302972
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 16,
+            "slow": 36,
+            "signal": 12
+          },
+          "weight": 1.2143920034257831,
+          "long_threshold": 0.4556398404512359,
+          "short_threshold": 0.1253693070114709
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.32207645753009156,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 23,
+      "adx_filter_min": 18.03427106248703,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 44,
+      "vol_filter_min_zscore": -0.4766452908473466,
+      "time_filter_enabled": true,
+      "trade_hours_start": 5,
+      "trade_hours_end": 21,
+      "leverage": 4.171827159140213,
+      "stop_loss_pct": 7.509217227343148,
+      "take_profit_pct": 4.104109006147103,
+      "trailing_stop_pct": 4.165825240407127,
+      "max_hold_bars": 332,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.95622785785651,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.876117354530478,
+    "round": 10,
+    "median_monthly_return": 12.669704789157809,
+    "mean_monthly_return": 10.866101309459836,
+    "std_monthly_return": 2.896481016067932,
+    "min_monthly_return": 6.779230609497286,
+    "max_monthly_return": 13.149368529724415,
+    "median_sharpe": 6.3705989455954635,
+    "worst_drawdown": -15.103312829925189,
+    "median_pf": 1.7128703841180788,
+    "median_wr": 56.41025641025641,
+    "total_trades": 109,
+    "n_indicators": 7,
+    "leverage": 4.0738193644881795,
+    "split_returns": [
+      12.669704789157809,
+      13.149368529724415,
+      6.779230609497286
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 11,
+            "mult": 3.899532704256804
+          },
+          "weight": 2.1801995619093524,
+          "long_threshold": 0.9160589522510518,
+          "short_threshold": -0.3254616320091696
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 27
+          },
+          "weight": 2.5797418096754803,
+          "long_threshold": 0.4024212155970749,
+          "short_threshold": -0.9270313759233255
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 18,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.6822200659130206,
+          "long_threshold": 0.33121174917354207,
+          "short_threshold": -0.06399193698805707
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 46
+          },
+          "weight": 0.4129838931806925,
+          "long_threshold": -0.2545563251515927,
+          "short_threshold": 0.012140770115114961
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 48
+          },
+          "weight": 2.234596343402895,
+          "long_threshold": 0.40686210506515696,
+          "short_threshold": -0.9595753352861661
+        },
+        {
+          "name": "keltner_pos",
+          "params": {
+            "period": 15,
+            "mult": 1.1857953375067332
+          },
+          "weight": 1.642279487929626,
+          "long_threshold": 0.39453541012543447,
+          "short_threshold": 0.14694240685598806
+        },
+        {
+          "name": "donchian_pos",
+          "params": {
+            "period": 33
+          },
+          "weight": 2.9412594456103114,
+          "long_threshold": 0.8203380954512856,
+          "short_threshold": -0.3736295160667408
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.3356820650097432,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 27,
+      "adx_filter_min": 16.229784563759857,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 41,
+      "vol_filter_min_zscore": 0.380533528375003,
+      "time_filter_enabled": true,
+      "trade_hours_start": 5,
+      "trade_hours_end": 21,
+      "leverage": 4.0738193644881795,
+      "stop_loss_pct": 7.999550550729967,
+      "take_profit_pct": 4.979442031319695,
+      "trailing_stop_pct": 4.094856057572426,
+      "max_hold_bars": 379,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.717579957748743,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.772690283659956,
+    "round": 7,
+    "median_monthly_return": 9.875800511649302,
+    "mean_monthly_return": 9.727560976725231,
+    "std_monthly_return": 0.6583451448307109,
+    "min_monthly_return": 8.857422192657827,
+    "max_monthly_return": 10.449460225868561,
+    "median_sharpe": 5.36639830848346,
+    "worst_drawdown": -11.355200082687976,
+    "median_pf": 1.7740119618972752,
+    "median_wr": 51.61290322580645,
+    "total_trades": 101,
+    "n_indicators": 7,
+    "leverage": 3.572176837656201,
+    "split_returns": [
+      8.857422192657827,
+      9.875800511649302,
+      10.449460225868561
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.982539854746677
+          },
+          "weight": 2.392082497840846,
+          "long_threshold": 0.5821746614094988,
+          "short_threshold": -0.419331395714629
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 28
+          },
+          "weight": 2.632963383562434,
+          "long_threshold": 0.3737769467315834,
+          "short_threshold": -0.891723379264861
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 13
+          },
+          "weight": 0.3039335742915636,
+          "long_threshold": 0.4341678585346003,
+          "short_threshold": -0.8501286051681597
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.9660151037427451,
+          "long_threshold": 0.47922693176000175,
+          "short_threshold": -0.39194814283213
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 26
+          },
+          "weight": 0.18852890497948846,
+          "long_threshold": -0.06310730732350138,
+          "short_threshold": 0.2729521184001264
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.4468168481861197,
+          "long_threshold": 0.5665785773120247,
+          "short_threshold": -0.318801676243112
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 50
+          },
+          "weight": 2.488672572834501,
+          "long_threshold": 0.4744706511464139,
+          "short_threshold": -0.9235323646610969
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.218321096748615,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 28,
+      "adx_filter_min": 23.897308477401726,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 72,
+      "vol_filter_min_zscore": -1.0610721203375546,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 20,
+      "leverage": 3.572176837656201,
+      "stop_loss_pct": 4.542149485891861,
+      "take_profit_pct": 5.966947179351772,
+      "trailing_stop_pct": 4.912801914604404,
+      "max_hold_bars": 271,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.49548935175642,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.477790392731679,
+    "round": 10,
+    "median_monthly_return": 9.528450326357907,
+    "mean_monthly_return": 9.30517056545917,
+    "std_monthly_return": 0.771939250620655,
+    "min_monthly_return": 8.268087590458373,
+    "max_monthly_return": 10.118973779561225,
+    "median_sharpe": 5.234563525821989,
+    "worst_drawdown": -10.51997232010203,
+    "median_pf": 1.9745060450578555,
+    "median_wr": 67.5,
+    "total_trades": 111,
+    "n_indicators": 7,
+    "leverage": 3.648720520370667,
+    "split_returns": [
+      9.528450326357907,
+      10.118973779561225,
+      8.268087590458373
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.7309263868965052
+          },
+          "weight": 2.345335016092936,
+          "long_threshold": 0.877069459100053,
+          "short_threshold": -0.4201351770972457
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 30
+          },
+          "weight": 0.21794847648980564,
+          "long_threshold": 0.27525001320380993,
+          "short_threshold": -0.999769539343533
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 29,
+            "signal": 12
+          },
+          "weight": 2.1232128225662055,
+          "long_threshold": 0.47924058159369515,
+          "short_threshold": -0.4588931753556692
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 29
+          },
+          "weight": 0.26546772010173575,
+          "long_threshold": 0.010281500076458984,
+          "short_threshold": 0.37248416217599095
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 40
+          },
+          "weight": 1.6840324508481894,
+          "long_threshold": 0.5710033890577055,
+          "short_threshold": -0.8225251018437376
+        },
+        {
+          "name": "bb_width",
+          "params": {
+            "period": 24,
+            "std_dev": 2.258267036457135
+          },
+          "weight": 2.7526260755567793,
+          "long_threshold": 0.16702059269201253,
+          "short_threshold": -0.11928889471935616
+        },
+        {
+          "name": "keltner_pos",
+          "params": {
+            "period": 24,
+            "mult": 2.6934408711433404
+          },
+          "weight": 0.34758211211719114,
+          "long_threshold": 0.24933320391616967,
+          "short_threshold": -0.721514253009947
+        }
+      ],
+      "combine_mode": "vote",
+      "combine_threshold": 0.3056752370373199,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 30,
+      "adx_filter_min": 18.5358234725774,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 42,
+      "vol_filter_min_zscore": -0.14031564827361384,
+      "time_filter_enabled": true,
+      "trade_hours_start": 9,
+      "trade_hours_end": 21,
+      "leverage": 3.648720520370667,
+      "stop_loss_pct": 6.533089819590436,
+      "take_profit_pct": 3.4589545200260217,
+      "trailing_stop_pct": 4.7258261590267265,
+      "max_hold_bars": 292,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.08270779255621,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.434286208470605,
+    "round": 9,
+    "median_monthly_return": 9.709901848656722,
+    "mean_monthly_return": 9.646269701420662,
+    "std_monthly_return": 1.070337898438731,
+    "min_monthly_return": 8.304721579775265,
+    "max_monthly_return": 10.924185675829994,
+    "median_sharpe": 17.845426176337217,
+    "worst_drawdown": -10.30463264110565,
+    "median_pf": 1.7319927786314615,
+    "median_wr": 54.54545454545454,
+    "total_trades": 103,
+    "n_indicators": 7,
+    "leverage": 3.799418578835126,
+    "split_returns": [
+      8.304721579775265,
+      9.709901848656722,
+      10.924185675829994
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.703514520481323
+          },
+          "weight": 2.360468998096657,
+          "long_threshold": 0.3602248014966495,
+          "short_threshold": -0.3714828454155153
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.6990085326476683,
+          "long_threshold": 0.315769341265426,
+          "short_threshold": -0.944223396503147
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.15544955007632655,
+          "long_threshold": 0.29751099773689244,
+          "short_threshold": -0.872925823363575
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.773362593905158,
+          "long_threshold": 0.4625108009392074,
+          "short_threshold": -0.37046976766981804
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 30
+          },
+          "weight": 0.10429712449062956,
+          "long_threshold": -0.12569054568176444,
+          "short_threshold": 0.39078756855123853
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.4724313513084186,
+          "long_threshold": 0.5717132614375499,
+          "short_threshold": -0.17056140198967676
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 48
+          },
+          "weight": 2.4784418635912373,
+          "long_threshold": 0.6090431107172346,
+          "short_threshold": -0.9992939820010178
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24483842067027678,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 19.460713446619046,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 41,
+      "vol_filter_min_zscore": -0.6239876304583574,
+      "time_filter_enabled": true,
+      "trade_hours_start": 1,
+      "trade_hours_end": 18,
+      "leverage": 3.799418578835126,
+      "stop_loss_pct": 4.1857573984946725,
+      "take_profit_pct": 7.097595995418008,
+      "trailing_stop_pct": 4.7411936186971975,
+      "max_hold_bars": 283,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.857019522387294,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.366098247816413,
+    "round": 8,
+    "median_monthly_return": 9.14202420151056,
+    "mean_monthly_return": 9.346804777246255,
+    "std_monthly_return": 1.4824645518828692,
+    "min_monthly_return": 7.642236181178186,
+    "max_monthly_return": 11.256153949050018,
+    "median_sharpe": 3.957487879312966,
+    "worst_drawdown": -10.325258251849863,
+    "median_pf": 2.1192548404624567,
+    "median_wr": 54.83870967741935,
+    "total_trades": 97,
+    "n_indicators": 7,
+    "leverage": 3.6180049566797905,
+    "split_returns": [
+      7.642236181178186,
+      11.256153949050018,
+      9.14202420151056
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.8832742580528667
+          },
+          "weight": 2.8006357780536137,
+          "long_threshold": 0.4883463342031207,
+          "short_threshold": -0.5913068867285332
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.488070231219959,
+          "long_threshold": 0.3022114902634547,
+          "short_threshold": -0.9606939574400065
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.19949530622326428,
+          "long_threshold": 0.3646998424992873,
+          "short_threshold": -0.9656106374178758
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.8503904021243853,
+          "long_threshold": 0.5569846755292044,
+          "short_threshold": -0.4730127524983351
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 47
+          },
+          "weight": 0.19041721723169885,
+          "long_threshold": -0.10053606496217082,
+          "short_threshold": 0.0638340351007975
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 13
+          },
+          "weight": 2.627956851334803,
+          "long_threshold": 0.376939809420926,
+          "short_threshold": -0.3530454884196263
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.623998469770911,
+          "long_threshold": 0.47443346280713405,
+          "short_threshold": -0.9381262490300837
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.24440147504759246,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 16.43023151763494,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 38,
+      "vol_filter_min_zscore": -1.2902219132199073,
+      "time_filter_enabled": true,
+      "trade_hours_start": 3,
+      "trade_hours_end": 16,
+      "leverage": 3.6180049566797905,
+      "stop_loss_pct": 6.806804840523847,
+      "take_profit_pct": 6.788385769259129,
+      "trailing_stop_pct": 4.734639131381392,
+      "max_hold_bars": 310,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.547436779673024,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.351514803424111,
+    "round": 7,
+    "median_monthly_return": 9.1252880667816,
+    "mean_monthly_return": 9.204961477712176,
+    "std_monthly_return": 0.5045922103776103,
+    "min_monthly_return": 8.630665413449567,
+    "max_monthly_return": 9.858930952905363,
+    "median_sharpe": 5.350988695864936,
+    "worst_drawdown": -12.105815994985711,
+    "median_pf": 1.730532652481774,
+    "median_wr": 53.125,
+    "total_trades": 102,
+    "n_indicators": 7,
+    "leverage": 3.845340997774006,
+    "split_returns": [
+      9.1252880667816,
+      8.630665413449567,
+      9.858930952905363
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.9868611032217114
+          },
+          "weight": 2.3254304947669286,
+          "long_threshold": 0.5778009111490185,
+          "short_threshold": -0.418359307168087
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 28
+          },
+          "weight": 2.662395493613395,
+          "long_threshold": 0.42982966484403046,
+          "short_threshold": -0.9030179113350167
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 13
+          },
+          "weight": 0.20188607170752554,
+          "long_threshold": 0.37849349792778025,
+          "short_threshold": -0.9047939698331665
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.9671526969958528,
+          "long_threshold": 0.4700098801356247,
+          "short_threshold": -0.3655224211748923
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 29
+          },
+          "weight": 0.14698945796172877,
+          "long_threshold": -0.06194639436652238,
+          "short_threshold": 0.3055908599794123
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.537671568466298,
+          "long_threshold": 0.6628708300900239,
+          "short_threshold": -0.3716029519798487
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 50
+          },
+          "weight": 2.4090611515143467,
+          "long_threshold": 0.531884941797824,
+          "short_threshold": -0.9167826202418585
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2152452392980175,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 28,
+      "adx_filter_min": 24.02046212369136,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 71,
+      "vol_filter_min_zscore": -1.042199474900239,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 20,
+      "leverage": 3.845340997774006,
+      "stop_loss_pct": 4.300866837127097,
+      "take_profit_pct": 5.798026119320499,
+      "trailing_stop_pct": 4.997616996482018,
+      "max_hold_bars": 272,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.511567369185475,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.346574336176326,
+    "round": 7,
+    "median_monthly_return": 10.41746496088448,
+    "mean_monthly_return": 9.643893226736447,
+    "std_monthly_return": 1.4764595004486383,
+    "min_monthly_return": 7.577497564563292,
+    "max_monthly_return": 10.936717154761567,
+    "median_sharpe": 15.660473045304451,
+    "worst_drawdown": -11.084687696247784,
+    "median_pf": 1.654266077694303,
+    "median_wr": 54.0,
+    "total_trades": 130,
+    "n_indicators": 7,
+    "leverage": 3.663558872044682,
+    "split_returns": [
+      10.41746496088448,
+      10.936717154761567,
+      7.577497564563292
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.7973287697457567
+          },
+          "weight": 2.353925759113655,
+          "long_threshold": 0.48460997388336713,
+          "short_threshold": -0.523042256858122
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.7821987685301295,
+          "long_threshold": 0.3064974579881167,
+          "short_threshold": -0.8727532585350328
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 16
+          },
+          "weight": 0.16273760821822408,
+          "long_threshold": 0.3934972282727304,
+          "short_threshold": -0.9274227487756771
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 16,
+            "slow": 23,
+            "signal": 13
+          },
+          "weight": 2.1469251742288287,
+          "long_threshold": 0.4927235903489826,
+          "short_threshold": -0.42070250513976376
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 22
+          },
+          "weight": 0.10325456458639574,
+          "long_threshold": -0.02893824716193484,
+          "short_threshold": -0.025895829492209615
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.318636390032066,
+          "long_threshold": 0.4338244039478283,
+          "short_threshold": -0.31159931013190373
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 46
+          },
+          "weight": 2.4097115686629627,
+          "long_threshold": 0.6050482334886221,
+          "short_threshold": -0.9644093886143121
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2354730274005472,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 30,
+      "adx_filter_min": 25.02535193817729,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 73,
+      "vol_filter_min_zscore": -1.1705299575778765,
+      "time_filter_enabled": true,
+      "trade_hours_start": 6,
+      "trade_hours_end": 20,
+      "leverage": 3.663558872044682,
+      "stop_loss_pct": 3.0968345844312526,
+      "take_profit_pct": 4.465929391143902,
+      "trailing_stop_pct": 4.652360959998012,
+      "max_hold_bars": 293,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.79204314664897,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 7.277111117299707,
+    "round": 7,
+    "median_monthly_return": 8.773152053772248,
+    "mean_monthly_return": 8.850670022132535,
+    "std_monthly_return": 0.19381702949719568,
+    "min_monthly_return": 8.661743291300416,
+    "max_monthly_return": 9.117114721324942,
+    "median_sharpe": 4.917968492905106,
+    "worst_drawdown": -11.41500333207761,
+    "median_pf": 1.8217460495232352,
+    "median_wr": 54.285714285714285,
+    "total_trades": 100,
+    "n_indicators": 7,
+    "leverage": 3.5712262645303805,
+    "split_returns": [
+      8.661743291300416,
+      8.773152053772248,
+      9.117114721324942
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 4.066423580656409
+          },
+          "weight": 2.509183578799016,
+          "long_threshold": 0.5277639735300974,
+          "short_threshold": -0.48472325276559086
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 28
+          },
+          "weight": 2.545900075819676,
+          "long_threshold": 0.39207517314478113,
+          "short_threshold": -0.8779678907530659
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 14
+          },
+          "weight": 0.3068347493968012,
+          "long_threshold": 0.42546455445654097,
+          "short_threshold": -0.9238885353851729
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 38,
+            "signal": 13
+          },
+          "weight": 1.889852456362095,
+          "long_threshold": 0.5133289793490379,
+          "short_threshold": -0.3853711663418661
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 27
+          },
+          "weight": 0.15653353940628117,
+          "long_threshold": -0.06480372056891606,
+          "short_threshold": 0.2952826681589364
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 31
+          },
+          "weight": 2.443794036727759,
+          "long_threshold": 0.5496659769011725,
+          "short_threshold": -0.3321553677223137
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 50
+          },
+          "weight": 2.4578676668448547,
+          "long_threshold": 0.5474012066863589,
+          "short_threshold": -0.8751417683953827
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.2186315448553025,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 28,
+      "adx_filter_min": 23.555675421379775,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 67,
+      "vol_filter_min_zscore": -1.0560620862657624,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 20,
+      "leverage": 3.5712262645303805,
+      "stop_loss_pct": 4.575696750302525,
+      "take_profit_pct": 6.144808542748711,
+      "trailing_stop_pct": 4.890660503345478,
+      "max_hold_bars": 277,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.599143494891774,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 6.999744867042108,
+    "round": 7,
+    "median_monthly_return": 8.478344374695578,
+    "mean_monthly_return": 8.482472124988076,
+    "std_monthly_return": 0.037621100447612056,
+    "min_monthly_return": 8.438598629111638,
+    "max_monthly_return": 8.530473371157013,
+    "median_sharpe": 7.690867939072035,
+    "worst_drawdown": -13.891692681260404,
+    "median_pf": 1.6786697078065491,
+    "median_wr": 47.05882352941176,
+    "total_trades": 100,
+    "n_indicators": 7,
+    "leverage": 3.84702290289736,
+    "split_returns": [
+      8.438598629111638,
+      8.478344374695578,
+      8.530473371157013
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 18,
+            "mult": 4.065896475984875
+          },
+          "weight": 2.8161615583192012,
+          "long_threshold": 0.6270891399086965,
+          "short_threshold": -0.5552656551927285
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.5334328515666966,
+          "long_threshold": 0.30307033317404625,
+          "short_threshold": -0.9665230489165345
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.24607367369638572,
+          "long_threshold": 0.36310528758164284,
+          "short_threshold": -0.9258352254016119
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 15,
+            "slow": 37,
+            "signal": 13
+          },
+          "weight": 1.7174076265225193,
+          "long_threshold": 0.5154335436355166,
+          "short_threshold": -0.48594776015524677
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 45
+          },
+          "weight": 0.1623322335632994,
+          "long_threshold": -0.09840845576784807,
+          "short_threshold": -0.013295642721871753
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 14
+          },
+          "weight": 2.4480018988126004,
+          "long_threshold": 0.2613628535107702,
+          "short_threshold": -0.2565831538949555
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 47
+          },
+          "weight": 2.7404374542137058,
+          "long_threshold": 0.4602525612481826,
+          "short_threshold": -0.9533436798359729
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.22909435280558904,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 22.52538571242221,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 65,
+      "vol_filter_min_zscore": -1.1112297626151326,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 22,
+      "leverage": 3.84702290289736,
+      "stop_loss_pct": 6.779785359307962,
+      "take_profit_pct": 6.410357444226755,
+      "trailing_stop_pct": 4.790908967276662,
+      "max_hold_bars": 324,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.987405041586026,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 6.961645702894494,
+    "round": 7,
+    "median_monthly_return": 9.042318215717593,
+    "mean_monthly_return": 8.94633419537937,
+    "std_monthly_return": 0.9362499685093552,
+    "min_monthly_return": 7.754691755148502,
+    "max_monthly_return": 10.041992615272012,
+    "median_sharpe": 8.1975346102211,
+    "worst_drawdown": -8.869666912277536,
+    "median_pf": 1.7888998158142229,
+    "median_wr": 56.25,
+    "total_trades": 102,
+    "n_indicators": 7,
+    "leverage": 3.644502114414255,
+    "split_returns": [
+      10.041992615272012,
+      9.042318215717593,
+      7.754691755148502
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 17,
+            "mult": 3.929767374350916
+          },
+          "weight": 2.7152543631838815,
+          "long_threshold": 0.5327265177382383,
+          "short_threshold": -0.5715350959105514
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.4936612182555913,
+          "long_threshold": 0.2894261967654354,
+          "short_threshold": -0.9403192833569061
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.2591662371888731,
+          "long_threshold": 0.36089377617748575,
+          "short_threshold": -0.9250512441122852
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 36,
+            "signal": 13
+          },
+          "weight": 1.8633952247494212,
+          "long_threshold": 0.5278962425136754,
+          "short_threshold": -0.5051884368915096
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 46
+          },
+          "weight": 0.15673963722841344,
+          "long_threshold": -0.059671825858901476,
+          "short_threshold": 0.10685203562337525
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 12
+          },
+          "weight": 2.640746568237983,
+          "long_threshold": 0.39970475401552763,
+          "short_threshold": -0.3425574945386985
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 49
+          },
+          "weight": 2.6314151175917164,
+          "long_threshold": 0.45470561414283117,
+          "short_threshold": -0.9044268201742087
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.23014128729596023,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 22.9113195141226,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 70,
+      "vol_filter_min_zscore": -1.1583223369961357,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 22,
+      "leverage": 3.644502114414255,
+      "stop_loss_pct": 6.792733028226244,
+      "take_profit_pct": 6.851880311319381,
+      "trailing_stop_pct": 4.865496200628318,
+      "max_hold_bars": 288,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 19.023898337676574,
+      "name": "",
+      "generation": 0
+    }
+  },
+  {
+    "score": 6.861523274532295,
+    "round": 7,
+    "median_monthly_return": 8.693721567775233,
+    "mean_monthly_return": 8.794527618510097,
+    "std_monthly_return": 1.5436931052890148,
+    "min_monthly_return": 6.956317075654351,
+    "max_monthly_return": 10.73354421210071,
+    "median_sharpe": 3.9907570074652665,
+    "worst_drawdown": -15.868666429751757,
+    "median_pf": 2.0586260689544007,
+    "median_wr": 51.61290322580645,
+    "total_trades": 100,
+    "n_indicators": 7,
+    "leverage": 3.3730786089071363,
+    "split_returns": [
+      10.73354421210071,
+      6.956317075654351,
+      8.693721567775233
+    ],
+    "failed_splits": 2,
+    "config": {
+      "entry_indicators": [
+        {
+          "name": "supertrend",
+          "params": {
+            "period": 16,
+            "mult": 3.9653543738013246
+          },
+          "weight": 2.680355961942668,
+          "long_threshold": 0.5437784045815673,
+          "short_threshold": -0.5415070253814843
+        },
+        {
+          "name": "adx",
+          "params": {
+            "period": 29
+          },
+          "weight": 2.4523416238239544,
+          "long_threshold": 0.3578249026592145,
+          "short_threshold": -0.9089181326904293
+        },
+        {
+          "name": "adx_direction",
+          "params": {
+            "period": 15
+          },
+          "weight": 0.10208931051595353,
+          "long_threshold": 0.39839864139822617,
+          "short_threshold": -0.8975080718166499
+        },
+        {
+          "name": "macd_cross",
+          "params": {
+            "fast": 17,
+            "slow": 36,
+            "signal": 13
+          },
+          "weight": 1.9291955961366396,
+          "long_threshold": 0.5048548933377365,
+          "short_threshold": -0.36385921010771505
+        },
+        {
+          "name": "roc",
+          "params": {
+            "period": 29
+          },
+          "weight": 0.10171428065849918,
+          "long_threshold": -0.08866716982196113,
+          "short_threshold": -0.04751688371923907
+        },
+        {
+          "name": "cci",
+          "params": {
+            "period": 30
+          },
+          "weight": 2.4486766056729063,
+          "long_threshold": 0.41417165953077134,
+          "short_threshold": -0.2891755025624514
+        },
+        {
+          "name": "momentum",
+          "params": {
+            "period": 47
+          },
+          "weight": 2.61735695155656,
+          "long_threshold": 0.43801418277298715,
+          "short_threshold": -0.8896741395543023
+        }
+      ],
+      "combine_mode": "weighted",
+      "combine_threshold": 0.20768623315071325,
+      "adx_filter_enabled": false,
+      "adx_filter_period": 29,
+      "adx_filter_min": 23.654945036342884,
+      "vol_filter_enabled": false,
+      "vol_filter_period": 72,
+      "vol_filter_min_zscore": -1.0510382604246926,
+      "time_filter_enabled": true,
+      "trade_hours_start": 7,
+      "trade_hours_end": 21,
+      "leverage": 3.3730786089071363,
+      "stop_loss_pct": 4.608323444408799,
+      "take_profit_pct": 5.939682779614688,
+      "trailing_stop_pct": 4.997138475854237,
+      "max_hold_bars": 306,
+      "exit_on_signal_flip": false,
+      "risk_per_trade_pct": 18.68818339136316,
+      "name": "",
+      "generation": 0
+    }
+  }
+]

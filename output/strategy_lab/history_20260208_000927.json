@@ -1,0 +1,72 @@
+[
+  {
+    "round": 1,
+    "best_score": 4.722594004352421,
+    "round_best": 4.722594004352421,
+    "n_candidates": 20,
+    "time_s": 622.8605213165283
+  },
+  {
+    "round": 2,
+    "best_score": 6.6371597158904905,
+    "round_best": 6.6371597158904905,
+    "n_candidates": 20,
+    "time_s": 589.3173971176147
+  },
+  {
+    "round": 3,
+    "best_score": 6.6371597158904905,
+    "round_best": 4.650556836645004,
+    "n_candidates": 20,
+    "time_s": 580.8179557323456
+  },
+  {
+    "round": 4,
+    "best_score": 6.6371597158904905,
+    "round_best": 3.2320471883749344,
+    "n_candidates": 20,
+    "time_s": 510.7494912147522
+  },
+  {
+    "round": 5,
+    "best_score": 6.6371597158904905,
+    "round_best": 5.996897924865624,
+    "n_candidates": 20,
+    "time_s": 515.2455151081085
+  },
+  {
+    "round": 6,
+    "best_score": 6.6371597158904905,
+    "round_best": 1.9311659182914778,
+    "n_candidates": 20,
+    "time_s": 913.3054449558258
+  },
+  {
+    "round": 7,
+    "best_score": 6.7506606358179075,
+    "round_best": 6.7506606358179075,
+    "n_candidates": 20,
+    "time_s": 1436.0852024555206
+  },
+  {
+    "round": 8,
+    "best_score": 6.7506606358179075,
+    "round_best": 2.332682393899992,
+    "n_candidates": 20,
+    "time_s": 1056.810699224472
+  },
+  {
+    "round": 9,
+    "best_score": 6.7506606358179075,
+    "round_best": 1.6639617913203315,
+    "n_candidates": 20,
+    "time_s": 889.8834707736969
+  },
+  {
+    "round": 10,
+    "best_score": 6.7506606358179075,
+    "round_best": 2.6734776243181826,
+    "n_candidates": 20,
+    "time_s": 1899.5939710140228
+  }
+]
