@@ -167,6 +167,28 @@ export interface OptimizationScope {
   stopLoss: boolean;
   
   leverage: boolean;
+
+  /** Per-order настройки оптимизации (базовый + DCA ордера) */
+  orderConfigs?: OrderOptimizationConfig[];
+}
+
+/**
+ * Настройки оптимизации для одного ордера (базовый или DCA).
+ * index=0 — базовый ордер, index=1..N — DCA ордера.
+ */
+export interface OrderOptimizationConfig {
+  /** Индекс ордера: 0 = base order, 1+ = DCA */
+  index: number;
+  /** Фиксировать ордер целиком (без мутации indent/volume) */
+  locked: boolean;
+  /** Оптимизировать отступ */
+  optimizeIndent: boolean;
+  /** Диапазон отступа (мин, макс) в % */
+  indentRange: [number, number];
+  /** Оптимизировать объём */
+  optimizeVolume: boolean;
+  /** Диапазон объёма (мин, макс) в % */
+  volumeRange: [number, number];
 }
 
 export interface GeneticConfig {

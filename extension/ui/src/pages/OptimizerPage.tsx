@@ -8,6 +8,7 @@ import {
   ExperimentOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
+  SettingOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 import {
@@ -40,6 +41,8 @@ import { fetchBots } from '../api/bots';
 import PageHeader from '../components/ui/PageHeader';
 import { buildCabinetUrl } from '../lib/cabinetUrls';
 import { genomeToStrategy } from '../lib/genomeConverter';
+import { dtoToGridOrderGene } from '../lib/genomeConverter';
+import OrderSettingsModal from '../components/OrderSettingsModal';
 import {
   CATEGORY_LABELS,
   INDICATORS_BY_CATEGORY,
@@ -63,6 +66,7 @@ import type {
   OptimizationScope,
   OptimizationStatus,
   OptimizationTarget,
+  OrderOptimizationConfig,
 } from '../types/optimizer';
 import type { TradingBot } from '../types/bots';
 
@@ -496,6 +500,34 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
   const [selectedGenome, setSelectedGenome] = useState<EvaluatedGenome | null>(null);
   const [genomeModalOpen, setGenomeModalOpen] = useState(false);
 
+  // Модальное окно настроек ордеров
+  const [orderSettingsOpen, setOrderSettingsOpen] = useState(false);
+  const [orderConfigs, setOrderConfigs] = useState<OrderOptimizationConfig[]>([]);
+
+  // Preview-геном из выбранного бота (для модального окна настроек ордеров)
+  const botGenomePreview = useMemo<import('../types/optimizer').BotGenome | null>(() => {
+    if (!selectedBot) return null;
+    const baseOrderDto = selectedBot.settings?.baseOrder;
+    const baseOrder = baseOrderDto
+      ? dtoToGridOrderGene(baseOrderDto)
+      : { indent: 0, volume: 10, conditions: [] };
+    const dcaOrders = (selectedBot.settings?.orders ?? []).map(dtoToGridOrderGene);
+    return {
+      id: 'preview',
+      generation: 0,
+      algorithm: (selectedBot.algorithm as 'LONG' | 'SHORT') ?? 'LONG',
+      leverage: selectedBot.deposit?.leverage ?? 10,
+      depositAmount: selectedBot.deposit?.amount ?? 10,
+      entryConditions: [],
+      baseOrder,
+      dcaOrders,
+      takeProfit: { type: 'PERCENT', value: 1, indicator: null },
+      stopLoss: null,
+      pullUp: null,
+      portion: null,
+    };
+  }, [selectedBot]);
+
   // Сохранённое состояние для восстановления
   const [savedStateInfo, setSavedStateInfo] = useState<ReturnType<typeof getSavedOptimizerInfo>>(null);
 
@@ -546,6 +578,8 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
       setSelectedBotId(botId);
       const bot = bots.find((b) => b.id === botId) ?? null;
       setSelectedBot(bot);
+      // Сбрасываем per-order конфиги при смене бота
+      setOrderConfigs([]);
 
       if (bot) {
         // Устанавливаем символы бота
@@ -686,13 +720,17 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
     setTopGenomes([]);
 
     // Создаём конфигурацию
+    const scopeWithOrders: OptimizationScope = {
+      ...scope,
+      orderConfigs: orderConfigs.length > 0 ? orderConfigs : undefined,
+    };
     const config: OptimizationRunConfig = createOptimizerConfig({
       botId: selectedBotId,
       symbols: symbolsList,
       periodFrom: `${periodFrom}T00:00:00.000Z`,
       periodTo: `${periodTo}T23:59:59.999Z`,
       genetic: geneticConfig,
-      scope,
+      scope: scopeWithOrders,
       target,
     });
 
@@ -747,7 +785,7 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
     } finally {
       optimizerRef.current = null;
     }
-  }, [selectedBot, selectedBotId, symbols, periodFrom, periodTo, geneticConfig, scope, target, estimatedBacktests, addLog]);
+  }, [selectedBot, selectedBotId, symbols, periodFrom, periodTo, geneticConfig, scope, target, orderConfigs, estimatedBacktests, addLog]);
 
   // Пауза
   const handlePause = useCallback(() => {
@@ -1094,6 +1132,19 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
                 >
                   Плечо
                 </Checkbox>
+
+                {/* Кнопка настройки per-order оптимизации */}
+                {selectedBot && (
+                  <Button
+                    icon={<SettingOutlined />}
+                    onClick={() => setOrderSettingsOpen(true)}
+                    disabled={status === 'running'}
+                    block
+                    style={{ marginTop: 8 }}
+                  >
+                    Настройки по ордерам ({orderConfigs.filter((c) => c.locked).length} заф.)
+                  </Button>
+                )}
               </Space>
             </Card>
 
@@ -1420,6 +1471,15 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
         open={genomeModalOpen}
         onClose={() => setGenomeModalOpen(false)}
         onExport={handleExportGenome}
+      />
+
+      {/* Модальное окно настроек ордеров */}
+      <OrderSettingsModal
+        open={orderSettingsOpen}
+        onClose={() => setOrderSettingsOpen(false)}
+        genome={botGenomePreview}
+        orderConfigs={orderConfigs}
+        onSave={setOrderConfigs}
       />
     </div>
   );

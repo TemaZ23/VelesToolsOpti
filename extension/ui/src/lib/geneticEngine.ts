@@ -19,6 +19,7 @@ import type {
   GeneticConfig,
   GenomeFitness,
   GridOrderGene,
+  OrderOptimizationConfig,
   OptimizationScope,
   OptimizationTarget,
   StopLossGene,
@@ -53,28 +54,66 @@ const clamp = (value: number, min: number, max: number): number => {
 
 /**
  * Нормализация объёмов чтобы сумма baseOrder + DCA = 100%
- * Сохраняет пропорции между ордерами
+ * Сохраняет пропорции между ордерами.
+ * Зафиксированные ордера (locked / !optimizeVolume) не масштабируются.
  */
-const normalizeVolumes = (baseOrder: GridOrderGene, dcaOrders: GridOrderGene[]): void => {
-  const totalVolume = baseOrder.volume + dcaOrders.reduce((sum, o) => sum + o.volume, 0);
-  
-  if (totalVolume <= 0) return;
-  
-  const scale = 100 / totalVolume;
-  
-  baseOrder.volume = Math.max(1, baseOrder.volume * scale);
-  for (const order of dcaOrders) {
-    order.volume = Math.max(1, order.volume * scale);
+const normalizeVolumes = (
+  baseOrder: GridOrderGene,
+  dcaOrders: GridOrderGene[],
+  orderCfgs?: OrderOptimizationConfig[],
+): void => {
+  const isVolumeLocked = (idx: number): boolean => {
+    if (!orderCfgs) return false;
+    const cfg = orderCfgs.find((c) => c.index === idx);
+    return cfg ? cfg.locked || !cfg.optimizeVolume : false;
+  };
+
+  // Считаем фиксированную и свободную суммы
+  let lockedTotal = 0;
+  let freeTotal = 0;
+
+  if (isVolumeLocked(0)) {
+    lockedTotal += baseOrder.volume;
+  } else {
+    freeTotal += baseOrder.volume;
   }
-  
+
+  for (let i = 0; i < dcaOrders.length; i++) {
+    if (isVolumeLocked(i + 1)) {
+      lockedTotal += dcaOrders[i].volume;
+    } else {
+      freeTotal += dcaOrders[i].volume;
+    }
+  }
+
+  const freeTarget = 100 - lockedTotal;
+
+  // Если нечего масштабировать или целевое значение неположительное — fallback
+  if (freeTotal <= 0 || freeTarget <= 0) return;
+
+  const scale = freeTarget / freeTotal;
+
+  if (!isVolumeLocked(0)) {
+    baseOrder.volume = Math.max(1, baseOrder.volume * scale);
+  }
+  for (let i = 0; i < dcaOrders.length; i++) {
+    if (!isVolumeLocked(i + 1)) {
+      dcaOrders[i].volume = Math.max(1, dcaOrders[i].volume * scale);
+    }
+  }
+
   // Корректируем чтобы сумма была ровно 100% (из-за округления)
   const newTotal = baseOrder.volume + dcaOrders.reduce((sum, o) => sum + o.volume, 0);
   if (Math.abs(newTotal - 100) > 0.01) {
-    // Добавляем разницу к последнему DCA ордеру
     const diff = 100 - newTotal;
-    if (dcaOrders.length > 0) {
-      dcaOrders[dcaOrders.length - 1].volume = Math.max(1, dcaOrders[dcaOrders.length - 1].volume + diff);
-    } else {
+    // Ищем последний нефиксированный ордер для коррекции
+    for (let i = dcaOrders.length - 1; i >= 0; i--) {
+      if (!isVolumeLocked(i + 1)) {
+        dcaOrders[i].volume = Math.max(1, dcaOrders[i].volume + diff);
+        return;
+      }
+    }
+    if (!isVolumeLocked(0)) {
       baseOrder.volume = Math.max(1, baseOrder.volume + diff);
     }
   }
@@ -267,34 +306,47 @@ export const mutateCondition = (condition: ConditionGene, mutationStrength = 0.3
  * @param order - ордер для мутации
  * @param mutationStrength - сила мутации (0.3 = ±30%, 0.5 = ±50%)
  * @param guaranteed - гарантировать мутацию (для начальной популяции)
+ * @param orderCfg - per-order конфиг (если задан, диапазоны indent/volume ограничены)
  */
 export const mutateGridOrder = (
   order: GridOrderGene,
   mutationStrength = 0.3,
   guaranteed = false,
+  orderCfg?: OrderOptimizationConfig,
 ): GridOrderGene => {
+  // Если ордер зафиксирован — возвращаем без изменений
+  if (orderCfg?.locked) {
+    return { ...order, conditions: [...order.conditions] };
+  }
+
   const mutated = { ...order, conditions: [...order.conditions] };
 
+  // Определяем, мутировать ли indent/volume (per-order конфиг имеет приоритет)
+  const shouldMutateIndent = orderCfg ? orderCfg.optimizeIndent : true;
+  const shouldMutateVolume = orderCfg ? orderCfg.optimizeVolume : true;
+
   // Мутация отступа - при guaranteed=true всегда мутируем
-  if (guaranteed || Math.random() < 0.6) {
-    // Изменение от -strength до +strength от текущего значения
-    // Добавляем минимальное абсолютное изменение чтобы мутация была заметной
+  if (shouldMutateIndent && (guaranteed || Math.random() < 0.6)) {
     const relativeChange = (Math.random() - 0.5) * 2 * mutationStrength * order.indent;
     const minAbsoluteChange = order.indent * 0.1; // минимум 10% изменение
     const delta = Math.abs(relativeChange) < minAbsoluteChange 
       ? (relativeChange >= 0 ? minAbsoluteChange : -minAbsoluteChange)
       : relativeChange;
-    mutated.indent = Math.max(0.01, order.indent + delta);
+    const minIndent = orderCfg?.indentRange?.[0] ?? 0.01;
+    const maxIndent = orderCfg?.indentRange?.[1] ?? 50;
+    mutated.indent = clamp(order.indent + delta, Math.max(0.01, minIndent), maxIndent);
   }
 
   // Мутация объёма - при guaranteed=true всегда мутируем
-  if (guaranteed || Math.random() < 0.6) {
+  if (shouldMutateVolume && (guaranteed || Math.random() < 0.6)) {
     const relativeChange = (Math.random() - 0.5) * 2 * mutationStrength * order.volume;
     const minAbsoluteChange = order.volume * 0.1;
     const delta = Math.abs(relativeChange) < minAbsoluteChange
       ? (relativeChange >= 0 ? minAbsoluteChange : -minAbsoluteChange)
       : relativeChange;
-    mutated.volume = clamp(order.volume + delta, 1, 50);
+    const minVolume = orderCfg?.volumeRange?.[0] ?? 1;
+    const maxVolume = orderCfg?.volumeRange?.[1] ?? 50;
+    mutated.volume = clamp(order.volume + delta, Math.max(1, minVolume), maxVolume);
   }
 
   // Мутация условий
@@ -364,17 +416,29 @@ export const mutateGenome = (genome: BotGenome, scope: OptimizationScope, mutati
   // Флаг гарантированной мутации (для высокого mutationRate - начальная популяция)
   const guaranteedMutation = mutationRate >= 0.7;
 
+  // Per-order конфиги (если заданы)
+  const orderCfgs = scope.orderConfigs;
+  const getOrderCfg = (idx: number): OrderOptimizationConfig | undefined =>
+    orderCfgs?.find((c) => c.index === idx);
+
   // Мутация базового ордера (indent + volume)
   if ((scope.dcaIndents || scope.dcaVolumes) && (guaranteedMutation || Math.random() < mutationRate)) {
-    mutated.baseOrder = mutateGridOrder(mutated.baseOrder, 0.5, guaranteedMutation);
+    const baseCfg = getOrderCfg(0);
+    // Пропускаем если базовый ордер зафиксирован
+    if (!baseCfg?.locked) {
+      mutated.baseOrder = mutateGridOrder(mutated.baseOrder, 0.5, guaranteedMutation, baseCfg);
+    }
   }
 
   // Мутация сетки DCA - мутируем КАЖДЫЙ ордер
   if (scope.dcaIndents || scope.dcaVolumes || scope.dcaConditions) {
     for (let i = 0; i < mutated.dcaOrders.length; i++) {
+      const dcaCfg = getOrderCfg(i + 1); // index=0 — base, DCA начинается с 1
+      // Пропускаем зафиксированные ордера
+      if (dcaCfg?.locked) continue;
       // При guaranteedMutation мутируем все ордера, иначе по вероятности
       if (guaranteedMutation || Math.random() < mutationRate) {
-        mutated.dcaOrders[i] = mutateGridOrder(mutated.dcaOrders[i], 0.5, guaranteedMutation);
+        mutated.dcaOrders[i] = mutateGridOrder(mutated.dcaOrders[i], 0.5, guaranteedMutation, dcaCfg);
       }
     }
   }
@@ -432,7 +496,7 @@ export const mutateGenome = (genome: BotGenome, scope: OptimizationScope, mutati
 
   // ВАЖНО: Нормализуем объёмы чтобы сумма была 100%
   if (scope.dcaVolumes) {
-    normalizeVolumes(mutated.baseOrder, mutated.dcaOrders);
+    normalizeVolumes(mutated.baseOrder, mutated.dcaOrders, scope.orderConfigs);
   }
 
   return mutated;
@@ -442,6 +506,10 @@ export const mutateGenome = (genome: BotGenome, scope: OptimizationScope, mutati
  * Скрещивание двух геномов
  */
 export const crossover = (parent1: BotGenome, parent2: BotGenome, scope: OptimizationScope): BotGenome => {
+  const orderCfgs = scope.orderConfigs;
+  const isOrderLocked = (idx: number): boolean =>
+    orderCfgs?.find((c) => c.index === idx)?.locked ?? false;
+
   const child: BotGenome = {
     id: generateId(),
     generation: Math.max(parent1.generation, parent2.generation) + 1,
@@ -454,13 +522,20 @@ export const crossover = (parent1: BotGenome, parent2: BotGenome, scope: Optimiz
       ? mixConditions(parent1.entryConditions, parent2.entryConditions)
       : [...parent1.entryConditions],
 
-    // Базовый ордер
-    baseOrder: Math.random() > 0.5 ? { ...parent1.baseOrder } : { ...parent2.baseOrder },
+    // Базовый ордер — если зафиксирован, всегда от parent1 (носитель оригинала)
+    baseOrder: isOrderLocked(0)
+      ? { ...parent1.baseOrder }
+      : Math.random() > 0.5 ? { ...parent1.baseOrder } : { ...parent2.baseOrder },
 
-    // DCA - смешиваем
+    // DCA — зафиксированные ордера берём от parent1, остальные смешиваем
     dcaOrders: scope.dcaStructure
       ? mixDcaOrders(parent1.dcaOrders, parent2.dcaOrders)
-      : parent1.dcaOrders.map((o) => ({ ...o })),
+      : parent1.dcaOrders.map((o, i) => {
+          if (isOrderLocked(i + 1)) return { ...parent1.dcaOrders[i] };
+          return Math.random() > 0.5
+            ? { ...parent1.dcaOrders[i] }
+            : (parent2.dcaOrders[i] ? { ...parent2.dcaOrders[i] } : { ...parent1.dcaOrders[i] });
+        }),
 
     // Тейк-профит
     takeProfit: Math.random() > 0.5 ? { ...parent1.takeProfit } : { ...parent2.takeProfit },
@@ -480,7 +555,7 @@ export const crossover = (parent1: BotGenome, parent2: BotGenome, scope: Optimiz
   };
 
   // Нормализуем объёмы после скрещивания
-  normalizeVolumes(child.baseOrder, child.dcaOrders);
+  normalizeVolumes(child.baseOrder, child.dcaOrders, orderCfgs);
 
   return child;
 };

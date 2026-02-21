@@ -71,12 +71,14 @@ This directory contains shared utilities used across the UI. Every exported help
 ## `geneticEngine.ts`
 Генетический алгоритм для оптимизации параметров ботов:
 - `createRandomGenome(config, generation?)` – создание случайного генома с заданной конфигурацией.
-- `mutateGenome(genome, config)` – мутация генома (условия входа, DCA, TP, SL).
-- `crossover(parent1, parent2, generation)` – скрещивание двух геномов (чередование генов).
+- `mutateGenome(genome, config)` – мутация генома (условия входа, DCA, TP, SL). Учитывает per-order конфиги (`scope.orderConfigs`): зафиксированные ордера не мутируются, диапазоны indent/volume ограничиваются.
+- `mutateGridOrder(order, strength, guaranteed, orderCfg?)` – мутация одного ордера с опциональным per-order конфигом. При `orderCfg.locked` возвращает без изменений; отступы и объёмы ограничиваются `indentRange`/`volumeRange`.
+- `crossover(parent1, parent2, generation)` – скрещивание двух геномов (чередование генов). Зафиксированные ордера берутся от parent1.
 - `tournamentSelection(population, tournamentSize)` – турнирный отбор лучших особей.
 - `createNextGeneration(evaluatedPopulation, config, nextGenNumber)` – создание нового поколения с элитизмом, скрещиванием и мутациями.
 - `createInitialPopulation(config)` – создание начальной популяции.
 - `calculateScore(fitness, config)` – расчёт итогового score по метрикам.
+- `normalizeVolumes(baseOrder, dcaOrders, orderCfgs?)` – нормализация объёмов до 100%. Зафиксированные ордера не масштабируются.
 
 ## `genomeConverter.ts`
 Конвертер между геномом оптимизатора и API Veles:
