@@ -22,7 +22,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { BotGenome, GridOrderGene, OrderOptimizationConfig } from '../types/optimizer';
+import type { BotGenome, GridOrderGene, OrderOptimizationConfig, TakeProfitOptimizationConfig } from '../types/optimizer';
 
 const { Text } = Typography;
 
@@ -39,6 +39,12 @@ interface OrderSettingsModalProps {
   orderConfigs: OrderOptimizationConfig[];
   /** Callback при сохранении настроек */
   onSave: (configs: OrderOptimizationConfig[]) => void;
+  /** Показать секцию тейк-профита */
+  showTakeProfit: boolean;
+  /** Текущая конфигурация TP */
+  takeProfitConfig: TakeProfitOptimizationConfig | null;
+  /** Callback при сохранении TP-конфига */
+  onSaveTakeProfit: (config: TakeProfitOptimizationConfig) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -103,14 +109,32 @@ const OrderSettingsModal: React.FC<OrderSettingsModalProps> = ({
   genome,
   orderConfigs,
   onSave,
+  showTakeProfit,
+  takeProfitConfig,
+  onSaveTakeProfit,
 }) => {
   const [configs, setConfigs] = useState<OrderOptimizationConfig[]>([]);
+  const [tpConfig, setTpConfig] = useState<TakeProfitOptimizationConfig>({
+    locked: false,
+    valueRange: [0.1, 10],
+  });
 
   // При открытии / смене генома — пересобираем конфиги
   useEffect(() => {
     if (!genome) return;
     setConfigs(mergeWithDefaults(genome, orderConfigs));
-  }, [genome, orderConfigs, open]);
+
+    // TP defaults
+    if (takeProfitConfig) {
+      setTpConfig(takeProfitConfig);
+    } else {
+      const tpVal = genome.takeProfit.value;
+      setTpConfig({
+        locked: false,
+        valueRange: [Math.max(0.1, +(tpVal * 0.5).toFixed(2)), +(tpVal * 2).toFixed(2)],
+      });
+    }
+  }, [genome, orderConfigs, takeProfitConfig, open]);
 
   // Обновить одну настройку по индексу
   const updateConfig = useCallback(
@@ -124,8 +148,11 @@ const OrderSettingsModal: React.FC<OrderSettingsModalProps> = ({
 
   const handleSave = useCallback(() => {
     onSave(configs);
+    if (showTakeProfit) {
+      onSaveTakeProfit(tpConfig);
+    }
     onClose();
-  }, [configs, onSave, onClose]);
+  }, [configs, tpConfig, onSave, onSaveTakeProfit, showTakeProfit, onClose]);
 
   // Быстрые действия
   const lockAll = useCallback(() => {
@@ -367,6 +394,60 @@ const OrderSettingsModal: React.FC<OrderSettingsModalProps> = ({
         bordered
         scroll={{ x: 800 }}
       />
+
+      {/* Секция тейк-профита */}
+      {showTakeProfit && genome && (
+        <div style={{ marginTop: 16, padding: '12px 16px', border: '1px solid #303030', borderRadius: 8 }}>
+          <Space align="center" style={{ marginBottom: 8 }}>
+            <Text strong>Тейк-профит</Text>
+            <Tag color={genome.takeProfit.type === 'PNL' ? 'blue' : 'green'}>
+              {genome.takeProfit.type}
+            </Tag>
+            <Text type="secondary">текущее: {genome.takeProfit.value.toFixed(2)}</Text>
+          </Space>
+          <Space size="middle">
+            <Tooltip title={tpConfig.locked ? 'Разблокировать' : 'Зафиксировать (не мутировать)'}>
+              <Button
+                type={tpConfig.locked ? 'primary' : 'default'}
+                danger={tpConfig.locked}
+                size="small"
+                icon={tpConfig.locked ? <LockOutlined /> : <UnlockOutlined />}
+                onClick={() => setTpConfig((prev) => ({ ...prev, locked: !prev.locked }))}
+              />
+            </Tooltip>
+            <Space size={4}>
+              <Text type="secondary">Мин:</Text>
+              <InputNumber
+                size="small"
+                min={0.01}
+                max={tpConfig.valueRange[1]}
+                step={0.1}
+                value={tpConfig.valueRange[0]}
+                disabled={tpConfig.locked}
+                onChange={(v) =>
+                  setTpConfig((prev) => ({ ...prev, valueRange: [v ?? 0.1, prev.valueRange[1]] }))
+                }
+                style={{ width: 80 }}
+              />
+            </Space>
+            <Space size={4}>
+              <Text type="secondary">Макс:</Text>
+              <InputNumber
+                size="small"
+                min={tpConfig.valueRange[0]}
+                max={100}
+                step={0.1}
+                value={tpConfig.valueRange[1]}
+                disabled={tpConfig.locked}
+                onChange={(v) =>
+                  setTpConfig((prev) => ({ ...prev, valueRange: [prev.valueRange[0], v ?? 10] }))
+                }
+                style={{ width: 80 }}
+              />
+            </Space>
+          </Space>
+        </div>
+      )}
     </Modal>
   );
 };

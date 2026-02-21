@@ -456,13 +456,19 @@ export const mutateGenome = (genome: BotGenome, scope: OptimizationScope, mutati
 
   // Мутация тейк-профита
   if (scope.takeProfit && (guaranteedMutation || Math.random() < mutationRate)) {
-    // Минимум ±10% изменение или ±0.2 абсолютно
-    const relativeChange = (Math.random() - 0.5) * 2 * 0.5 * mutated.takeProfit.value;
-    const minChange = Math.max(0.2, mutated.takeProfit.value * 0.1);
-    const delta = Math.abs(relativeChange) < minChange
-      ? (relativeChange >= 0 ? minChange : -minChange)
-      : relativeChange;
-    mutated.takeProfit.value = clamp(mutated.takeProfit.value + delta, 0.1, 10);
+    const tpCfg = scope.takeProfitConfig;
+    // Пропускаем если зафиксирован
+    if (!tpCfg?.locked) {
+      // Минимум ±10% изменение или ±0.2 абсолютно
+      const relativeChange = (Math.random() - 0.5) * 2 * 0.5 * mutated.takeProfit.value;
+      const minChange = Math.max(0.2, mutated.takeProfit.value * 0.1);
+      const delta = Math.abs(relativeChange) < minChange
+        ? (relativeChange >= 0 ? minChange : -minChange)
+        : relativeChange;
+      const tpMin = tpCfg?.valueRange?.[0] ?? 0.1;
+      const tpMax = tpCfg?.valueRange?.[1] ?? 10;
+      mutated.takeProfit.value = clamp(mutated.takeProfit.value + delta, tpMin, tpMax);
+    }
   }
 
   if (scope.takeProfitIndicator && mutated.takeProfit.indicator && Math.random() < mutationRate) {

@@ -170,6 +170,9 @@ export interface OptimizationScope {
 
   /** Per-order настройки оптимизации (базовый + DCA ордера) */
   orderConfigs?: OrderOptimizationConfig[];
+
+  /** Настройки оптимизации тейк-профита */
+  takeProfitConfig?: TakeProfitOptimizationConfig;
 }
 
 /**
@@ -189,6 +192,16 @@ export interface OrderOptimizationConfig {
   optimizeVolume: boolean;
   /** Диапазон объёма (мин, макс) в % */
   volumeRange: [number, number];
+}
+
+/**
+ * Настройки оптимизации тейк-профита.
+ */
+export interface TakeProfitOptimizationConfig {
+  /** Зафиксировать текущее значение (не мутировать) */
+  locked: boolean;
+  /** Диапазон значения TP (мин, макс) */
+  valueRange: [number, number];
 }
 
 export interface GeneticConfig {

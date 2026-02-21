@@ -67,6 +67,7 @@ import type {
   OptimizationStatus,
   OptimizationTarget,
   OrderOptimizationConfig,
+  TakeProfitOptimizationConfig,
 } from '../types/optimizer';
 import type { TradingBot } from '../types/bots';
 
@@ -503,6 +504,7 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
   // Модальное окно настроек ордеров
   const [orderSettingsOpen, setOrderSettingsOpen] = useState(false);
   const [orderConfigs, setOrderConfigs] = useState<OrderOptimizationConfig[]>([]);
+  const [takeProfitConfig, setTakeProfitConfig] = useState<TakeProfitOptimizationConfig | null>(null);
 
   // Preview-геном из выбранного бота (для модального окна настроек ордеров)
   const botGenomePreview = useMemo<import('../types/optimizer').BotGenome | null>(() => {
@@ -521,7 +523,11 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
       entryConditions: [],
       baseOrder,
       dcaOrders,
-      takeProfit: { type: 'PERCENT', value: 1, indicator: null },
+      takeProfit: {
+        type: (selectedBot.profit?.type as 'PERCENT' | 'ABSOLUTE' | 'PNL') ?? 'PERCENT',
+        value: selectedBot.profit?.checkPnl ?? 1,
+        indicator: null,
+      },
       stopLoss: null,
       pullUp: null,
       portion: null,
@@ -580,6 +586,7 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
       setSelectedBot(bot);
       // Сбрасываем per-order конфиги при смене бота
       setOrderConfigs([]);
+      setTakeProfitConfig(null);
 
       if (bot) {
         // Устанавливаем символы бота
@@ -723,6 +730,7 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
     const scopeWithOrders: OptimizationScope = {
       ...scope,
       orderConfigs: orderConfigs.length > 0 ? orderConfigs : undefined,
+      takeProfitConfig: takeProfitConfig ?? undefined,
     };
     const config: OptimizationRunConfig = createOptimizerConfig({
       botId: selectedBotId,
@@ -785,7 +793,7 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
     } finally {
       optimizerRef.current = null;
     }
-  }, [selectedBot, selectedBotId, symbols, periodFrom, periodTo, geneticConfig, scope, target, orderConfigs, estimatedBacktests, addLog]);
+  }, [selectedBot, selectedBotId, symbols, periodFrom, periodTo, geneticConfig, scope, target, orderConfigs, takeProfitConfig, estimatedBacktests, addLog]);
 
   // Пауза
   const handlePause = useCallback(() => {
@@ -1480,6 +1488,9 @@ const OptimizerPage = ({ extensionReady }: OptimizerPageProps) => {
         genome={botGenomePreview}
         orderConfigs={orderConfigs}
         onSave={setOrderConfigs}
+        showTakeProfit={scope.takeProfit}
+        takeProfitConfig={takeProfitConfig}
+        onSaveTakeProfit={setTakeProfitConfig}
       />
     </div>
   );
