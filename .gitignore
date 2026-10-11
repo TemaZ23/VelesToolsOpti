@@ -4,3 +4,5 @@ node_modules
 extension/ui/dist
 release-artifacts/
 **/coverage/**
+extension-build/dist/
+extension-build/app/.bundle.test.js

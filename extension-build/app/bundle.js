@@ -1,3 +1,4 @@
+import * as VTPS from "../src/patternSearch.mjs";
 var Lhe = Object.defineProperty;
 var khe = (e, t, r) => (t in e ? Lhe(e, t, { enumerable: !0, configurable: !0, writable: !0, value: r }) : (e[t] = r));
 var Et = (e, t, r) => khe(e, typeof t != "symbol" ? t + "" : t, r);
@@ -130254,7 +130255,7 @@ const qq = (e) => e.toFixed(6).replace(/0+$/, "").replace(/\.$/, ""),
     "Массовый менеджмент ботов (запуск/остановка/удаление).",
     "Удобный поиск, фильтрация и сортировка бектестов.",
     "Разделение бэктестов на группы для удобства анализа.",
-    "Оптимизатор стратегий: одни настройки для всего списка монет с оценкой как в «Группах бэктестов».",
+    "Оптимизатор стратегий: пошаговый поиск одних настроек для всего списка монет, оценка как в «Группах бэктестов» и проверка устойчивости.",
   ],
   Hct = [
     "Группы символов для более удобного запуска бектестов.",
@@ -130899,6 +130900,7 @@ ${y}/q1w2e`,
     maxDepositMaePercent: null,
     penalizeOpenDeals: !0,
     maxPortfolioDrawdownPercent: null,
+    minDealsSharePercent: 60,
   },
   out = ["robust", "pnlToRisk", "pnl", "pnlPerDay", "winRate", "composite"],
   sut = ["improveBoth", "portfolioPnlToRisk", "portfolioProfit"],
@@ -130915,7 +130917,7 @@ ${y}/q1w2e`,
   },
   cut = {
     improveBoth:
-      "Оценка = min(прибыль / прибыль исходной, просадка исходной / просадка) на тех же монетах и периоде. Больше 1 — только если выросла прибыль И снизилась суммарная просадка; 1.10 — оба показателя лучше минимум на 10%.",
+      "Оценка = min(прибыль / прибыль исходной, просадка исходной / просадка) на тех же монетах и периоде. Больше 1 — только если выросла прибыль И снизилась суммарная просадка; 1.10 — оба показателя лучше минимум на 10%. Если разрешено менять депозит бота, сравнение идёт при депозите, уравновешивающем прибыль и просадку (они пропорциональны депозиту), — так находятся варианты с лучшим соотношением прибыль/просадка.",
     portfolioPnlToRisk:
       "Как P/R в «Группах бэктестов»: чистая прибыль портфеля, делённая на суммарную максимальную просадку. Может выбрать вариант с меньшей прибылью, но заметно меньшей просадкой.",
     portfolioProfit:
@@ -133280,7 +133282,7 @@ const Zi = (e, t) => {
       n.push(`Бэктест не выполнен: ${g}`), (a += 1e3 * Math.max(o, i.length));
     }
     const s = e.length > 0 ? xB(e, r.settings) : null,
-      l = (s == null ? void 0 : s.metrics) ?? {
+      vtRaw = (s == null ? void 0 : s.metrics) ?? {
         totalProfit: 0,
         activeMae: 0,
         adjustedProfit: 0,
@@ -133295,6 +133297,14 @@ const Zi = (e, t) => {
         coins: 0,
         coinsWithDeals: 0,
       },
+      // Profit and drawdown are proportional to the bot deposit: compare with the original at the
+      // deposit (within the allowed change) that balances both, and show metrics at that deposit.
+      vtRescale =
+        r.reference && r.target.metric === "improveBoth"
+          ? VTPS.psRescale({ profit: vtRaw.adjustedProfit, risk: vtRaw.risk }, r.reference, r.maxDepositChange ?? 0)
+          : null,
+      vtScale = vtRescale ? vtRescale.scale : 1,
+      l = VTPS.psScaleMetrics(vtRaw, vtScale),
       c = r.constraints.maxPortfolioDrawdownPercent;
     c !== null &&
       c > 0 &&
@@ -133303,18 +133313,24 @@ const Zi = (e, t) => {
       (a += l.drawdownPercent - c));
     const u = ((s == null ? void 0 : s.profitableDeals) ?? 0) + ((s == null ? void 0 : s.losingDeals) ?? 0);
     u === 0 && e.length > 0 && (n.push("Нет ни одной закрытой сделки"), (a += 1));
+    const vtMinDeals = r.constraints.minDealsSharePercent,
+      vtBaseDeals = r.reference && typeof r.reference.deals == "number" ? r.reference.deals : 0;
+    if (vtMinDeals != null && vtMinDeals > 0 && vtBaseDeals > 0 && u > 0) {
+      const g = Math.ceil((vtBaseDeals * vtMinDeals) / 100);
+      u < g && (n.push(`Сделок ${u} — меньше ${vtMinDeals}% от исходной (${vtBaseDeals})`), (a += (g - u) / g));
+    }
     const d = s == null ? void 0 : s.perSymbol,
       f = t.map((g) => {
         const m = d == null ? void 0 : d.get(g.symbol);
         return m
           ? {
               ...g,
-              netQuote: _t(m.net, 6),
+              netQuote: _t(m.net * vtScale, 6),
               totalDeals: m.deals,
               winningDeals: m.wins,
               losingDeals: m.losses,
               hasOpenDeal: m.open,
-              openDealLoss: _t(m.openMae, 6),
+              openDealLoss: _t(m.openMae * vtScale, 6),
             }
           : g;
       }),
@@ -133342,9 +133358,44 @@ const Zi = (e, t) => {
         violations: n,
         violationAmount: _t(a, 4),
         symbols: f,
-        portfolio: l,
+        portfolio: { ...l, depositScale: vtScale, raw: vtScale === 1 ? null : vtRaw },
       };
-    return (v.score = kL(l, r.target, r.reference)), { fitness: v, aggregation: s };
+    r.folds && r.folds.length > 0 && e.length > 0 && (v.folds = VTPS.psFoldMetrics(e, r.folds, (g) => OX(g, r.settings)));
+    const vtScored = vtPortfolioScore(v, vtRaw, vtRescale, r);
+    return (v.score = vtScored.score), (v.rescale = vtScored.rescale), { fitness: v, aggregation: s };
+  },
+  // Score of a portfolio variant: "better on both" after the deposit rescale, capped by the median
+  // over folds (time slices and coin groups of the search) when fold consistency is on.
+  vtPortfolioScore = (v, raw, rescale, r) => {
+    if (!rescale) return { score: kL(raw, r.target, r.reference), rescale: null };
+    const t = v.folds && r.reference.folds ? VTPS.psFoldScores(v.folds, r.reference.folds, rescale.scale, r.settings.totalDeposit) : [],
+      n = t.map((a) => a.score);
+    return {
+      score: r.useFolds ? VTPS.psObjective(rescale.score, n) : rescale.score,
+      rescale: {
+        scale: rescale.scale,
+        profitGain: rescale.profitGain,
+        riskGain: rescale.riskGain,
+        overall: rescale.score,
+        foldScores: t,
+        foldsBetter: n.filter((a) => a >= 1 - jL.tolerance).length,
+        foldMedian: n.length > 0 ? _t(VTPS.psMedian(n), 4) : null,
+      },
+    };
+  },
+  vtOverallScore = (e) => (e.rescale ? e.rescale.overall : e.score),
+  vtDepositScale = (e) => {
+    var r, n;
+    const t = (r = e.validation ?? e.fitness) == null ? void 0 : r.portfolio;
+    return ((n = t == null ? void 0 : t.depositScale) != null ? n : 1) || 1;
+  },
+  // Reference for comparisons: the original's raw (deposit-unscaled) profit, drawdown, deals and folds.
+  vtReference = (e) => {
+    var r;
+    const t = e.portfolio ? (e.portfolio.raw ?? e.portfolio) : null;
+    return t
+      ? { profit: t.adjustedProfit, risk: t.risk, deals: e.totalDeals, folds: e.folds ?? null }
+      : { profit: e.adjustedPnl, risk: ((r = e.portfolio) == null ? void 0 : r.risk) ?? 0, deals: e.totalDeals, folds: null };
   },
   _dt = (e, t) => {
     const r = Math.max(1, Math.min(t, e.length));
@@ -133630,7 +133681,7 @@ const Zi = (e, t) => {
     );
   },
   j$ = { robust: "✅ устойчиво", partial: "🟡 частично устойчиво", overfit: "⚠️ похоже на подгонку" },
-  Tdt = (e, t, r, n, a = Math.random, i = (o) => JSON.stringify(o)) => {
+  Tdt = (e, t, r, n, a = Math.random, i = (o) => JSON.stringify(o), vtShift = 0.1) => {
     const o = e.dimensions.filter(
       (u) =>
         !u.choices &&
@@ -133648,7 +133699,7 @@ const Zi = (e, t) => {
       for (const g of o) {
         const m = t[g.id];
         if (typeof m != "number" || m < g.min - Er || m > g.max + Er || a() >= 0.5) continue;
-        const y = Math.max(g.step, 0.1 * (g.max - g.min)),
+        const y = Math.max(g.step, vtShift * (g.max - g.min)),
           b = (a() < 0.5 ? -1 : 1) * y * (0.5 + a() * 0.5);
         (d[g.id] = ga(m + b, g.min, g.max)), (f = !0);
       }
@@ -133689,6 +133740,208 @@ const Zi = (e, t) => {
           children: E.jsx(un, { color: Rdt[t.verdict], style: { marginInlineEnd: 0 }, children: j$[t.verdict] }),
         })
       : null;
+  },
+  vtScaleTag = ({ candidate: e }) => {
+    const t = vtDepositScale(e);
+    return t === 1
+      ? null
+      : E.jsx(ar, {
+          title:
+            "Прибыль и просадка портфеля пропорциональны депозиту бота. Все цифры варианта — при этом депозите: при нём вариант лучше исходной и по прибыли, и по просадке. «Создать бота» подставит его.",
+          children: E.jsxs(un, { color: "blue", style: { marginInlineEnd: 0 }, children: ["депозит бота ×", t] }),
+        });
+  },
+  vtGain = (e, t = !1) => {
+    if (e == null || !Number.isFinite(e)) return E.jsx(aa, { type: "secondary", children: "—" });
+    const r = t ? 1 / Math.max(e, 1e-9) - 1 : e - 1,
+      n = t ? r <= 0 : r >= 0;
+    return E.jsxs(aa, {
+      style: { color: Math.abs(r) < 5e-4 ? void 0 : n ? "#3f8600" : "#cf1322" },
+      children: [r >= 0 ? "+" : "−", Math.abs(r * 100).toFixed(1), "%"],
+    });
+  },
+  vtFoldsTable = ({ fitness: e, folds: t }) => {
+    const r = new Map((t ?? []).map((a) => [a.key, a])),
+      n = e.rescale.foldScores.map((a) => {
+        const i = r.get(a.key);
+        return {
+          key: a.key,
+          kind: (i == null ? void 0 : i.kind) ?? (a.key.startsWith("c") ? "coins" : "time"),
+          label: (i == null ? void 0 : i.label) ?? a.key,
+          score: a.score,
+        };
+      });
+    return E.jsxs(ut, {
+      direction: "vertical",
+      size: 8,
+      style: { width: "100%" },
+      children: [
+        E.jsxs(aa, {
+          type: "secondary",
+          children: [
+            "Монеты поиска разбиты на отрезки периода и группы монет. На каждом срезе вариант сравнивается с исходной (min(прибыль/прибыль исходной, просадка исходной/просадка), депозит ×",
+            e.rescale.scale,
+            "). Оценка поиска не выше медианы по срезам — ",
+            e.rescale.foldMedian != null ? e.rescale.foldMedian.toFixed(3) : "—",
+            ", общая — ",
+            e.rescale.overall.toFixed(3),
+            ".",
+          ],
+        }),
+        E.jsx(sa, {
+          size: "small",
+          rowKey: "key",
+          pagination: !1,
+          dataSource: n,
+          columns: [
+            {
+              title: "Срез",
+              key: "label",
+              render: (a, i) => (i.kind === "coins" ? `Монеты: ${i.label}` : `Период ${i.label}`),
+            },
+            { title: "Оценка", key: "score", width: 90, render: (a, i) => i.score.toFixed(3) },
+            {
+              title: "Итог",
+              key: "result",
+              width: 90,
+              render: (a, i) =>
+                i.score >= 1 + Er
+                  ? E.jsx(un, { color: "green", children: "лучше" })
+                  : i.score >= 1 - jL.tolerance
+                    ? E.jsx(un, { children: "не хуже" })
+                    : E.jsx(un, { color: "red", children: "хуже" }),
+            },
+          ],
+        }),
+      ],
+    });
+  },
+  vtSensitivityCard = ({ rows: e, running: t }) => {
+    const [r, n] = p.useState(!1),
+      a = e.filter((s) => s.valid && s.delta > 0).length,
+      i = r ? e : e.slice(0, 12),
+      o = [
+        {
+          title: "Изменение (от исходной)",
+          key: "label",
+          render: (s, l) =>
+            E.jsxs(ut, {
+              direction: "vertical",
+              size: 0,
+              children: [
+                E.jsx(aa, { strong: l.valid && l.delta > 0, children: l.label }),
+                l.change ? E.jsx(aa, { type: "secondary", style: { fontSize: 12 }, children: l.change }) : null,
+                l.violation ? E.jsx(aa, { type: "danger", style: { fontSize: 12 }, children: l.violation }) : null,
+              ],
+            }),
+        },
+        {
+          title: E.jsx(ar, {
+            title: "Изменение оценки поиска относительно исходной (1.000). Плюс — вариант лучше и по прибыли, и по просадке.",
+            children: "Оценка",
+          }),
+          key: "delta",
+          width: 92,
+          render: (s, l) =>
+            l.valid
+              ? E.jsxs(aa, {
+                  strong: !0,
+                  style: { color: l.delta > 0 ? "#3f8600" : l.delta < 0 ? "#cf1322" : void 0 },
+                  children:
+                    l.relative === !1
+                      ? [l.delta >= 0 ? "+" : "−", Math.abs(l.delta).toFixed(3)]
+                      : [l.delta >= 0 ? "+" : "−", Math.abs(l.delta * 100).toFixed(1), "%"],
+                })
+              : E.jsx(un, { color: "red", style: { marginInlineEnd: 0 }, children: "огранич." }),
+        },
+        { title: "Прибыль", key: "profit", width: 84, render: (s, l) => vtGain(l.profitGain) },
+        { title: "Просадка", key: "risk", width: 84, render: (s, l) => vtGain(l.riskGain, !0) },
+        {
+          title: E.jsx(ar, { title: "Депозит бота, при котором вариант сравнивался с исходной", children: "Депозит" }),
+          key: "scale",
+          width: 78,
+          render: (s, l) => (l.scale === 1 ? "—" : `×${l.scale}`),
+        },
+        {
+          title: E.jsx(ar, { title: "На скольких срезах (отрезки периода, группы монет) вариант не хуже исходной", children: "Срезы" }),
+          key: "folds",
+          width: 70,
+          render: (s, l) => (l.folds > 0 ? `${l.foldsBetter}/${l.folds}` : "—"),
+        },
+        {
+          title: "Сделок",
+          key: "deals",
+          width: 80,
+          render: (s, l) =>
+            l.deals == null || !l.baseDeals
+              ? (l.deals ?? "—")
+              : E.jsx(ar, {
+                  title: `${l.deals} сделок (исходная — ${l.baseDeals})`,
+                  children: vtGain(l.deals / l.baseDeals),
+                }),
+        },
+      ];
+    return E.jsxs(Wr, {
+      size: "small",
+      title: E.jsxs(ut, {
+        wrap: !0,
+        children: [
+          "🔬 Влияние параметров",
+          E.jsx(aa, {
+            type: "secondary",
+            style: { fontSize: 12, fontWeight: "normal" },
+            children: `каждый сдвинут по отдельности на монетах поиска · помогают: ${a} из ${e.length}`,
+          }),
+        ],
+      }),
+      extra:
+        e.length > 12
+          ? E.jsx(Ge, { size: "small", type: "link", onClick: () => n((s) => !s), children: r ? "свернуть" : `все (${e.length})` })
+          : null,
+      children: E.jsxs(ut, {
+        direction: "vertical",
+        size: 6,
+        style: { width: "100%" },
+        children: [
+          E.jsx(sa, {
+            size: "small",
+            rowKey: "id",
+            pagination: !1,
+            dataSource: i,
+            columns: o,
+            scroll: { x: 640, y: r ? 420 : void 0 },
+          }),
+          E.jsx(aa, {
+            type: "secondary",
+            style: { fontSize: 12 },
+            children: t
+              ? "Первый раунд пошагового поиска: удачные изменения дальше объединяются и уточняются."
+              : "Первый раунд пошагового поиска. Если ничего не помогает и исходная осталась лучшей — значит, в выбранных диапазонах её не улучшить: попробуйте другие параметры или шире диапазоны.",
+          }),
+        ],
+      }),
+    });
+  },
+  vtDepositNote = ({ candidate: e, run: t }) => {
+    var o, s;
+    const r = vtDepositScale(e);
+    if (r === 1 || !t) return null;
+    const n = (s = (o = t.baseStrategy) == null ? void 0 : o.deposit) == null ? void 0 : s.amount,
+      a = t.config.portfolio.depositPerBot,
+      i = [];
+    return (
+      typeof n == "number" && n > 0 && i.push(`в боте ${_t(n * r, 2)} вместо ${n} USDT`),
+      typeof a == "number" && a > 0 && i.push(`в бэктестах ${_t(a * r, 2)} вместо ${a} USDT на бота`),
+      E.jsxs(Ft, {
+        style: { fontSize: 12, display: "block", marginTop: 6 },
+        children: [
+          "💰 Цифры варианта — при депозите бота ×",
+          r,
+          i.length > 0 ? ` (${i.join("; ")})` : "",
+          `. «Создать бота» подставит этот депозит; с прежним депозитом ${r < 1 ? "выше" : "ниже"} и прибыль, и просадка.`,
+        ],
+      })
+    );
   },
   NX = (e, t) => (e ? "#3f8600" : t ? "#cf1322" : void 0),
   Odt = [
@@ -133859,7 +134112,7 @@ const Zi = (e, t) => {
                 r.plateau
                   ? E.jsx(ar, {
                       title:
-                        "Лучший вариант слегка сдвинут (каждый параметр примерно на ±10% диапазона) и проверен на монетах поиска. Если результат держится — это плато, а не случайный пик.",
+                        "Лучший вариант слегка сдвинут (примерно половина параметров — на 2–5% от значения) и проверен на монетах поиска. Если результат держится — это плато, а не случайный пик.",
                       children: E.jsxs(aa, {
                         children: [
                           "Плато: лучше исходной",
@@ -134091,6 +134344,7 @@ const Zi = (e, t) => {
     onDownloadJson: c,
     onCreateGroup: u,
     stress: d,
+    folds: vtFolds = null,
   }) => {
     const [f, h] = p.useState(null),
       [v, g] = p.useState(null),
@@ -134166,6 +134420,15 @@ const Zi = (e, t) => {
                 key: "robustness",
                 label: "Устойчивость",
                 children: E.jsx(Ddt, { candidate: e, stress: b ? d : void 0 }),
+              },
+            ]
+          : []),
+        ...(e.fitness.rescale && e.fitness.rescale.foldScores.length > 0 && !e.isBase
+          ? [
+              {
+                key: "folds",
+                label: `Срезы поиска (${e.fitness.rescale.foldsBetter}/${e.fitness.rescale.foldScores.length})`,
+                children: E.jsx(vtFoldsTable, { fitness: e.fitness, folds: vtFolds }),
               },
             ]
           : []),
@@ -134253,6 +134516,7 @@ const Zi = (e, t) => {
             : null,
           C === "fail" ? E.jsx(un, { color: "red", children: "проверка не пройдена" }) : null,
           E.jsx(_B, { candidate: e }),
+          e.isBase ? null : E.jsx(vtScaleTag, { candidate: e }),
           e.fitness.valid ? null : E.jsx(un, { color: "red", children: "не проходит ограничения" }),
         ],
       }),
@@ -134385,6 +134649,7 @@ const Zi = (e, t) => {
                 wrap: !0,
                 children: [
                   E.jsx(zdt, { fitness: h.validation ?? h.fitness }),
+                  h.isBase ? null : E.jsx(vtScaleTag, { candidate: h }),
                   E.jsx(Yi, {
                     type: "secondary",
                     style: { fontSize: 12 },
@@ -134583,7 +134848,7 @@ const Zi = (e, t) => {
       onRow: (l) => ({ onClick: () => i(l), style: { cursor: "pointer" } }),
     });
   },
-  Fdt = ({ history: e, height: t = 220 }) => {
+  Fdt = ({ history: e, height: t = 220, pattern: vtPattern = !1 }) => {
     const { mode: r } = gd(),
       n = r === "dark",
       a = p.useMemo(() => {
@@ -134596,7 +134861,7 @@ const Zi = (e, t) => {
           tooltip: { trigger: "axis", valueFormatter: (s) => (typeof s == "number" ? s.toFixed(3) : String(s)) },
           xAxis: {
             type: "category",
-            name: "поколение",
+            name: vtPattern ? "раунд" : "поколение",
             nameLocation: "middle",
             nameGap: 22,
             nameTextStyle: { color: i, fontSize: 11 },
@@ -134631,7 +134896,7 @@ const Zi = (e, t) => {
               itemStyle: { color: "#16a34a" },
             },
             {
-              name: "Медиана поколения",
+              name: vtPattern ? "Медиана раунда" : "Медиана поколения",
               type: "line",
               data: e.map((s) => s.medianScore),
               symbolSize: 4,
@@ -134648,7 +134913,7 @@ const Zi = (e, t) => {
             },
           ],
         };
-      }, [e, n]);
+      }, [e, n, vtPattern]);
     return E.jsx(Bh, {
       style: { height: t, width: "100%" },
       theme: n ? "dark" : void 0,
@@ -135258,6 +135523,8 @@ const { Text: ru } = cr,
     onStressTextChange: s,
     onCancel: l,
     onStart: c,
+    searchMonths: vtMonths = 0,
+    onSearchMonthsChange: vtSetMonths,
   }) => {
     const [u, d] = p.useState(!1),
       f = r.enabled ? n : a,
@@ -135269,13 +135536,13 @@ const { Text: ru } = cr,
           description: `${t.coins} монет, ${FX(t.periodFrom)} — ${FX(t.periodTo)} (каждая с даты листинга)`,
         },
         {
-          title: "Поиск",
-          description: `≈${t.variants} вариантов на ${t.screeningCount} ключевых монетах за последние ${t.screeningMonths} мес: сетка, тейк, пороги, замена фильтров похожими`,
+          title: "Пошаговый поиск",
+          description: `до ${t.variants} вариантов на ${t.screeningCount} ключевых монетах ${t.screeningMonths > 0 ? `за последние ${t.screeningMonths} мес` : "за весь период"}: каждый параметр по отдельности (сетка, тейк, подтяжка, пороги, замена фильтров похожими), затем удачные изменения вместе и уточнение. Вариант засчитывается, если он лучше исходной и по прибыли, и по просадке${t.depositChange > 0 ? ` при депозите бота в пределах ±${t.depositChange}%` : ""} — в большинстве периодов и групп монет`,
         },
         { title: "Финал", description: `${t.finalists} лучших — на всех монетах за весь период` },
         {
           title: "Проверка устойчивости",
-          description: `каждый год отдельно, монеты и период, которых поиск не видел${t.neighbors > 0 ? `, плато (${t.neighbors} сдвинутых настроек)` : ""}`,
+          description: `каждый год отдельно, ${t.screeningMonths > 0 ? "монеты и период, которых поиск не видел" : "монеты, которых поиск не видел"}${t.neighbors > 0 ? `, плато (${t.neighbors} сдвинутых настроек)` : ""}`,
         },
         ...(r.enabled
           ? [
@@ -135319,6 +135586,39 @@ const { Text: ru } = cr,
             ],
           }),
           E.jsx(Z3, { direction: "vertical", size: "small", current: -1, items: g }),
+          vtSetMonths
+            ? E.jsxs("div", {
+                style: { borderTop: "1px solid rgba(128,128,128,0.2)", paddingTop: 10 },
+                children: [
+                  E.jsxs(or, {
+                    align: "center",
+                    gap: 8,
+                    wrap: !0,
+                    children: [
+                      E.jsx(ru, { strong: !0, children: "Период поиска" }),
+                      E.jsx(pl, {
+                        size: "small",
+                        value: vtMonths,
+                        onChange: (y) => vtSetMonths(Number(y)),
+                        options: [
+                          { value: 0, label: "весь период" },
+                          { value: 36, label: "3 года" },
+                          { value: 12, label: "1 год" },
+                        ],
+                      }),
+                    ],
+                  }),
+                  E.jsx(ru, {
+                    type: "secondary",
+                    style: { fontSize: 12, display: "block", marginTop: 4 },
+                    children:
+                      vtMonths > 0
+                        ? "Дешевле, но поиск не видит более ранних обвалов: сетка, удачная на спокойном отрезке, может провалиться на всей истории. Финал и проверка устойчивости это покажут, но хороший вариант найдётся реже."
+                        : "Рекомендуется: риск сетки определяют редкие обвалы, и поиск должен видеть их все — иначе находит настройки, которые хороши только на спокойном отрезке. Дороже по бюджету, по числу бэктестов — так же.",
+                  }),
+                ],
+              })
+            : null,
           E.jsxs("div", {
             style: { borderTop: "1px solid rgba(128,128,128,0.2)", paddingTop: 10 },
             children: [
@@ -135778,6 +136078,8 @@ const { Text: ru } = cr,
           phase: e.phase,
           generation: e.generation + 1,
           totalGenerations: e.config.genetic.generations,
+          searchMethod: e.config.genetic.searchMethod ?? "genetic",
+          patternRound: e.patternRound ?? 0,
           evaluatedGenomes: e.archive.length,
           savedAt: new Date(e.savedAt),
         }
@@ -135907,6 +136209,15 @@ class Nf {
     Et(this, "finishRequested", !1);
     Et(this, "lastSaveAt", 0);
     Et(this, "saveTimer", null);
+    Et(this, "searchFolds", null);
+    Et(this, "sensitivity", null);
+    Et(this, "searchPath", null);
+    Et(this, "searchSummary", null);
+    Et(this, "patternRound", 0);
+    Et(this, "patternStep", 0);
+    Et(this, "searchEvaluations", 0);
+    Et(this, "replaying", !1);
+    Et(this, "boundMoves", []);
     Et(this, "repair", (t) => (this.space && this.baseStrategy ? rdt(this.space, t, this.baseStrategy) : t));
     (this.config = t),
       (this.callbacks = r),
@@ -135969,8 +136280,37 @@ class Nf {
         periods: this.periods,
         mode: this.config.mode,
         screeningSymbols: this.screeningSymbols,
+        searchMethod: this.usePattern ? "pattern" : "genetic",
+        sensitivity: this.sensitivity,
+        searchPath: this.searchPath,
+        searchSummary: this.searchSummary,
+        searchFolds: this.searchFolds,
       }
     );
+  }
+  get usePattern() {
+    return (this.config.genetic.searchMethod ?? "genetic") === "pattern";
+  }
+  get searchBudget() {
+    const t = this.config.genetic.searchBudget;
+    return Math.max(5, Math.round(Number.isFinite(t) ? t : 110));
+  }
+  get maxDepositChange() {
+    var r;
+    if (this.config.mode !== "portfolio") return 0;
+    const t = (r = this.config.portfolio) == null ? void 0 : r.maxDepositChangePercent;
+    return Number.isFinite(t) && t > 0 ? Math.min(100, t) / 100 : 0;
+  }
+  get relativeScore() {
+    return this.config.mode === "portfolio" && this.config.target.metric === "improveBoth";
+  }
+  formatScoreDelta(t) {
+    return this.relativeScore
+      ? `${t >= 0 ? "+" : "−"}${Math.abs(t * 100).toFixed(1)}%`
+      : `${t >= 0 ? "+" : "−"}${Math.abs(t).toFixed(3)}`;
+  }
+  get foldConsistency() {
+    return this.config.mode === "portfolio" && this.config.portfolio.foldConsistency === !0;
   }
   async start() {
     var a;
@@ -136004,10 +136344,12 @@ class Nf {
               : null))
         : ((this.phase = "search"), this.logPeriods()),
       (this.generation = 0),
-      (this.pending = uft(this.baseGenome, this.space, this.repair, {
-        size: t.genetic.populationSize,
-        random: this.deps.random,
-      })),
+      (this.pending = this.usePattern
+        ? [this.baseGenome]
+        : uft(this.baseGenome, this.space, this.repair, {
+            size: t.genetic.populationSize,
+            random: this.deps.random,
+          })),
       this.saveStateNow(),
       this.runLoop()
     );
@@ -136029,7 +136371,9 @@ class Nf {
             : "проверка на отложенном периоде"
           : this.phase === "robustness"
             ? "проверка устойчивости"
-            : `поколение ${this.generation + 1}/${this.config.genetic.generations}`;
+            : this.usePattern
+              ? `пошаговый поиск, раунд ${Math.max(1, this.patternRound)}`
+              : `поколение ${this.generation + 1}/${this.config.genetic.generations}`;
     return this.log("info", `🔄 Продолжаем: ${t}, уже оценено ${this.archive.size} вариантов`), this.runLoop();
   }
   pause() {
@@ -136090,10 +136434,14 @@ class Nf {
       d = this.robustnessEnabled
         ? Math.min(KX, c) * this.plateauNeighborCount * s + 2 * this.estimatedStressCoins()
         : 0;
-    let f = n === "validation" ? this.validationKeys.length : this.pending.length,
+    const vtPattern = this.usePattern,
+      vtVariants = vtPattern ? this.searchBudget : a * r.genetic.generations;
+    let f = n === "validation" ? this.validationKeys.length : vtPattern ? vtVariants : this.pending.length,
       h = 0;
     if (n === "baseline" || n === "preparing")
-      (f = l), (h = Math.max(0, l - this.phaseSymbolsDone) + a * r.genetic.generations * s + c * u + d);
+      (f = l), (h = Math.max(0, l - this.phaseSymbolsDone) + vtVariants * s + c * u + d);
+    else if (n === "search" && vtPattern)
+      h = (this.finishRequested ? 0 : Math.max(0, vtVariants - this.searchEvaluations)) * s + c * u + d;
     else if (n === "search") {
       const b = Math.max(0, f - this.generationDone),
         S = this.finishRequested ? 0 : Math.max(0, r.genetic.generations - (this.generation + 1));
@@ -136113,10 +136461,13 @@ class Nf {
     return {
       status: this.status,
       phase: n,
-      currentGeneration: Math.min(this.generation + 1, r.genetic.generations),
+      currentGeneration: vtPattern ? Math.max(1, this.patternRound) : Math.min(this.generation + 1, r.genetic.generations),
       totalGenerations: r.genetic.generations,
+      searchMethod: vtPattern ? "pattern" : "genetic",
+      patternStep: this.patternStep,
       evaluatedGenomes: this.archive.size,
-      generationDone: n === "baseline" ? this.phaseSymbolsDone : this.generationDone,
+      generationDone:
+        n === "baseline" ? this.phaseSymbolsDone : vtPattern && n === "search" ? this.searchEvaluations : this.generationDone,
       generationSize: f,
       totalBacktests: this.backtestsRun + h,
       completedBacktests: this.backtestsRun,
@@ -136130,6 +136481,10 @@ class Nf {
   async runLoop() {
     try {
       if (this.phase === "baseline" && (await this.runBaseline(), this.stopRequested)) return this.getLeaderboard();
+      if (this.phase === "search" && this.usePattern) {
+        if ((await this.runPatternSearch(), this.stopRequested)) return this.getLeaderboard();
+        this.scheduler.undrain(), this.enterPostSearchPhase();
+      }
       for (; this.phase === "search"; ) {
         if ((await this.evaluateCurrentGeneration(), this.stopRequested)) return this.getLeaderboard();
         this.scheduler.undrain(), this.completeGeneration();
@@ -136198,8 +136553,8 @@ class Nf {
     const a = r.portfolio;
     if (
       (a &&
-        ((this.references.final = { profit: a.adjustedProfit, risk: a.risk }),
-        (this.baselineFitness = { ...r, score: kL(a, this.config.target, this.references.final) }),
+        ((this.references.final = vtReference(r)),
+        (this.baselineFitness = this.selfScore(r)),
         this.log(
           "success",
           `📌 Исходная: ${a.monthlyPercent.toFixed(2)}%/мес, прибыль ${ao(a.adjustedProfit)} (Акт. МПУ ${a.activeMae.toFixed(2)}), суммарная просадка ${a.drawdownPercent.toFixed(1)}% депозита, сделок ${r.totalDeals}, макс. одновременно ${a.maxConcurrentPositions}${a.skippedByLimit ? `, не вошло по блокировке ${a.skippedByLimit}` : ""}`,
@@ -136212,16 +136567,57 @@ class Nf {
       !this.screeningSymbols)
     ) {
       const o = this.config.portfolio.screeningCount;
-      this.screeningSymbols = o >= t.symbols.length ? t.symbols : _dt(n, o);
+      this.screeningSymbols =
+        o >= t.symbols.length ? t.symbols : this.usePattern ? VTPS.psPickScreeningSymbols(n, o) : _dt(n, o);
     }
     const i = this.universe("search");
     this.log(
       "info",
       `🎯 Монеты для поиска (${i.symbols.length}): ${i.symbols.map(ec).join(", ")} · период поиска ${i.period.from.slice(0, 10)} — ${i.period.to.slice(0, 10)}`,
     ),
+      this.buildSearchFolds(n),
+      this.logComparisonRules(),
       (this.phase = "search"),
       (this.generationDone = 0),
       this.saveStateNow();
+  }
+  // Score of the original against itself: 1 for "better on both", otherwise the target metric.
+  selfScore(t) {
+    if (!t.portfolio) return t;
+    const r = vtReference(t),
+      n = this.config.target.metric === "improveBoth" ? VTPS.psRescale(r, r, this.maxDepositChange) : null,
+      a = vtPortfolioScore(t, t.portfolio.raw ?? t.portfolio, n, {
+        target: this.config.target,
+        reference: r,
+        settings: { totalDeposit: this.config.portfolio.totalDeposit },
+        useFolds: this.foldConsistency,
+      });
+    return { ...t, score: a.score, rescale: a.rescale };
+  }
+  // Time slices of the search period and groups of search coins (balanced by the original's profit).
+  buildSearchFolds(t) {
+    if (this.config.mode !== "portfolio") {
+      this.searchFolds = null;
+      return;
+    }
+    const r = this.universe("search"),
+      n = new Map();
+    for (const o of t) n.set(o.symbol, o.deals.reduce((s, l) => s + (l.st === "F" ? l.n : 0), 0));
+    const a = VTPS.psTimeFolds(r.period.from, r.period.to),
+      i = VTPS.psCoinGroups(r.symbols, n);
+    this.searchFolds = [...a, ...i];
+  }
+  logComparisonRules() {
+    if (this.config.mode !== "portfolio" || this.config.target.metric !== "improveBoth") return;
+    const t = this.maxDepositChange,
+      r = this.searchFolds ?? [],
+      n = r.filter((o) => o.kind === "time").length,
+      a = r.filter((o) => o.kind === "coins").length,
+      i = this.config.constraints.minDealsSharePercent;
+    this.log(
+      "info",
+      `📐 Сравнение с исходной: «лучше и по прибыли, и по просадке»${t > 0 ? ` при депозите бота, подобранном в пределах ±${Math.round(t * 100)}% (прибыль и просадка пропорциональны депозиту)` : " при том же депозите"}${this.foldConsistency && r.length >= 2 ? `; улучшение должно держаться в большинстве из ${r.length} срезов поиска (${n} периодов, ${a} группы монет)` : ""}${i > 0 ? `; сделок не меньше ${i}% от исходной` : ""}`,
+    );
   }
   enterPostSearchPhase() {
     const t = this.config.mode === "portfolio" || !!this.periods.holdout;
@@ -136272,6 +136668,15 @@ class Nf {
             ? `📊 Исходная: ${o.portfolio.monthlyPercent.toFixed(2)}%/мес, суммарная просадка ${o.portfolio.drawdownPercent.toFixed(1)}%`
             : `📊 Исходный бот: score ${n.fitness.score.toFixed(3)}, PnL ${ao(n.fitness.adjustedPnl)}${n.validation ? `, на проверке ${n.validation.roiMonthlyPercent.toFixed(2)}%/мес` : ""}`,
         );
+        const s = vtDepositScale(r);
+        if (s !== 1 && this.baseStrategy) {
+          const l = this.depositAmount(this.baseStrategy),
+            c = this.config.portfolio.depositPerBot;
+          this.log(
+            "info",
+            `💰 Цифры варианта — при депозите бота ×${s}: ${l > 0 ? `${_t(l * s, 2)} вместо ${l} USDT в боте` : ""}${c ? `${l > 0 ? ", " : ""}${_t(c * s, 2)} вместо ${c} USDT в бэктестах` : ""}. «Создать бота» подставит этот депозит.`,
+          );
+        }
       } else
         n &&
           n.key === r.key &&
@@ -136345,12 +136750,9 @@ class Nf {
     const n = async (l) => {
       const c = Oi(l);
       if (this.archive.has(c)) return;
-      const u = c === this.baseKey ? null : (this.references.search ?? null),
-        d = await this.evaluateGenome(l, t, this.config.constraints, u);
-      c === this.baseKey &&
-        d.portfolio &&
-        ((this.references.search = { profit: d.portfolio.adjustedProfit, risk: d.portfolio.risk }),
-        (d.score = kL(d.portfolio, this.config.target, this.references.search)));
+      const u = c === this.baseKey ? null : (this.references.search ?? null);
+      let d = await this.evaluateGenome(l, t, this.config.constraints, u);
+      c === this.baseKey && d.portfolio && ((this.references.search = vtReference(d)), (d = this.selfScore(d)));
       const f = this.createCandidate(l, c, d);
       this.archive.set(c, f),
         this.knownKeys.add(c),
@@ -136434,6 +136836,249 @@ class Nf {
   rankedSearchCandidates() {
     return [...this.archive.values()].sort((t, r) => u0(t.fitness, r.fitness));
   }
+  // Step-by-step search (see src/patternSearch.mjs). Deterministic: after a stop it is simply run
+  // again — variants already in the archive are replayed without backtests.
+  async runPatternSearch() {
+    if (!(this.space && this.baseGenome)) return;
+    const t = this.universe("search"),
+      r = this.searchBudget,
+      n = this.archive.size > 1;
+    (this.history = []),
+      (this.replaying = n),
+      (this.generationDone = 0),
+      (this.generationCacheHits = 0),
+      (this.searchEvaluations = 0),
+      this.log(
+        "info",
+        n
+          ? `
+🔄 Восстанавливаем ход пошагового поиска по сохранённым результатам…`
+          : `
+🧭 Пошаговый поиск: до ${r} вариантов × ${t.symbols.length} монет. Сначала каждый параметр меняется по отдельности (видно, что влияет и в какую сторону), затем удачные изменения объединяются, продолжаются, пока есть прирост, и уточняются более мелким шагом.`,
+      ),
+      this.emitProgress();
+    let a = null;
+    const i = new Set(),
+      o = async (l) => {
+        const c = Oi(l);
+        let u = this.archive.get(c);
+        if (!u) {
+          if (this.stopRequested || this.finishRequested || a) return null;
+          this.replaying && ((this.replaying = !1), this.log("info", "▶️ Дальше — новые варианты"));
+          try {
+            const d = c === this.baseKey ? null : (this.references.search ?? null);
+            let f = await this.evaluateGenome(l, t, this.config.constraints, d);
+            c === this.baseKey && f.portfolio && ((this.references.search = vtReference(f)), (f = this.selfScore(f))),
+              (u = this.createCandidate(l, c, f)),
+              this.archive.set(c, u),
+              this.knownKeys.add(c),
+              (this.generationDone += 1),
+              this.logCandidate(u),
+              this.callbacks.onCandidate(u),
+              this.saveStateSoon();
+          } catch (d) {
+            if (d instanceof Af || d instanceof f0) return null;
+            return a || ((a = dR(d)), this.scheduler.cancel()), null;
+          }
+        }
+        return (
+          i.has(c) || (i.add(c), (this.searchEvaluations = i.size)),
+          this.emitProgress(),
+          { score: u.fitness.score, valid: u.fitness.valid, violation: u.fitness.violationAmount, candidate: u }
+        );
+      },
+      s = await VTPS.psRunSearch({
+        space: this.space,
+        baseGenome: this.baseGenome,
+        repair: this.repair,
+        keyOf: Oi,
+        budget: r,
+        rng: VTPS.psCreateRng(VTPS.psHashSeed(this.baseKey)),
+        options: { stallRounds: ga(Math.round(this.config.genetic.earlyStopGenerations || 2), 1, 4) },
+        evaluate: (l) => Promise.all(l.map(o)),
+        shouldStop: () => this.stopRequested || this.finishRequested || a !== null,
+        onEvent: (l) => this.onPatternEvent(l),
+        onRound: (l) => this.completePatternRound(l),
+      });
+    if (a) throw a;
+    this.stopRequested || this.finishPatternSearch(s);
+  }
+  describePatternResult(t) {
+    var a, i;
+    const r = (i = (a = t.candidate) == null ? void 0 : a.fitness) == null ? void 0 : i.rescale,
+      n = [];
+    if (!t.valid) {
+      const o = t.candidate ? t.candidate.fitness.violations[0] : null;
+      return `${t.score.toFixed(3)} ⚠️ ${o ?? "не проходит ограничения"}`;
+    }
+    if (r) {
+      const o = (s) => `${s >= 1 ? "+" : "−"}${Math.abs((s - 1) * 100).toFixed(0)}%`;
+      n.push(`прибыль ${o(r.profitGain)}`, `просадка ${o(1 / Math.max(r.riskGain, 1e-9))}`),
+        r.scale !== 1 && n.push(`депозит ×${r.scale}`),
+        r.foldScores.length > 0 && n.push(`срезов лучше ${r.foldsBetter}/${r.foldScores.length}`);
+    }
+    return `${t.score.toFixed(3)}${n.length > 0 ? ` (${n.join(", ")})` : ""}`;
+  }
+  onPatternEvent(t) {
+    var n;
+    const r = (a) => `${(a * 100).toFixed(a < 0.1 ? 1 : 0)}%`;
+    if ((t.type === "scan" && ((this.patternRound = t.round), (this.patternStep = t.step), this.emitProgress()),
+    t.type === "scanned" && t.round === 1 && this.captureSensitivity(t.scan, t.current),
+    this.replaying))
+      return;
+    switch (t.type) {
+      case "scan":
+        this.log(
+          "info",
+          t.round === 1
+            ? `
+🔬 Раунд 1: влияние каждого параметра по отдельности — ${t.count} вариантов (шаг ${r(t.step)} диапазона от исходной)`
+            : `
+🔬 Раунд ${t.round}: ${t.count} вариантов вокруг лучшего (шаг ${r(t.step)} диапазона)`,
+        );
+        break;
+      case "scanned": {
+        const a = t.scan.filter((s) => s.result.valid && s.delta > 0).sort((s, l) => l.delta - s.delta),
+          i = t.scan.filter((s) => s.delta < 0).sort((s, l) => s.delta - l.delta),
+          o = (s) =>
+            `${s.move.label} (${(s.delta === 1 || s.delta === -1) && !(s.result.valid && t.current.valid) ? (s.delta > 0 ? "проходит ограничения" : "не проходит ограничения") : this.formatScoreDelta(s.delta)})`;
+        this.log(
+          a.length > 0 ? "success" : "info",
+          `📈 Лучше текущего: ${a.length > 0 ? a.slice(0, 6).map(o).join(", ") : "нет"}${a.length > 6 ? ` и ещё ${a.length - 6}` : ""}${i.length > 0 ? `
+📉 Хуже всего: ${i.slice(0, 4).map(o).join(", ")}` : ""}`,
+        );
+        break;
+      }
+      case "accept": {
+        const a = this.describePatternResult(t.result),
+          i = t.moves.map((o) => o.label).join(" + ");
+        this.log(
+          "success",
+          t.how === "combined"
+            ? `🧩 Вместе: ${i} → ${a} ✅`
+            : t.how === "line"
+              ? `➡️ Дальше в ту же сторону: ${i} → ${a} ✅`
+              : t.how === "pattern"
+                ? `⏩ Повторили весь шаг раунда ещё раз → ${a} ✅`
+                : `➕ ${i} → ${a} ✅`,
+        );
+        break;
+      }
+      case "reject":
+        this.log(
+          "info",
+          t.how === "combined"
+            ? `🧩 Все удачные изменения вместе: ${this.describePatternResult(t.result)} — не лучше лучшего из них, добавляем по одному`
+            : `➖ ${t.moves.map((a) => a.label).join(" + ")}: ${this.describePatternResult(t.result)} — вместе с уже принятыми не помогает`,
+        );
+        break;
+      case "bound":
+        (this.boundMoves = this.boundMoves ?? []), (n = t.move) && this.boundMoves.push(n.label);
+        break;
+    }
+  }
+  captureSensitivity(t, r) {
+    var a, i;
+    const n = (i = (a = r.candidate) == null ? void 0 : a.fitness) == null ? void 0 : i.totalDeals;
+    (this.sensitivity = t
+      .map((o) => {
+        var l;
+        const s = (l = o.result.candidate) == null ? void 0 : l.fitness,
+          c = s == null ? void 0 : s.rescale;
+        return {
+          id: o.move.id,
+          label: o.move.label,
+          group: o.move.group,
+          macro: !!o.move.macro,
+          change: this.space ? VTPS.psDescribeMove(this.space, r.genome, o.genome, o.move, OL, 3) : "",
+          key: o.key,
+          score: o.result.score,
+          delta: _t(Math.abs(o.delta) === 1 && !(o.result.valid && r.valid) ? 0 : o.delta, 4),
+          valid: o.result.valid,
+          violation: s && !s.valid ? (s.violations[0] ?? null) : null,
+          profitGain: (c == null ? void 0 : c.profitGain) ?? null,
+          riskGain: (c == null ? void 0 : c.riskGain) ?? null,
+          scale: (c == null ? void 0 : c.scale) ?? 1,
+          foldsBetter: (c == null ? void 0 : c.foldsBetter) ?? null,
+          folds: (c == null ? void 0 : c.foldScores.length) ?? 0,
+          deals: (s == null ? void 0 : s.totalDeals) ?? null,
+          baseDeals: n ?? null,
+          relative: this.relativeScore,
+        };
+      })
+      .sort((o, s) => Number(s.valid) - Number(o.valid) || s.delta - o.delta || (o.id < s.id ? -1 : 1))),
+      this.callbacks.onLeaderboard(this.getLeaderboard());
+  }
+  completePatternRound(t) {
+    (this.patternRound = t.round),
+      (this.patternStep = t.step),
+      (this.bestKey = t.best.key),
+      (this.stagnant = t.improved ? 0 : this.stagnant + 1),
+      this.history.push({
+        generation: t.round,
+        bestScore: t.best.score,
+        medianScore: t.medianScore,
+        evaluated: t.evaluated,
+        cacheHits: this.generationCacheHits,
+        validCount: t.validCount,
+      }),
+      (this.generationCacheHits = 0),
+      !this.replaying &&
+        this.boundMoves &&
+        this.boundMoves.length > 0 &&
+        this.log(
+          "info",
+          `📏 Упёрлись в границу диапазона: ${[...new Set(this.boundMoves)].join(", ")} — если улучшение продолжается, расширьте диапазоны в «Ручной настройке»`,
+        ),
+      (this.boundMoves = []),
+      this.replaying ||
+        this.log(
+          t.improved ? "success" : "info",
+          t.improved
+            ? `🏁 Раунд ${t.round}: ${t.start.score.toFixed(3)} → ${this.describePatternResult(t.best)} · ${VTPS.psDescribeChanges(this.space, t.start.genome, t.best.genome, OL, 5)}`
+            : `🏁 Раунд ${t.round}: при шаге ${(t.step * 100).toFixed(t.step < 0.1 ? 1 : 0)}% диапазона улучшений нет`,
+        ),
+      this.callbacks.onLeaderboard(this.getLeaderboard()),
+      this.saveStateNow();
+  }
+  finishPatternSearch(t) {
+    var a;
+    if (!(t.best && t.base && this.space && this.baseGenome)) return;
+    (this.searchPath = t.path.map((i) => ({
+      key: i.key,
+      round: i.round,
+      score: i.score,
+      moves: i.moves.map((o) => o.label),
+    }))),
+      (this.searchSummary = {
+        evaluations: t.evaluations,
+        budget: this.searchBudget,
+        rounds: t.rounds.length,
+        stoppedBy: t.stoppedBy,
+        bestKey: t.best.key,
+        baseScore: t.base.score,
+        bestScore: t.best.score,
+      });
+    const r =
+        t.stoppedBy === "budget"
+          ? "исчерпан бюджет вариантов"
+          : t.stoppedBy === "stop"
+            ? "завершён досрочно"
+            : "дальнейшие шаги не дают прироста",
+      n = (a = this.archive.get(t.best.key)) == null ? void 0 : a.fitness;
+    t.best.key === t.base.key
+      ? this.log(
+          "warning",
+          `🧭 Поиск завершён (${r}, оценено ${t.evaluations}): на монетах поиска исходные настройки не удалось улучшить с запасом`,
+        )
+      : this.log(
+          "success",
+          `🧭 Поиск завершён (${r}, оценено ${t.evaluations}): ${t.base.score.toFixed(3)} → ${this.describePatternResult(t.best)}${n ? ` · ${this.describeFitness(n)}` : ""}
+   изменено: ${VTPS.psDescribeChanges(this.space, this.baseGenome, t.best.genome, OL, 8)}`,
+        ),
+      this.callbacks.onLeaderboard(this.getLeaderboard()),
+      this.saveStateNow();
+  }
   trimArchive(t) {
     if (t.size <= WX) return t;
     const r = [...t.values()].sort((a, i) => u0(a.fitness, i.fitness)).slice(0, WX),
@@ -136446,6 +137091,31 @@ class Nf {
     const t = this.rankedSearchCandidates(),
       r = t.filter((s) => s.fitness.valid),
       n = r.length > 0 ? r : t;
+    if (this.config.mode === "portfolio" && this.usePattern && this.space && this.baseGenome) {
+      const s = Math.max(1, Math.round(this.config.portfolio.finalists)),
+        l = ((o = this.archive.get(this.baseKey)) == null ? void 0 : o.fitness.score) ?? 1,
+        c = [...this.archive.values()].map((d) => ({
+          key: d.key,
+          score: d.fitness.score,
+          valid: d.fitness.valid,
+          isBase: d.isBase,
+          changed: fhe(this.space, this.baseGenome, d.genome).filter((f) => f.changed).length,
+        })),
+        { keys: u, improved: d } = VTPS.psPickFinalists(c, s, l);
+      return (
+        d
+          ? this.log(
+              "info",
+              `🎯 В финал (все монеты, весь период): ${u.map((f) => { const h = c.find((v) => v.key === f); return `${f.slice(0, 6)} (оценка ${h.score.toFixed(3)}, изменено параметров: ${h.changed})`; }).join("; ")}`,
+            )
+          : u.length > 0 &&
+            this.log(
+              "warning",
+              "⚠️ На монетах поиска ни один вариант не обошёл исходную с запасом — проверяем на всех монетах лучших из найденных",
+            ),
+        u
+      );
+    }
     if (this.config.mode === "portfolio") {
       const s = Math.max(1, Math.round(this.config.portfolio.finalists)),
         l = ((o = this.archive.get(this.baseKey)) == null ? void 0 : o.fitness.score) ?? 1,
@@ -136599,7 +137269,7 @@ class Nf {
       this.log(
         "info",
         `
-🧪 Проверка устойчивости (${n.length} вариантов): каждый год отдельно, монеты вне поиска, период до поиска${i.size > 0 && a > 0 ? `; плато — ${a} соседних настроек на монетах поиска` : ""}${s ? "; стресс-тест на расширенном списке монет" : ""}`,
+🧪 Проверка устойчивости (${n.length} вариантов): каждый год отдельно, монеты вне поиска${Date.parse(this.periods.search.from) - Date.parse(this.universe("final").period.from) >= ghe * phe ? ", период до поиска" : ""}${i.size > 0 && a > 0 ? `; плато — ${a} соседних настроек на монетах поиска` : ""}${s ? "; стресс-тест на расширенном списке монет" : ""}`,
       ),
       this.emitProgress();
     for (const c of n) {
@@ -136648,7 +137318,7 @@ class Nf {
       o = new Set(i.symbols),
       s = (u = this.screeningSymbols) != null && u.some((d) => o.has(d)) ? this.screeningSymbols : null,
       l = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
-      c = await this.finalEntriesFor(t.key, t.genome);
+      c = VTPS.psScaleEntries(await this.finalEntriesFor(t.key, t.genome), vtDepositScale(t));
     return Idt({
       baseEntries: l,
       entries: c,
@@ -136731,7 +137401,7 @@ class Nf {
       d = (t.validatedScore ?? Number.NEGATIVE_INFINITY) > r + Tv,
       f = await this.buildReportFor(t, d, ((v = t.robustness) == null ? void 0 : v.plateau) ?? null, {
         baseEntries: [...c, ...o.entries],
-        entries: [...u, ...s.entries],
+        entries: VTPS.psScaleEntries([...u, ...s.entries], vtDepositScale(t)),
         newSymbols: n.newSymbols,
         skipped: n.skipped,
       }),
@@ -136791,19 +137461,31 @@ class Nf {
   async runPlateau(t, r, n) {
     var s;
     if (!this.space) return null;
-    const a = Tdt(this.space, t.genome, r, this.repair, this.deps.random, Oi),
+    // Neighbours shift parameters by ~10% of a ±25% range (as before), whatever the range width.
+    const vtShift = 0.1 * Math.min(1, 25 / Math.max(1, this.config.scope.rangeWidthPercent ?? 25)),
+      a = Tdt(
+        this.space,
+        t.genome,
+        r,
+        this.repair,
+        this.deps.random ?? VTPS.psCreateRng(VTPS.psHashSeed(t.key)),
+        Oi,
+        vtShift,
+      ),
       i = await Promise.all(
         a.map(async (l) => {
           const c = this.archive.get(Oi(l)),
             u = c
               ? c.fitness
               : await this.evaluateGenome(l, n, this.config.constraints, this.references.search ?? null);
-          return (this.generationDone += n.symbols.length), this.emitProgress(), { score: u.score, valid: u.valid };
+          return (
+            (this.generationDone += n.symbols.length), this.emitProgress(), { score: vtOverallScore(u), valid: u.valid }
+          );
         }),
       );
     if (i.length === 0) return null;
-    const o = ((s = this.archive.get(this.baseKey)) == null ? void 0 : s.fitness.score) ?? 1;
-    return Mdt(i, t.fitness.score, o);
+    const o = (s = this.archive.get(this.baseKey)) == null ? void 0 : s.fitness;
+    return Mdt(i, vtOverallScore(t.fitness), o ? vtOverallScore(o) : 1);
   }
   logRobustness(t, r) {
     const n = `Вариант ${t.key.slice(0, 6)}`,
@@ -136900,6 +137582,9 @@ ${a.join(`
           expectedSymbols: l.length,
           failures: s,
           reference: a,
+          maxDepositChange: this.maxDepositChange,
+          folds: r.kind === "search" ? this.searchFolds : null,
+          useFolds: r.kind === "search" && this.foldConsistency,
         },
       );
     return { fitness: f, entries: d };
@@ -137080,6 +137765,12 @@ ${a.join(`
       (this.cacheHits = t.cacheHits),
       (this.generationCacheHits = t.generationCacheHits ?? 0),
       (this.durationSamples = t.durationSamples ?? []),
+      (this.searchFolds = t.searchFolds ?? null),
+      (this.sensitivity = t.sensitivity ?? null),
+      (this.searchPath = t.searchPath ?? null),
+      (this.searchSummary = t.searchSummary ?? null),
+      (this.patternRound = t.patternRound ?? 0),
+      (this.patternStep = t.patternStep ?? 0),
       (this.startedAt = t.startedAt),
       (this.elapsedBeforeMs = t.elapsedMs ?? 0);
   }
@@ -137110,6 +137801,12 @@ ${a.join(`
       cacheHits: this.cacheHits,
       generationCacheHits: this.generationCacheHits,
       durationSamples: this.durationSamples,
+      searchFolds: this.searchFolds,
+      sensitivity: this.sensitivity,
+      searchPath: this.searchPath,
+      searchSummary: this.searchSummary,
+      patternRound: this.patternRound,
+      patternStep: this.patternStep,
       startedAt: this.startedAt,
       elapsedMs: t,
       savedAt: Date.now(),
@@ -137139,8 +137836,9 @@ ${a.join(`
   }
   describeFitness(t) {
     if (t.portfolio) {
-      const r = t.portfolio;
-      return `score ${t.score.toFixed(3)}, ${r.monthlyPercent.toFixed(2)}%/мес, просадка ${r.drawdownPercent.toFixed(1)}%, P/R ${t.pnlToRisk.toFixed(2)}, сделок ${t.totalDeals}`;
+      const r = t.portfolio,
+        n = t.rescale;
+      return `score ${t.score.toFixed(3)}, ${r.monthlyPercent.toFixed(2)}%/мес, просадка ${r.drawdownPercent.toFixed(1)}%, P/R ${t.pnlToRisk.toFixed(2)}, сделок ${t.totalDeals}${n && n.scale !== 1 ? `, депозит ×${n.scale}` : ""}${n && n.foldScores.length > 0 ? `, срезов лучше ${n.foldsBetter}/${n.foldScores.length}` : ""}`;
     }
     return `score ${t.score.toFixed(3)}, PnL ${ao(t.adjustedPnl)}, ${t.roiMonthlyPercent.toFixed(2)}%/мес, win ${t.winRate.toFixed(1)}%, MAE ${Math.abs(t.maxDrawdown).toFixed(1)}%`;
   }
@@ -137190,14 +137888,14 @@ const U1 =
     "1000000BABYDOGE 1000BONK 1000FLOKI 1000LUNC 1000PEPE 1INCH AAVE ACH ADA AGLD AIOZ AKT ALGO ALICE ANKR APE APT AR ARB ARK ARKM ASTR ATH ATOM AUCTION AVAX AXL AXS BAND BAT BCH BEAM BICO BIGTIME BLUR BNB BSV C98 CAKE CELO CETUS CFX CHR CHZ CKB COMP COTI CRO CRV CTC CVC CVX CYBER DASH DEXE DOGE DOT DYDX DYM EGLD ENJ ENS ETC FIDA FIL FLOW FLR GALA GAS GLM GRAM GRT HBAR ICP ICX ID IMX INJ IOTA JASMY JTO JUP KAS KNC KSM LDO LINK LPT LRC LSK MAGIC MANA MANTA MBOX MINA MNT MOVR NEAR NEO NMR ONDO ONG OP ORDI PENDLE PEOPLE PIXEL POL PYTH QNT QTUM RARE ROSE RSR RVN S SAFE SAND SEI SHIB1000 SKL SLP SNX SSV STG STORJ STX SUPER SUSHI TAO THETA TIA TWT UMA UNI VET WAVES WAXP WIF WLD WOO XLM XMR XRP XTZ XVG YFI YGG ZEC ZEN ZIL ZRX",
   z$ = {
     portfolio: {
-      fast: { populationSize: 8, generations: 5, earlyStopGenerations: 2 },
-      balanced: { populationSize: 12, generations: 8, earlyStopGenerations: 3 },
-      thorough: { populationSize: 16, generations: 12, earlyStopGenerations: 4 },
+      fast: { populationSize: 8, generations: 5, earlyStopGenerations: 2, searchBudget: 60 },
+      balanced: { populationSize: 12, generations: 8, earlyStopGenerations: 3, searchBudget: 110 },
+      thorough: { populationSize: 16, generations: 12, earlyStopGenerations: 4, searchBudget: 180 },
     },
     single: {
-      fast: { populationSize: 10, generations: 6, earlyStopGenerations: 3 },
-      balanced: { populationSize: 16, generations: 10, earlyStopGenerations: 4 },
-      thorough: { populationSize: 24, generations: 16, earlyStopGenerations: 5 },
+      fast: { populationSize: 10, generations: 6, earlyStopGenerations: 3, searchBudget: 60 },
+      balanced: { populationSize: 16, generations: 10, earlyStopGenerations: 4, searchBudget: 110 },
+      thorough: { populationSize: 24, generations: 16, earlyStopGenerations: 5, searchBudget: 180 },
     },
   },
   Aft = {
@@ -137223,6 +137921,7 @@ const U1 =
   },
   Nft = {
     ...z$.portfolio.balanced,
+    searchMethod: "pattern",
     mutationRate: 0.4,
     crossoverRate: 0.7,
     tournamentSize: 3,
@@ -137238,9 +137937,11 @@ const U1 =
     screeningAuto: !0,
     screeningText: "",
     screeningCount: 12,
-    screeningMonths: 12,
+    screeningMonths: 0,
     finalists: 3,
     dynamicBlockOrder: 5,
+    maxDepositChangePercent: 30,
+    foldConsistency: !0,
   },
   jft = { enabled: !0, neighbors: 6 },
   K1 = (e) => e.toISOString().slice(0, 10),
@@ -137257,9 +137958,11 @@ const U1 =
   zft = (e, t) => {
     for (const [r, n] of Object.entries(z$[e]))
       if (
-        n.populationSize === t.populationSize &&
-        n.generations === t.generations &&
-        n.earlyStopGenerations === t.earlyStopGenerations
+        ((t.searchMethod ?? "genetic") === "pattern"
+          ? n.searchBudget === t.searchBudget && n.earlyStopGenerations === t.earlyStopGenerations
+          : n.populationSize === t.populationSize &&
+            n.generations === t.generations &&
+            n.earlyStopGenerations === t.earlyStopGenerations)
       )
         return r;
     return "custom";
@@ -137294,6 +137997,7 @@ const U1 =
       robustness: { ...jft, ...(t.robustness ?? {}) },
       stressText: t.stressText ?? "",
       stressEnabled: t.stressEnabled ?? !0,
+      simpleSearchMonths: typeof t.simpleSearchMonths == "number" ? t.simpleSearchMonths : 0,
     };
   },
   Fft = (e, t) => {
@@ -137306,7 +138010,7 @@ const U1 =
       periodFrom: r.from,
       periodTo: r.to,
       portfolioTarget: "improveBoth",
-      genetic: { ...e.genetic, ...z$.portfolio.balanced },
+      genetic: { ...e.genetic, ...z$.portfolio.balanced, searchMethod: "pattern" },
       scope: {
         ...e.scope,
         dcaIndents: !0,
@@ -137318,12 +138022,21 @@ const U1 =
         orderThresholds: !0,
         exitThresholds: !0,
         linkOrderConditions: !0,
-        rangeWidthPercent: 25,
+        rangeWidthPercent: 50,
         structureSwap: !0,
         structureRemove: !0,
         structureSimilarOnly: !0,
       },
-      portfolio: { ...e.portfolio, screeningAuto: !0, screeningCount: 12, screeningMonths: 12, finalists: 3 },
+      constraints: { ...e.constraints, minDealsSharePercent: e.constraints.minDealsSharePercent ?? 60 },
+      portfolio: {
+        ...e.portfolio,
+        screeningAuto: !0,
+        screeningCount: 12,
+        screeningMonths: e.simpleSearchMonths ?? 0,
+        finalists: 3,
+        maxDepositChangePercent: e.portfolio.maxDepositChangePercent ?? 30,
+        foldConsistency: !0,
+      },
       robustness: { enabled: !0, neighbors: Math.max(4, e.robustness.neighbors) },
     };
   },
@@ -137347,6 +138060,8 @@ const U1 =
         screeningMonths: e.portfolio.screeningMonths,
         finalists: e.portfolio.finalists,
         dynamicBlockOrder: e.portfolio.dynamicBlockOrder > 0 ? Math.round(e.portfolio.dynamicBlockOrder) : null,
+        maxDepositChangePercent: e.portfolio.maxDepositChangePercent ?? 0,
+        foldConsistency: e.portfolio.foldConsistency !== !1,
       },
       botId: t.botId,
       botName: t.botName,
@@ -137379,7 +138094,7 @@ const U1 =
     var f, h, v;
     const t = [],
       n = e.symbols.map((g) => fR(e.period, e.listing.get(g))).reduce((g, m) => g + m, 0),
-      a = e.populationSize * e.generations;
+      a = e.searchVariants ?? e.populationSize * e.generations;
     if (e.mode === "portfolio") {
       const g = Math.max(1, e.symbols.length),
         m = Math.min(Math.max(1, e.screeningCount), g),
@@ -137731,6 +138446,7 @@ const U1 =
             finalists: o.portfolio.finalists,
             populationSize: o.genetic.populationSize,
             generations: o.genetic.generations,
+            searchVariants: o.genetic.searchMethod === "pattern" ? o.genetic.searchBudget : void 0,
             holdoutCandidates: o.validation.enabled ? o.validation.topCount + 1 : 0,
             holdoutShare: o.validation.holdoutPercent / 100,
             budget: $,
@@ -137872,6 +138588,7 @@ const U1 =
             finalists: Ve.portfolio.finalists,
             populationSize: Ve.genetic.populationSize,
             generations: Ve.genetic.generations,
+            searchVariants: Ve.genetic.searchMethod === "pattern" ? Ve.genetic.searchBudget : void 0,
             holdoutCandidates: 0,
             holdoutShare: 0,
             budget: $,
@@ -137999,7 +138716,12 @@ const U1 =
               null;
           if (!(Ne && nt)) return n.warning("Стратегия бота ещё загружается — попробуйте через пару секунд"), null;
           const lr = Ne.space ?? Tu(nt, Ne.config.scope, Ne.config.ranges, Ne.config.precision),
-            tn = ce.isBase ? nt : dhe(nt, lr, ce.genome),
+            vtBuilt = ce.isBase ? nt : dhe(nt, lr, ce.genome),
+            vtScale = vtDepositScale(ce),
+            tn =
+              vtScale !== 1 && vtBuilt.deposit && typeof vtBuilt.deposit.amount == "number"
+                ? { ...vtBuilt, deposit: { ...vtBuilt.deposit, amount: _t(vtBuilt.deposit.amount * vtScale, 2) } }
+                : vtBuilt,
             Ya = Ne.config.mode === "portfolio" ? Qft(nt) : Ne.config.symbols;
           return { strategy: tn, symbols: Ya.map((Gc) => Zi(Gc, Ne.quoteCurrency)) };
         },
@@ -138345,7 +139067,9 @@ const U1 =
                           ? "финальная проверка"
                           : U.phase === "robustness"
                             ? "проверка устойчивости"
-                            : `поколение ${U.generation}/${U.totalGenerations}`,
+                            : U.searchMethod === "pattern"
+                              ? `пошаговый поиск, раунд ${Math.max(1, U.patternRound)}`
+                              : `поколение ${U.generation}/${U.totalGenerations}`,
                       " ",
                       "· оценено ",
                       U.evaluatedGenomes,
@@ -138443,7 +139167,7 @@ const U1 =
                               type: "secondary",
                               style: { fontSize: 12 },
                               children:
-                                "Всё остальное оптимизатор выставит сам: период с 2020 года, цель «лучше и по прибыли, и по просадке», сетка, тейк, пороги и замена фильтров похожими, проверка устойчивости и — по желанию — стресс-тест на широком списке монет. Перед запуском покажет стоимость. Ваши боты не меняются.",
+                                "Всё остальное оптимизатор выставит сам: период с 2020 года, пошаговый поиск (каждый параметр по отдельности → удачные изменения вместе → уточнение), цель «лучше и по прибыли, и по просадке» с подбором депозита бота, улучшение — в большинстве периодов и групп монет, проверка устойчивости и — по желанию — стресс-тест на широком списке монет. Перед запуском покажет стоимость. Ваши боты не меняются.",
                             }),
                           ],
                         }),
@@ -138900,7 +139624,9 @@ const U1 =
                                 }),
                                 E.jsx(ZX, { type: "secondary", style: { fontSize: 12, margin: 0 }, children: cut[Rn] }),
                                 o.mode === "portfolio"
-                                  ? E.jsxs(ut, {
+                                  ? E.jsxs(E.Fragment, {
+                                      children: [
+                                        E.jsxs(ut, {
                                       wrap: !0,
                                       children: [
                                         E.jsx(_n, {
@@ -138925,6 +139651,65 @@ const U1 =
                                               maxPortfolioDrawdownPercent: ce ?? 40,
                                             }),
                                           style: { width: 80 },
+                                        }),
+                                      ],
+                                        }),
+                                        o.portfolioTarget === "improveBoth"
+                                          ? E.jsxs(ut, {
+                                              wrap: !0,
+                                              children: [
+                                                E.jsx(Ft, { children: "Можно менять депозит бота, ±%" }),
+                                                E.jsx(bn, {
+                                                  size: "small",
+                                                  min: 0,
+                                                  max: 100,
+                                                  value: o.portfolio.maxDepositChangePercent ?? 0,
+                                                  disabled: mt,
+                                                  onChange: (ce) =>
+                                                    l("portfolio", { ...o.portfolio, maxDepositChangePercent: ce ?? 0 }),
+                                                  style: { width: 80 },
+                                                }),
+                                                E.jsx(wn, {
+                                                  text: "Прибыль и суммарная просадка портфеля пропорциональны депозиту бота. Вариант с лучшим соотношением прибыль/просадка сравнивается с исходной при депозите, который уравновешивает оба показателя (в этих пределах): так он может стать лучше сразу по обоим. 0 — сравнивать при том же депозите (строже, улучшения находятся реже).",
+                                                }),
+                                              ],
+                                            })
+                                          : null,
+                                        o.portfolioTarget === "improveBoth"
+                                          ? E.jsxs(ut, {
+                                              wrap: !0,
+                                              children: [
+                                                E.jsx(_n, {
+                                                  checked: o.portfolio.foldConsistency !== !1,
+                                                  disabled: mt,
+                                                  onChange: (ce) =>
+                                                    l("portfolio", { ...o.portfolio, foldConsistency: ce.target.checked }),
+                                                  children: "Улучшение — в большинстве периодов и групп монет",
+                                                }),
+                                                E.jsx(wn, {
+                                                  text: "Период поиска делится на отрезки по ~полгода, монеты поиска — на 2–3 группы. Оценка варианта не выше медианы оценок по этим срезам: улучшение, которое держится только на одном удачном отрезке или паре монет, не засчитывается.",
+                                                }),
+                                              ],
+                                            })
+                                          : null,
+                                        E.jsxs(ut, {
+                                          wrap: !0,
+                                          children: [
+                                            E.jsx(Ft, { children: "Сделок не меньше, % от исходной" }),
+                                            E.jsx(bn, {
+                                              size: "small",
+                                              min: 0,
+                                              max: 100,
+                                              value: o.constraints.minDealsSharePercent ?? 0,
+                                              disabled: mt,
+                                              onChange: (ce) =>
+                                                l("constraints", { ...o.constraints, minDealsSharePercent: ce ?? 0 }),
+                                              style: { width: 80 },
+                                            }),
+                                            E.jsx(wn, {
+                                              text: "Варианты, которые торгуют заметно реже исходной, отбрасываются: их «улучшение» обычно держится на малом числе сделок. 0 — без ограничения.",
+                                            }),
+                                          ],
                                         }),
                                       ],
                                     })
@@ -139001,7 +139786,7 @@ const U1 =
                                           type: "secondary",
                                           style: { fontSize: 12, margin: "4px 0 8px" },
                                           children:
-                                            "1) исходная стратегия на всех монетах за весь период → 2) поиск на «ключевых» монетах за последние месяцы → 3) лучшие варианты проверяются на всех монетах за весь период → 4) проверка устойчивости: по годам, на невиденных монетах и периоде, плато. Победитель — по 3-й и 4-й ступеням.",
+                                            "1) исходная стратегия на всех монетах за весь период → 2) поиск на «ключевых» монетах (весь период или последние месяцы) → 3) лучшие варианты проверяются на всех монетах за весь период → 4) проверка устойчивости: по годам, на невиденных монетах и периоде, плато. Победитель — по 3-й и 4-й ступеням.",
                                         }),
                                         E.jsxs(or, {
                                           vertical: !0,
@@ -139061,7 +139846,8 @@ const U1 =
                                                     { value: 6, label: "последние 6 мес" },
                                                     { value: 12, label: "последние 12 мес" },
                                                     { value: 24, label: "последние 24 мес" },
-                                                    { value: 0, label: "весь период (дорого)" },
+                                                    { value: 36, label: "последние 36 мес" },
+                                                    { value: 0, label: "весь период (рекомендуется)" },
                                                   ],
                                                 }),
                                               ],
@@ -139274,6 +140060,24 @@ const U1 =
                                 E.jsx(pl, {
                                   block: !0,
                                   disabled: mt,
+                                  value: o.genetic.searchMethod === "genetic" ? "genetic" : "pattern",
+                                  onChange: (ce) => l("genetic", { ...o.genetic, searchMethod: ce }),
+                                  options: [
+                                    { value: "pattern", label: "Пошаговый (рекомендуется)" },
+                                    { value: "genetic", label: "Генетический" },
+                                  ],
+                                }),
+                                E.jsx(Ft, {
+                                  type: "secondary",
+                                  style: { fontSize: 12 },
+                                  children:
+                                    o.genetic.searchMethod === "genetic"
+                                      ? "Случайные скрещивания и мутации многих параметров сразу. На десятках параметров и ~100 вариантах обычно уступает пошаговому: случайные изменения чаще ухудшают уже настроенную стратегию."
+                                      : "Сначала каждый параметр сдвигается вверх и вниз по отдельности (плюс «макро»-сдвиги сетки: все отступы шире/уже, объёмы ближе/дальше), удачные изменения объединяются и продолжаются, пока есть прирост, затем шаг уменьшается вдвое. Ход поиска воспроизводим и продолжается после остановки.",
+                                }),
+                                E.jsx(pl, {
+                                  block: !0,
+                                  disabled: mt,
                                   value: Ue,
                                   onChange: (ce) => {
                                     const Ne = ce;
@@ -139286,7 +140090,50 @@ const U1 =
                                     { value: "custom", label: "Свой", disabled: !0 },
                                   ],
                                 }),
-                                E.jsxs(bl, {
+                                o.genetic.searchMethod !== "genetic"
+                                  ? E.jsxs(bl, {
+                                      gutter: [12, 8],
+                                      children: [
+                                        E.jsxs(rn, {
+                                          span: 12,
+                                          children: [
+                                            E.jsx(ar, {
+                                              title: "Сколько вариантов настроек можно оценить на монетах поиска (каждый — по бэктесту на монету)",
+                                              children: E.jsx(Ft, { type: "secondary", children: "Вариантов (бюджет)" }),
+                                            }),
+                                            E.jsx(bn, {
+                                              min: 10,
+                                              max: 500,
+                                              value: o.genetic.searchBudget ?? 110,
+                                              disabled: mt,
+                                              onChange: (ce) => l("genetic", { ...o.genetic, searchBudget: ce ?? 110 }),
+                                              style: { width: "100%" },
+                                            }),
+                                          ],
+                                        }),
+                                        E.jsxs(rn, {
+                                          span: 12,
+                                          children: [
+                                            E.jsx(ar, {
+                                              title:
+                                                "Сколько раундов подряд без улучшения допустимо (каждый такой раунд вдвое уменьшает шаг), прежде чем поиск остановится",
+                                              children: E.jsx(Ft, { type: "secondary", children: "Раундов без улучшения" }),
+                                            }),
+                                            E.jsx(bn, {
+                                              min: 1,
+                                              max: 4,
+                                              value: ga(o.genetic.earlyStopGenerations || 2, 1, 4),
+                                              disabled: mt,
+                                              onChange: (ce) =>
+                                                l("genetic", { ...o.genetic, earlyStopGenerations: ce ?? 2 }),
+                                              style: { width: "100%" },
+                                            }),
+                                          ],
+                                        }),
+                                      ],
+                                    })
+                                  : null,
+                                o.genetic.searchMethod !== "genetic" ? null : E.jsxs(bl, {
                                   gutter: [12, 8],
                                   children: [
                                     E.jsxs(rn, {
@@ -139679,7 +140526,10 @@ const U1 =
                             R === "paused" ? E.jsx(un, { color: "orange", children: "пауза" }) : null,
                             D.stagnantGenerations >= 2 && D.phase === "search"
                               ? E.jsx(ar, {
-                                  title: "Лучший результат не улучшался — поиск расширяется",
+                                  title:
+                                    D.searchMethod === "pattern"
+                                      ? "Раунды без улучшения — шаг уменьшается, поиск близок к завершению"
+                                      : "Лучший результат не улучшался — поиск расширяется",
                                   children: E.jsxs(un, { color: "gold", children: ["застой ", D.stagnantGenerations] }),
                                 })
                               : null,
@@ -139708,18 +140558,29 @@ const U1 =
                                   E.jsx(ra, {
                                     title:
                                       D.phase === "search"
-                                        ? "Поколение"
+                                        ? D.searchMethod === "pattern"
+                                          ? "Вариантов"
+                                          : "Поколение"
                                         : D.phase === "baseline"
                                           ? "Монет готово"
                                           : "Проверено",
-                                    value: D.phase === "search" ? D.currentGeneration : D.generationDone,
-                                    suffix: D.phase === "search" ? `/ ${D.totalGenerations}` : `/ ${D.generationSize}`,
+                                    value:
+                                      D.phase === "search" && D.searchMethod !== "pattern"
+                                        ? D.currentGeneration
+                                        : D.generationDone,
+                                    suffix:
+                                      D.phase === "search" && D.searchMethod !== "pattern"
+                                        ? `/ ${D.totalGenerations}`
+                                        : `/ ${D.generationSize}`,
                                   }),
                                   D.phase === "search"
-                                    ? E.jsxs(Ft, {
+                                    ? E.jsx(Ft, {
                                         type: "secondary",
                                         style: { fontSize: 12 },
-                                        children: ["вариантов ", D.generationDone, "/", D.generationSize],
+                                        children:
+                                          D.searchMethod === "pattern"
+                                            ? `раунд ${D.currentGeneration}${D.patternStep ? ` · шаг ${(D.patternStep * 100).toFixed(D.patternStep < 0.1 ? 1 : 0)}%` : ""}`
+                                            : `вариантов ${D.generationDone}/${D.generationSize}`,
                                       })
                                     : null,
                                 ],
@@ -139789,6 +140650,7 @@ const U1 =
                               : null,
                             pt.isBase ? E.jsx(un, { children: "исходные настройки" }) : null,
                             E.jsx(_B, { candidate: pt }),
+                            pt.isBase ? null : E.jsx(vtScaleTag, { candidate: pt }),
                             Pr.valid ? null : E.jsx(un, { color: "red", children: "не проходит ограничения" }),
                             zt && !pt.validation
                               ? E.jsx(un, { color: "default", children: "пока только монеты поиска" })
@@ -139868,7 +140730,7 @@ const U1 =
                                     children: [
                                       E.jsx(ar, {
                                         title:
-                                          "min(прибыль / прибыль исходной, просадка исходной / просадка); 1.00 = исходная",
+                                          "min(прибыль / прибыль исходной, просадка исходной / просадка) — на всех монетах, при рекомендуемом депозите бота; 1.00 = исходная, 1.10 — оба показателя лучше на 10%",
                                         children: E.jsx("div", {
                                           children: E.jsx(ra, {
                                             title: "Оценка",
@@ -139984,13 +140846,14 @@ const U1 =
                                 ],
                               })
                             : null,
+                          zt && !pt.isBase ? E.jsx(vtDepositNote, { candidate: pt, run: k }) : null,
                           pt.isBase && !de
                             ? E.jsx(dn, {
                                 style: { marginTop: 12 },
                                 type: "info",
                                 showIcon: !0,
                                 message:
-                                  "Исходные настройки оказались лучшими из найденных. Попробуйте шире диапазоны, другие параметры или больше поколений.",
+                                  "Исходные настройки оказались лучшими из найденных. Посмотрите «Влияние параметров» — что почти помогло; попробуйте шире диапазоны, другие параметры или больший бюджет поиска.",
                               })
                             : null,
                           W
@@ -140024,8 +140887,11 @@ const U1 =
                     ? E.jsx(Wr, {
                         size: "small",
                         title: "📈 Сходимость (оценка на монетах поиска)",
-                        children: E.jsx(Hdt, { history: j.history }),
+                        children: E.jsx(Hdt, { history: j.history, pattern: j.searchMethod === "pattern" }),
                       })
+                    : null,
+                  j && j.sensitivity && j.sensitivity.length > 0
+                    ? E.jsx(vtSensitivityCard, { rows: j.sensitivity, running: de })
                     : null,
                   j && (j.top.length > 0 || de)
                     ? E.jsxs(Wr, {
@@ -140100,7 +140966,7 @@ const U1 =
                             }),
                             E.jsx(Ft, {
                               children:
-                                "2. Нажмите «Найти устойчивые настройки»: исходная стратегия прогоняется на всех монетах с 2020 года (точка отсчёта), затем поиск перебирает варианты на ключевых монетах, лучшие проверяются на всех монетах за весь период.",
+                                "2. Нажмите «Найти устойчивые настройки»: исходная стратегия прогоняется на всех монетах с 2020 года (точка отсчёта). Затем на ключевых монетах каждый параметр сдвигается по отдельности — видно, что влияет и в какую сторону; удачные изменения объединяются, продолжаются, пока есть прирост, и уточняются. Лучшие варианты проверяются на всех монетах за весь период.",
                             }),
                             E.jsx(Ft, {
                               children:
@@ -140108,7 +140974,7 @@ const U1 =
                             }),
                             E.jsx(Ft, {
                               children:
-                                "4. Итог — вердикт «✅ устойчиво», «🟡 частично» или «⚠️ похоже на подгонку». Из устойчивого варианта можно создать нового бота; ваши боты не меняются. Всё это можно настроить вручную во вкладке «Ручная настройка».",
+                                "4. Итог — вердикт «✅ устойчиво», «🟡 частично» или «⚠️ похоже на подгонку» и рекомендуемый депозит бота (прибыль и просадка пропорциональны депозиту, поэтому вариант с лучшим соотношением прибыль/просадка сравнивается с исходной при уравновешивающем депозите). Из устойчивого варианта можно создать нового бота; ваши боты не меняются. Всё это можно настроить вручную во вкладке «Ручная настройка».",
                             }),
                             E.jsx(Ft, {
                               type: "secondary",
@@ -140158,7 +141024,11 @@ const U1 =
                 dynamicBlockOrder: Ve.portfolio.dynamicBlockOrder,
                 screeningCount: Math.min(Ve.portfolio.screeningCount, ct.length),
                 screeningMonths: Ve.portfolio.screeningMonths,
-                variants: Ve.genetic.populationSize * Ve.genetic.generations,
+                depositChange: Ve.portfolio.maxDepositChangePercent ?? 0,
+                variants:
+                  Ve.genetic.searchMethod === "pattern"
+                    ? Ve.genetic.searchBudget
+                    : Ve.genetic.populationSize * Ve.genetic.generations,
                 finalists: Ve.portfolio.finalists,
                 neighbors: Ve.robustness.neighbors,
               },
@@ -140176,9 +141046,12 @@ const U1 =
               onStressTextChange: (ce) => l("stressText", ce),
               onCancel: () => Lt(!1),
               onStart: bt,
+              searchMonths: Ve.portfolio.screeningMonths,
+              onSearchMonthsChange: (ce) => l("simpleSearchMonths", ce),
             })
           : null,
         E.jsx(jdt, {
+          folds: (j == null ? void 0 : j.searchFolds) ?? null,
           candidate: le,
           base: Xe,
           space: (k == null ? void 0 : k.space) ?? null,
