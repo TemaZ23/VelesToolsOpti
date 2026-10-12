@@ -131,6 +131,12 @@ export interface Candidate {
   generation: number;
   /** id параметров, отличающихся от базового бота. */
   changed: string[];
+  /**
+   * id параметров, которые мутация сдвинула относительно родителя (без побочных правок сетки/объёмов).
+   * По ним обновляется статистика успеха параметров; у базового кандидата — пустой список.
+   * Необязательно для совместимости: при отсутствии используется `changed`.
+   */
+  mutated?: string[];
   screen: CandidateEvaluation | null;
   full: CandidateEvaluation | null;
   createdAt: number;
