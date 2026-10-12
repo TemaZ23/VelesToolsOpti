@@ -1,0 +1,17 @@
+IS 2021-03-01…2025-04-20 {'LONG_OPT': (np.float64(7.83), np.float64(85.21), np.float64(0.0919)), 'LONG_OPT_VELES': (np.float64(7.58), np.float64(85.31), np.float64(0.0889))}
+Окно автора 2023-04-20…2026-04-20 {'LONG_OPT': (np.float64(7.27), np.float64(33.05), np.float64(0.2201)), 'LONG_OPT_VELES': (np.float64(7.06), np.float64(35.76), np.float64(0.1974))}
+OOS 2025-04-20…2026-10-01 {'LONG_OPT': (np.float64(6.84), np.float64(32.95), np.float64(0.2075)), 'LONG_OPT_VELES': (np.float64(6.95), np.float64(31.0), np.float64(0.2241))}
+Весь период 2021-03-01…2026-10-01 {'LONG_OPT': (np.float64(7.58), np.float64(85.21), np.float64(0.0889)), 'LONG_OPT_VELES': (np.float64(7.42), np.float64(85.31), np.float64(0.0869))}
+AUTHOR_22X [1.5] liq 8 / 62 median avg/mo 13.7
+AUTHOR_22X [2.25] liq 19 / 62 median avg/mo 19.9
+AUTHOR_22X [3.0] liq 23 / 62 median avg/mo 26.1
+AUTHOR_22X [3.375] liq 24 / 62 median avg/mo 29.4
+LONG_OPT [1.5] liq 1 / 62 median avg/mo 13.6
+LONG_OPT [2.25] liq 7 / 62 median avg/mo 19.2
+LONG_OPT [3.0] liq 19 / 62 median avg/mo 23.7
+LONG_OPT [3.375] liq 24 / 62 median avg/mo 26.0
+LONG_OPT+BTC_DD_FILTER [1.5] liq 0 / 62 median avg/mo 12.8
+LONG_OPT+BTC_DD_FILTER [2.25] liq 1 / 62 median avg/mo 19.2
+LONG_OPT+BTC_DD_FILTER [3.0] liq 16 / 62 median avg/mo 22.3
+LONG_OPT+BTC_DD_FILTER [3.375] liq 20 / 62 median avg/mo 24.7
+ok

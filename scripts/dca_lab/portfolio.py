@@ -320,6 +320,9 @@ def _stack_sleeves(market: Market, sleeves: list[Sleeve], n_slots: int) -> dict[
     return out
 
 
+EMPTY_SCHED = np.zeros(0)
+
+
 def run_sleeves(
     market: Market,
     sleeves: list[Sleeve],
@@ -327,6 +330,7 @@ def run_sleeves(
     t_from: int,
     t_to: int,
     record_deals: bool = False,
+    block_sched: np.ndarray | None = None,
 ) -> Result:
     t_to = min(t_to, market.t_end)
     st = _stack_sleeves(market, sleeves, len(sleeves))
@@ -351,6 +355,7 @@ def run_sleeves(
         t_from,
         t_to,
         3_000_000 if record_deals else 0,
+        EMPTY_SCHED if block_sched is None else np.ascontiguousarray(block_sched, dtype=np.float64),
     )
     deals = {}
     if record_deals:
@@ -367,9 +372,10 @@ def run(
     t_to: int,
     coins: list[str] | None = None,
     record_deals: bool = False,
+    block_sched: np.ndarray | None = None,
 ) -> Result:
     """Одиночный набор ботов: размер и блокировка берутся из PortfolioConfig."""
-    return run_sleeves(market, [sleeve_from_portfolio(bot, pf, coins)], pf, t_from, t_to, record_deals)
+    return run_sleeves(market, [sleeve_from_portfolio(bot, pf, coins)], pf, t_from, t_to, record_deals, block_sched)
 
 
 def run_batch(
@@ -377,9 +383,19 @@ def run_batch(
     configs: list[tuple[list[Sleeve], PortfolioConfig]],
     t_from: int,
     t_to: int,
+    block_scheds: list[np.ndarray | None] | None = None,
 ) -> list[Result]:
-    """Параллельный прогон набора портфелей (numba prange)."""
+    """Параллельный прогон набора портфелей (numba prange). block_scheds — режим рынка по дням."""
     t_to = min(t_to, market.t_end)
+    n_days_total = t_to // 1440 + 1
+    if block_scheds is None or all(b is None for b in block_scheds):
+        sched = np.zeros((len(configs), 0))
+    else:
+        sched = np.ones((len(configs), n_days_total))
+        for i, b in enumerate(block_scheds):
+            if b is not None:
+                ln = min(len(b), n_days_total)
+                sched[i, :ln] = b[:ln]
     n_slots = max(len(s) for s, _ in configs)
     stacks = [_stack_sleeves(market, s, n_slots) for s, _ in configs]
     b = {k: np.ascontiguousarray(np.stack([st[k] for st in stacks])) for k in stacks[0]}
@@ -404,6 +420,7 @@ def run_batch(
         gp,
         t_from,
         t_to,
+        np.ascontiguousarray(sched),
     )
     return [
         Result(stats[i], daily[i], sstats[i][: len(configs[i][0])], configs[i][1].deposit, t_from, t_to)

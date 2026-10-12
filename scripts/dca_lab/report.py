@@ -23,6 +23,7 @@ import numpy as np
 from .data import WORK_COINS
 from .optimize import series_for
 from .portfolio import Market, Result, date_of, load_market, minute_of, run_batch, run_sleeves
+from .regime import schedule_from_spec
 from .strategy import PortfolioConfig, Sleeve
 
 WINDOWS = {
@@ -40,36 +41,49 @@ def scaled(sleeves: list[Sleeve], k: float) -> list[Sleeve]:
     return out
 
 
-def load_configs(path: str) -> dict[str, tuple[list[Sleeve], PortfolioConfig]]:
+Config = tuple[list[Sleeve], PortfolioConfig, "np.ndarray | None"]
+
+
+def load_configs(path: str) -> dict[str, Config]:
     with open(path, encoding="utf-8") as f:
         raw = json.load(f)
     return {
-        name: ([Sleeve.from_dict(s) for s in d["sleeves"]], PortfolioConfig(**d["portfolio"])) for name, d in raw.items()
+        name: (
+            [Sleeve.from_dict(s) for s in d["sleeves"]],
+            PortfolioConfig(**d["portfolio"]),
+            schedule_from_spec(d.get("regime")),
+        )
+        for name, d in raw.items()
     }
+
+
+def _batch(market: Market, cfgs: list[Config], a: str, b: str) -> list[Result]:
+    return run_batch(market, [(c[0], c[1]) for c in cfgs], minute_of(a), minute_of(b), [c[2] for c in cfgs])
 
 
 def window_table(market: Market, configs: dict) -> dict[str, dict[str, dict]]:
     out: dict[str, dict[str, dict]] = {}
     names = list(configs)
     for wname, (a, b) in WINDOWS.items():
-        res = run_batch(market, [configs[n] for n in names], minute_of(a), minute_of(b))
+        res = _batch(market, [configs[n] for n in names], a, b)
         out[wname] = {n: r.summary() for n, r in zip(names, res)}
     return out
 
 
 def size_profile(
-    market: Market, sleeves: list[Sleeve], pf: PortfolioConfig, ks: list[float], t_from: str, t_to: str
+    market: Market, cfg: Config, ks: list[float], t_from: str, t_to: str
 ) -> list[dict]:
     """Масштаб размера ботов → метрики (без реинвеста и с реинвестом)."""
+    sleeves, pf, sched = cfg
     cfgs = []
     for compound in (False, True):
         for k in ks:
             p = copy.deepcopy(pf)
             p.compound = compound
-            cfgs.append((scaled(sleeves, k), p))
-    res = run_batch(market, cfgs, minute_of(t_from), minute_of(t_to))
+            cfgs.append((scaled(sleeves, k), p, sched))
+    res = _batch(market, cfgs, t_from, t_to)
     rows = []
-    for (sl, p), r in zip(cfgs, res):
+    for (sl, p, _), r in zip(cfgs, res):
         s = r.summary()
         rows.append(
             {
@@ -89,15 +103,15 @@ def size_profile(
 
 def start_date_risk(
     market: Market,
-    sleeves: list[Sleeve],
-    pf: PortfolioConfig,
+    cfg_in: Config,
     ks: list[float],
-    first: str = "2023-05-01",
+    first: str = "2021-03-01",
     last: str = "2026-04-01",
     horizon_days: int | None = None,
     compound: bool = True,
 ) -> list[dict]:
     """Запуск в начале каждого месяца: доля ликвидаций, медианный и худший результат."""
+    sleeves, pf, sched = cfg_in
     starts = []
     y, m = map(int, first[:7].split("-"))
     ly, lm = map(int, last[:7].split("-"))
@@ -115,7 +129,7 @@ def start_date_risk(
         def one(st: str, cfg=cfg) -> dict:
             t0 = minute_of(st)
             t1 = t0 + horizon_days * 1440 if horizon_days else market.t_end
-            r = run_sleeves(market, cfg[0], cfg[1], t0, min(t1, market.t_end))
+            r = run_sleeves(market, cfg[0], cfg[1], t0, min(t1, market.t_end), block_sched=sched)
             return {
                 "start": st,
                 "liquidated": int(r.liquidated),
@@ -147,7 +161,7 @@ def start_date_risk(
 
 def monthly_table(market: Market, configs: dict, t_from: str, t_to: str) -> dict[str, list[tuple[str, float]]]:
     names = list(configs)
-    res = run_batch(market, [configs[n] for n in names], minute_of(t_from), minute_of(t_to))
+    res = _batch(market, [configs[n] for n in names], t_from, t_to)
     return {n: r.monthly_returns() for n, r in zip(names, res)}
 
 
@@ -160,11 +174,12 @@ def main() -> None:
     configs = load_configs(args.configs)
     market = load_market(WORK_COINS, series=series_for("long", "crash"), verbose=False)
     ks = [float(x) for x in args.ks.split(",")]
-    data: dict = {"windows": window_table(market, configs), "sizes": {}, "start_risk": {}, "monthly": {}}
-    data["monthly"] = monthly_table(market, configs, "2023-04-20", "2026-10-01")
-    for name, (sl, pf) in configs.items():
-        data["sizes"][name] = size_profile(market, sl, pf, ks, "2023-04-20", "2026-10-01")
-        data["start_risk"][name] = start_date_risk(market, sl, pf, ks)
+    data: dict = {"windows": window_table(market, configs), "sizes": {}, "start_risk": {}, "start_risk_12m": {}, "monthly": {}}
+    data["monthly"] = monthly_table(market, configs, "2021-03-01", "2026-10-01")
+    for name, cfg in configs.items():
+        data["sizes"][name] = size_profile(market, cfg, ks, "2021-03-01", "2026-10-01")
+        data["start_risk"][name] = start_date_risk(market, cfg, ks)
+        data["start_risk_12m"][name] = start_date_risk(market, cfg, ks, last="2025-09-01", horizon_days=365)
         print("готово:", name, flush=True)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:

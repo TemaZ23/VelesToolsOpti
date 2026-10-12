@@ -11,3 +11,4 @@
 - Every data contract coming from the backend must be represented as a `...Dto` interface. DTO shapes mirror backend responses exactly and must never be altered for convenience—derive separate domain types instead.
 - In the bots page filters, use Ant Design `Select` components instead of native selects for consistency.
 - For one-time onboarding or announcement modals, guard display with `readStorageValue`/`writeStorageValue` so users see them only once.
+- DCA Lab (`scripts/dca_lab`): run heavy Python simulations one at a time (each loads ~7 GB); load only the indicator series a task needs via `series_for(...)`; keep market data under `cache/dca_lab/` (git-ignored).

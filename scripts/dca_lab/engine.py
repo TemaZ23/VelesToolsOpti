@@ -130,8 +130,10 @@ def simulate(
     t_from,
     t_to,
     max_deals,
+    block_sched,  # float64[дни от GLOBAL_T0]: множитель блокировки (режим рынка); пусто — 1.0
 ):
     n_coins = coin_off.shape[0]
+    n_sched = block_sched.shape[0]
     n_strat = cser.shape[0]
     deposit = gparams[G_DEPOSIT]
     maker = gparams[G_MAKER]
@@ -214,6 +216,8 @@ def simulate(
         upnl_low = 0.0
         notional = 0.0
         is_funding = (t % 480) == 0
+        day = t // 1440
+        sched = block_sched[day] if day < n_sched else 1.0
         for s in range(n_strat):
             pull_up = fparams[s, F_PULL_UP]
             tp_min = fparams[s, F_TP_MIN]
@@ -226,6 +230,8 @@ def simulate(
             tp_mode = iparams[s, I_TP_MODE]
             sl_mode = iparams[s, I_SL_MODE]
             block = iparams[s, I_BLOCK]
+            if n_sched > 0:
+                block = int(block * sched + 1e-9)
             dyn_order = iparams[s, I_DYN]
             dr = float(iparams[s, I_DIR])  # +1 / -1
             long = dr > 0
@@ -562,6 +568,7 @@ def simulate_batch(
     gparams,  # [B, N_G]
     t_from,
     t_to,
+    block_sched,  # [B, D]
 ):
     b_count = cser.shape[0]
     n_days = (t_to - t_from + 1439) // 1440
@@ -590,6 +597,7 @@ def simulate_batch(
             t_from,
             t_to,
             0,
+            block_sched[b],
         )
         out_stats[b] = res[0]
         out_daily[b] = res[1]

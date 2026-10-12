@@ -13,23 +13,33 @@
 Итоговые настройки обязательно перепроверяйте массовым бэктестом в Veles Tools —
 это эталон; DCA Lab — быстрый фильтр идей.
 
+**Результаты оптимизации LONG_STRATEGY:** [`output/dca_lab/REPORT.md`](../../output/dca_lab/REPORT.md),
+готовые настройки бота — [`output/dca_lab/LONG_OPT_veles_settings.md`](../../output/dca_lab/LONG_OPT_veles_settings.md).
+
 ## Быстрый старт
 
 ```bash
 pip install numpy numba pytest
-# 1. минутные свечи Binance USDⓈ-M (≈95 МБ на монету за 2023-01..2026-09)
-PYTHONPATH=. python3 -m scripts.dca_lab.data --start 2023-01 --end 2026-09          # список WORK
-PYTHONPATH=. python3 -m scripts.dca_lab.data --start 2023-01 --end 2026-09 --stress # список STRESS-TEST
+# 1. минутные свечи Binance USDⓈ-M (≈145 МБ на монету за 2021-01..2026-09) + BTC для фильтра режима
+PYTHONPATH=. python3 -m scripts.dca_lab.data --start 2021-01 --end 2026-09                # список WORK
+PYTHONPATH=. python3 -m scripts.dca_lab.data --start 2020-06 --end 2026-09 --coins BTC    # фильтр BTC
+PYTHONPATH=. python3 -m scripts.dca_lab.data --start 2021-01 --end 2026-09 --extend       # дописать историю назад
 # 2. стратегия автора
 PYTHONPATH=. python3 -m scripts.dca_lab.run baseline
-# 3. эволюционный поиск на in-sample окне
-PYTHONPATH=. python3 -m scripts.dca_lab.run optimize --gens 40
+# 3. эволюционный поиск на in-sample окне (long | short | crash)
+PYTHONPATH=. python3 -m scripts.dca_lab.run optimize --problem long --gens 40 --min-deals 2000
+# 4. отбор по in-sample, OOS-проверка, чувствительность → configs.json
+PYTHONPATH=. python3 -m scripts.dca_lab.finalize --long output/dca_lab/evolve_long_<tag>.json
+# 5. окна, профили размера, риск по дате старта → report_data.json → таблицы
+PYTHONPATH=. python3 -m scripts.dca_lab.report --configs output/dca_lab/configs_report.json
+PYTHONPATH=. python3 -m scripts.dca_lab.make_report > output/dca_lab/tables.md
 # тесты механики движка
 PYTHONPATH=. python3 -m pytest -q scripts/dca_lab/tests
 ```
 
-Памяти нужно ~9 ГБ на 63 монеты со всеми сериями индикаторов (можно загрузить подмножество
-серий: `load_market(coins, series=[...])`). Запускайте тяжёлые задачи по одной.
+Памяти нужно ~7 ГБ на 63 монеты × 5,6 года с сериями одной задачи (`series_for("long")`);
+все серии меню сразу в 15 ГБ не помещаются. Запускайте тяжёлые задачи строго по одной — два процесса
+одновременно ловят OOM.
 
 ## Модули
 
@@ -40,8 +50,13 @@ PYTHONPATH=. python3 -m pytest -q scripts/dca_lab/tests
 | `strategy.py` | `BotConfig` (вход, сетка, тейк, стоп, направление), `Sleeve` (набор ботов с размером и блокировкой), пресеты |
 | `engine.py` | numba-движок: минутная синхронная симуляция всех ботов и стратегий |
 | `portfolio.py` | `Market` (данные), `run` / `run_sleeves` / `run_batch`, метрики `Result` |
-| `optimize.py` | пространство параметров, целевая функция, эволюция |
-| `run.py` | CLI |
+| `optimize.py` | задачи (LONG / SHORT / ловец проливов), пространство параметров, целевая функция, эволюция |
+| `finalize.py` | отбор кандидатов по in-sample, OOS-проверка, чувствительность, сборка `configs.json` |
+| `report.py` | метрики по окнам, профиль «размер бота → риск», риск по дате старта |
+| `make_report.py` | Markdown-таблицы из `report_data.json` |
+| `regime.py` | режим рынка по BTC → множитель блокировки по дням |
+| `veles_format.py` | настройки бота в терминах интерфейса Veles |
+| `run.py` | CLI (`baseline`, `optimize`) |
 
 ## Как трактуются настройки Veles
 
