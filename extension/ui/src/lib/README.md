@@ -121,3 +121,34 @@ Scoring для walk-forward валидации:
 - `pingConnection()` – проверка связи с background script.
 - `readConnectionStatus()` – получение статуса подключения к Veles.
 - `updateRequestDelay(delayMs)` – обновление задержки между запросами.
+
+## `botParams.ts`
+Числовые параметры реального DTO бота для портфельного оптимизатора (чистые функции, без сети):
+- `pathToId(path)` – сериализует путь `['settings', 'orders', 3, 'indent']` в id `settings.orders[3].indent`.
+- `getAtPath(obj, path)` – читает значение по пути, `undefined` если путь обрывается.
+- `setAtPath(obj, path, value)` – записывает число по существующему пути (мутирует объект), иначе бросает ошибку.
+- `roundTo(value, decimals)` – округление «от нуля» без артефактов двоичной арифметики (1.005 → 1.01), −0 → 0.
+- `formatParamValue(value, decimals)` – строка значения для подписей (округление без лишних нулей).
+- `defaultParamBounds(kind, base, indicator?)` – границы поиска по умолчанию (min/max/step/decimals/enabled): пороги RSI/MFI/Stoch, CCI, CMO, Williams %R, ADX, ATR%, объёма (выключен), неизвестных индикаторов; отступы/объёмы ордеров, мин. P&L тейка, отступы стопа, подтяжка. Ограничены естественной областью, база всегда внутри диапазона, точность не меньше точности базы.
+- `extractParams(strategy)` – извлекает `ParamSpec[]` в порядке: вход (`conditions`, `settings.conditions`) → ордера (`settings.baseOrder`, `settings.orders[i]`: отступ, объём, условия) → тейк (`checkPnl`, условия) → стоп (`indent`, `conditionalIndent`, условия) → `pullUp`. Только конечные числа; подписи на русском («CCI 1 час < 80», «Ордер 4: отступ»); пороги базовых сигналов (`basic`) и объёма выключены по умолчанию.
+- `baseValues(params)` – значения базового бота (id → base).
+- `clampAndRound(params, values)` – ограничение каждым [min, max] и округление до decimals (новый объект, отсутствующие значения = база).
+- `enforceGridConstraints(params, values)` – строго возрастающие отступы ордеров (зазор ≥ 0.01, иначе + шаг), первый ордер не меняется, пары, нарушенные уже в базе, не трогаются.
+- `normalizeVolumes(params, values)` – масштабирует включённые объёмы так, чтобы сумма равнялась сумме базовых (обычно 100%), остаток округления — на последний включённый ордер, объём ≥ 0.01.
+- `prepareValues(params, values)` – `clampAndRound` → `enforceGridConstraints` → `normalizeVolumes`.
+- `paramsHash(params, values)` – стабильный хеш значений (`p` + FNV-1a 32 бита), не зависит от порядка ключей.
+- `patchStrategy(strategy, params, values)` – глубокая копия стратегии с записанными подготовленными значениями; значения, равные базе, не записываются (идемпотентно для базовых значений).
+- `diffFromBase(params, values)` – id параметров, отличающихся от базы после округления.
+- `describeParamChange(param, value)` – описание изменения: «CCI 1 час < 80 → 60», «Ордер 4: отступ 15% → 13.8%».
+- `buildBotCreatePayloadFromStrategy(strategy, name)` – payload `POST /api/bots` из (пропатченной) стратегии с глубокими копиями; бросает русские ошибки без apiKey/алгоритма/биржи/депозита/названия.
+
+## `portfolioSearch.ts`
+Чистые функции поиска портфельного оптимизатора («уточнение базового бота»).
+- `createRng(seed)` – детерминированный генератор mulberry32, значения в `[0, 1)`.
+- `pickWeighted(items, weights, rng)` – выбор элемента пропорционально весу (некорректные веса = 0; все нули — равновероятно).
+- `proposeCandidates(input)` – новые наборы значений от лучших родителей: меняет 1–N включённых параметров на ±шаг (чаще 1 шаг), выбирает параметры с весом `(wins+1)/(tries+2)` по `paramStats`, прогоняет `prepareValues`, отбрасывает уже виденные хеши; возвращает `values`, `hash`, `parentIndex`, `changed` (отличия от базы) и `mutated` (что изменено относительно родителя).
+- `computeObjective(metrics, folds, cfg)` – score кандидата: `pnlToRisk`, `robust` (0.5 × весь период + 0.5 × худший под-период) или `profitCapped` (P&L со штрафом за превышение МПУ), со штрафом за малое число сделок.
+- `selectForPromotion(candidates, bestScreenScore, promoteCount, tolerance)` – кого отправить с отборочной корзины на полную.
+- `updateParamStats(stats, changed, improved)` – новая статистика успеха изменений по параметрам.
+- `isImprovement(score, bestScore, minImprovement)` – принимать ли нового лучшего.
+
