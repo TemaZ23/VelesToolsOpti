@@ -84,6 +84,11 @@ const SINGLE_STEP_PROBABILITY = 0.75;
 const DEFAULT_ATTEMPTS_PER_CANDIDATE = 50;
 /** Вес полного периода в устойчивой цели (остальное — худший под-период). */
 const ROBUST_FULL_PERIOD_WEIGHT = 0.5;
+/**
+ * Минимальная доля сделок кандидата от сделок базы на той же корзине: кандидат, который почти
+ * не торгует, не может пройти отбор или стать лучшим (см. hasEnoughDeals).
+ */
+export const MIN_DEALS_SHARE_OF_BASE = 0.25;
 /** Относительный допуск сравнения с порогом отбора (защита от двоичного шума). */
 const THRESHOLD_EPSILON = 1e-12;
 
@@ -340,9 +345,15 @@ export const proposeCandidates = (input: ProposeCandidatesInput): CandidatePropo
 // ЦЕЛЕВАЯ ФУНКЦИЯ
 // ═══════════════════════════════════════════════════════════════════
 
-/** Худший P&L к риску среди под-периодов со сделками (null — таких под-периодов нет). */
+/**
+ * Худший P&L к риску среди под-периодов (null — под-периодов нет). Под-период без сделок считается
+ * нулём, а не пропускается: иначе кандидат, который «промолчал» в провальном под-периоде, выглядел бы
+ * лучше любого кандидата с убытком в нём.
+ */
 const worstFoldPnlToRisk = (folds: FoldMetrics[]): number | null => {
-  const values = folds.filter((fold) => fold.deals > 0 && isFiniteNumber(fold.pnlToRisk)).map((fold) => fold.pnlToRisk);
+  const values = folds
+    .filter((fold) => isFiniteNumber(fold.pnlToRisk))
+    .map((fold) => (fold.deals > 0 ? fold.pnlToRisk : 0));
   return values.length > 0 ? Math.min(...values) : null;
 };
 
@@ -392,9 +403,10 @@ const applyDealsPenalty = (score: number, deals: number, minDeals: number): numb
 };
 
 /**
- * Score кандидата по портфельным метрикам: null — оценить нельзя (нет метрик или нечисловой результат),
- * 0 — нет сделок. 'pnlToRisk' — как в группе бэктестов; 'robust' — среднее P&L к риску за весь период
- * и худшего под-периода со сделками; 'profitCapped' — P&L со штрафом (cap / МПУ)² при МПУ > cap.
+ * Score кандидата по портфельным метрикам: null — оценить нельзя (нет метрик, нет ни одной сделки или
+ * нечисловой результат; такой кандидат не проходит отбор и не становится лучшим). 'pnlToRisk' — как в
+ * группе бэктестов; 'robust' — среднее P&L к риску за весь период и худшего под-периода (под-период без
+ * сделок считается нулём); 'profitCapped' — P&L со штрафом (cap / МПУ)² при МПУ > cap.
  * Затем штраф × deals / minDeals, если сделок меньше minDeals.
  */
 export const computeObjective = (
@@ -406,7 +418,7 @@ export const computeObjective = (
     return null;
   }
   if (!(metrics.totalDeals > 0)) {
-    return 0;
+    return null;
   }
   const raw = baseObjective(metrics, folds, cfg);
   if (!Number.isFinite(raw)) {
@@ -414,6 +426,71 @@ export const computeObjective = (
   }
   const score = applyDealsPenalty(raw, metrics.totalDeals, cfg.minDeals);
   return score === 0 ? 0 : score;
+};
+
+/** Доли отборочной корзины от полной для пересчёта ограничений цели. */
+export interface StageScale {
+  /** Для минимума сделок. */
+  deals: number;
+  /** Для ограничения МПУ. */
+  mae: number;
+}
+
+export interface ScreenStageScaleInput {
+  /** Метрики базы на полной корзине (null — ещё не посчитаны). */
+  baseFull: Pick<PortfolioMetrics, 'totalDeals' | 'maxConcurrentMae'> | null;
+  /** Метрики базы на отборочной корзине (null — ещё не посчитаны). */
+  baseScreen: Pick<PortfolioMetrics, 'totalDeals' | 'maxConcurrentMae'> | null;
+  screenSize: number;
+  basketSize: number;
+}
+
+/** Отношение a / b в (0, 1]; null — посчитать нельзя. */
+const shareOf = (part: number | null | undefined, whole: number | null | undefined): number | null => {
+  if (!(isFiniteNumber(part) && isFiniteNumber(whole) && part > 0 && whole > 0)) {
+    return null;
+  }
+  return Math.min(1, part / whole);
+};
+
+/**
+ * Доли отборочной корзины от полной: сделки отбора / сделки полной корзины и МПУ отбора / МПУ полной
+ * корзины — по базе (одинаково для всех кандидатов, включая саму базу); если данных базы нет —
+ * размер отборочной корзины / размер полной. Доли ограничены интервалом (0, 1].
+ */
+export const screenStageScale = (input: ScreenStageScaleInput): StageScale => {
+  const fallback = shareOf(input.screenSize, input.basketSize) ?? 1;
+  return {
+    deals: shareOf(input.baseScreen?.totalDeals, input.baseFull?.totalDeals) ?? fallback,
+    mae: shareOf(input.baseScreen?.maxConcurrentMae, input.baseFull?.maxConcurrentMae) ?? fallback,
+  };
+};
+
+/**
+ * Цель для отборочной корзины: минимум сделок и ограничение МПУ заданы для полной корзины, поэтому
+ * масштабируются долями отбора (иначе на маленькой корзине штраф за сделки срабатывал бы почти всегда,
+ * а ограничение МПУ — почти никогда). Вход не изменяется.
+ */
+export const scaleObjective = (cfg: ObjectiveConfig, scale: StageScale): ObjectiveConfig => ({
+  ...cfg,
+  minDeals: cfg.minDeals * toNonNegative(scale.deals),
+  maxMaeCap: isFiniteNumber(cfg.maxMaeCap) ? cfg.maxMaeCap * toNonNegative(scale.mae) : cfg.maxMaeCap,
+});
+
+/**
+ * Хватает ли кандидату сделок по сравнению с базой на той же корзине: deals ≥ referenceDeals × share.
+ * Без сделок базы (null, 0, нечисловое значение) порога нет. Нужен потому, что штраф minDeals уменьшает
+ * только положительный score: при убыточной базе кандидат, который почти не торгует, иначе «выиграл» бы.
+ */
+export const hasEnoughDeals = (
+  deals: number | null | undefined,
+  referenceDeals: number | null | undefined,
+  share: number = MIN_DEALS_SHARE_OF_BASE,
+): boolean => {
+  if (!(isFiniteNumber(referenceDeals) && referenceDeals > 0)) {
+    return true;
+  }
+  return isFiniteNumber(deals) && deals >= referenceDeals * toNonNegative(share);
 };
 
 // ═══════════════════════════════════════════════════════════════════

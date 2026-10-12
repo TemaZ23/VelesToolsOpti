@@ -61,6 +61,7 @@ import {
 import ParamsTable from '../components/portfolioOptimizer/ParamsTable';
 import PortfolioLogViewer from '../components/portfolioOptimizer/PortfolioLogViewer';
 import RunProgressPanel from '../components/portfolioOptimizer/RunProgressPanel';
+import type { OtherTabRun } from '../components/portfolioOptimizer/runLock';
 import { portfolioRunSession } from '../components/portfolioOptimizer/runSession';
 import {
   buildBestSummary,
@@ -69,13 +70,14 @@ import {
   buildOptimizedBotName,
   type CandidateActionTarget,
   formatDuration,
-  isProbablyRunningElsewhere,
   withGroupMissing,
+  withSchedulerConfig,
 } from '../components/portfolioOptimizer/runView';
 import SavedRunBanner from '../components/portfolioOptimizer/SavedRunBanner';
 import PageHeader from '../components/ui/PageHeader';
 import { useBacktestGroups } from '../context/BacktestGroupsContext';
 import { buildBotCreatePayloadFromStrategy, extractParams, patchStrategy, roundTo } from '../lib/botParams';
+import { DEFAULT_AGGREGATION_CONFIG } from '../services/backtestAggregations';
 import {
   clearSavedPortfolioState,
   estimateBacktests,
@@ -84,6 +86,7 @@ import {
   loadSavedPortfolioState,
   matchGroupBacktestsToBasket,
 } from '../services/portfolioOptimizer';
+import { readAggregationConfig, writeAggregationConfig } from '../storage/backtestAggregationConfigStore';
 import type { TradingBot } from '../types/bots';
 import type {
   Candidate,
@@ -118,6 +121,15 @@ interface LoadedGroup {
 }
 
 const BOTS_PAGE_SIZE = 100;
+
+/** Как часто проверять, не выполняется ли сохранённый запуск в другой вкладке. */
+const OTHER_TAB_CHECK_INTERVAL_MS = 10_000;
+
+const OTHER_TAB_BLOCKED_TITLE = 'Оптимизатор уже работает в другой вкладке';
+const OTHER_TAB_BLOCKED_CONTENT =
+  'Запуск выполняется в другой вкладке расширения. Управляйте им там: остановите его или закройте ту вкладку, ' +
+  'прежде чем продолжать или начинать запуск здесь, — иначе два запуска будут создавать бэктесты дважды и ' +
+  'перезаписывать сохранённое состояние друг друга.';
 
 const OBJECTIVE_OPTIONS: Array<{ value: ObjectiveKind; label: string }> = [
   { value: 'robust', label: 'Устойчивый P&L к риску (весь период + худший под-период)' },
@@ -342,8 +354,19 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       quoteCurrency,
       run: runSettings,
       algorithm: loaded?.strategy.algorithm ?? null,
+      baseStrategy: loaded?.strategy ?? null,
+      params: loaded ? params : undefined,
     });
-  }, [baseGroup, basket, loaded, loadedGroup, quoteCurrency, runSettings]);
+  }, [baseGroup, basket, loaded, loadedGroup, params, quoteCurrency, runSettings]);
+
+  /** Блокировка по ботам, с которой страница группы базы показывает её метрики (как BacktestGroupDetailsPage). */
+  const baseGroupBlock = useMemo(() => {
+    if (!baseGroup) {
+      return null;
+    }
+    const stored = readAggregationConfig(baseGroup.id) ?? DEFAULT_AGGREGATION_CONFIG;
+    return Math.min(Math.max(1, stored.maxConcurrentPositions), Math.max(1, baseGroup.backtestIds.length));
+  }, [baseGroup]);
 
   const draftConfig = useMemo(
     () => buildPortfolioConfig({ form: effectiveForm, botId: form.botId ?? 0, botName: loaded?.name ?? '', params }),
@@ -385,9 +408,39 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
   }, [active]);
 
   const problems = useMemo(
-    () => validateRunDraft({ form: effectiveForm, loadedBotId: loaded?.botId ?? null, params }),
-    [effectiveForm, loaded, params],
+    () =>
+      validateRunDraft({
+        form: effectiveForm,
+        loadedBotId: loaded?.botId ?? null,
+        params,
+        // С группой базы цена базы известна только после «Проверить» (недостающие монеты).
+        baseBacktests: baseGroup ? (groupMatch ? groupMatch.missing.length : null) : basket.length,
+      }),
+    [baseGroup, basket.length, effectiveForm, groupMatch, loaded, params],
   );
+
+  // Выполняется ли сохранённый запуск в другой вкладке (Web Locks или «пульс»): проверяется периодически.
+  const [elsewhere, setElsewhere] = useState<OtherTabRun>('none');
+  useEffect(() => {
+    if (!savedState || active) {
+      setElsewhere('none');
+      return;
+    }
+    let cancelled = false;
+    const check = (): void => {
+      void portfolioRunSession.detectOtherTabRun(savedState, Date.now()).then((value) => {
+        if (!cancelled) {
+          setElsewhere(value);
+        }
+      });
+    };
+    check();
+    const timer = setInterval(check, OTHER_TAB_CHECK_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [active, savedState]);
 
   const launchNewRun = useCallback(() => {
     if (!loaded) {
@@ -407,15 +460,25 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
     }
   }, [effectiveForm, loaded, messageApi, params]);
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
     if (problems.length > 0) {
       messageApi.error(problems[0]);
       return;
     }
-    if (savedState) {
+    const stored = loadSavedPortfolioState();
+    const otherTab = await portfolioRunSession.detectOtherTabRun(stored, Date.now());
+    if (otherTab === 'locked') {
+      modal.warning({ title: OTHER_TAB_BLOCKED_TITLE, content: OTHER_TAB_BLOCKED_CONTENT });
+      return;
+    }
+    if (stored) {
       modal.confirm({
         title: 'Начать новый запуск?',
         content:
+          (otherTab === 'probable'
+            ? 'Похоже, сохранённый запуск выполняется в другой вкладке расширения — новый запуск здесь заменит его ' +
+              'состояние, а та вкладка продолжит создавать бэктесты. '
+            : '') +
           'Сохранённый запуск будет заменён новым: продолжить его или посмотреть его результаты станет нельзя. ' +
           'Бэктесты и боты в Veles останутся.',
         okText: 'Начать',
@@ -425,12 +488,13 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       return;
     }
     launchNewRun();
-  }, [launchNewRun, messageApi, modal, problems, savedState]);
+  }, [launchNewRun, messageApi, modal, problems]);
 
   const resumeSaved = useCallback(
     (state: PortfolioOptimizerState) => {
       try {
-        void portfolioRunSession.resume(state);
+        // Потоки, интервал и таймаут, изменённые в форме перед «Продолжить», применяются к продолжению.
+        void portfolioRunSession.resume(withSchedulerConfig(state, formRef.current.scheduler));
         setSavedState(null);
       } catch (error) {
         messageApi.error(describeError(error));
@@ -439,11 +503,22 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
     [messageApi],
   );
 
-  const handleResumeSaved = useCallback(() => {
-    if (!savedState) {
+  const handleResumeSaved = useCallback(async () => {
+    // Состояние читается в момент нажатия: его могли дописать после загрузки страницы (например, бэктест,
+    // ответ на создание которого пришёл после остановки).
+    const state = loadSavedPortfolioState();
+    if (!state) {
+      setSavedState(null);
+      messageApi.warning('Сохранённый запуск не найден — возможно, его удалили в другой вкладке.');
       return;
     }
-    if (isProbablyRunningElsewhere(savedState, Date.now())) {
+    const otherTab = await portfolioRunSession.detectOtherTabRun(state, Date.now());
+    if (otherTab === 'locked') {
+      setElsewhere('locked');
+      modal.warning({ title: OTHER_TAB_BLOCKED_TITLE, content: OTHER_TAB_BLOCKED_CONTENT });
+      return;
+    }
+    if (otherTab === 'probable') {
       modal.confirm({
         title: 'Продолжить запуск здесь?',
         content:
@@ -451,12 +526,12 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
           'дважды и потратит лишние бэктесты.',
         okText: 'Продолжить здесь',
         cancelText: 'Отмена',
-        onOk: () => resumeSaved(savedState),
+        onOk: () => resumeSaved(state),
       });
       return;
     }
-    resumeSaved(savedState);
-  }, [modal, resumeSaved, savedState]);
+    resumeSaved(state);
+  }, [messageApi, modal, resumeSaved]);
 
   const handleClearSaved = useCallback(() => {
     clearSavedPortfolioState();
@@ -531,11 +606,14 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
         messageApi.error('Не удалось создать группу бэктестов.');
         return;
       }
+      // Группа открывается с той же блокировкой по ботам, с которой оптимизатор считал кандидата.
+      const block = Math.max(1, Math.min(meta.config.block, group.backtestIds.length));
+      writeAggregationConfig(group.id, { maxConcurrentPositions: block });
       messageApi.success({
         content: (
           <span>
-            Группа «{group.name}» создана ({group.backtestIds.length} бэктестов).{' '}
-            <Link to={`/backtest-groups/${group.id}`}>Открыть группу</Link>
+            Группа «{group.name}» создана ({group.backtestIds.length} бэктестов, блокировка по ботам {block} — как в
+            оптимизаторе). <Link to={`/backtest-groups/${group.id}`}>Открыть группу</Link>
           </span>
         ),
         duration: 8,
@@ -564,23 +642,30 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
     [messageApi, strategyFor],
   );
 
-  const [creatingBotFor, setCreatingBotFor] = useState<string | null>(null);
+  // Боты, которые создаются прямо сейчас: запросы идут через общую очередь и могут занять много секунд,
+  // повторное нажатие для того же кандидата игнорируется (иначе в Veles появились бы два одинаковых бота).
+  const creatingBotsRef = useRef(new Set<string>());
+  const [creatingBots, setCreatingBots] = useState<ReadonlySet<string>>(() => new Set());
+  const isCreatingBot = useCallback((candidateId: string) => creatingBots.has(candidateId), [creatingBots]);
 
   const handleCreateBot = useCallback(
     async (target: CandidateActionTarget) => {
       const strategy = strategyFor(target.candidate);
-      if (!(meta && strategy)) {
+      const candidateId = target.candidate.id;
+      if (!(meta && strategy) || creatingBotsRef.current.has(candidateId)) {
         return;
       }
       const name = buildOptimizedBotName(meta.config.botName, target.label);
-      setCreatingBotFor(target.candidate.id);
+      creatingBotsRef.current.add(candidateId);
+      setCreatingBots(new Set(creatingBotsRef.current));
       try {
         const response = await createBot(buildBotCreatePayloadFromStrategy(strategy, name));
         messageApi.success(`Бот «${name}» создан (ID ${response.id}).`);
       } catch (error) {
         messageApi.error(`Не удалось создать бота: ${describeError(error)}`);
       } finally {
-        setCreatingBotFor(null);
+        creatingBotsRef.current.delete(candidateId);
+        setCreatingBots(new Set(creatingBotsRef.current));
       }
     },
     [messageApi, meta, strategyFor],
@@ -620,9 +705,9 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       {savedState && !active ? (
         <SavedRunBanner
           state={savedState}
-          now={now}
+          elsewhere={elsewhere}
           resumeDisabled={!extensionReady}
-          onResume={handleResumeSaved}
+          onResume={() => void handleResumeSaved()}
           onClear={handleClearSaved}
         />
       ) : null}
@@ -800,6 +885,22 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
                 </FormField>
                 {groupError ? (
                   <Alert type="error" showIcon message="Не удалось проверить группу" description={groupError} />
+                ) : null}
+                {baseGroup && baseGroupBlock !== null && baseGroupBlock !== form.block ? (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message={`В группе «${baseGroup.name}» блокировка по ботам ${baseGroupBlock}, в форме — ${form.block}`}
+                    description={
+                      'Оптимизатор посчитает базу с блокировкой из формы, поэтому её P&L и МПУ будут отличаться от ' +
+                      'тех, что показывает страница группы.'
+                    }
+                    action={
+                      <Button size="small" disabled={formLocked} onClick={() => updateForm({ block: baseGroupBlock })}>
+                        Взять из группы
+                      </Button>
+                    }
+                  />
                 ) : null}
                 {groupMatch && loadedGroup ? (
                   <Alert
@@ -1240,7 +1341,7 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
                 size="large"
                 icon={<PlayCircleOutlined />}
                 disabled={problems.length > 0 || !extensionReady}
-                onClick={handleStart}
+                onClick={() => void handleStart()}
               >
                 Старт
               </Button>
@@ -1312,7 +1413,7 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
         botName={resultsBotName}
         quoteCurrency={resultsQuote}
         canCreateBot={extensionReady}
-        creatingBotFor={creatingBotFor}
+        isCreatingBot={isCreatingBot}
         onCreateGroup={handleCreateGroup}
         onCopyJson={(target) => void handleCopyJson(target)}
         onCreateBot={(target) => void handleCreateBot(target)}
@@ -1324,7 +1425,7 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
           botName={resultsBotName}
           quoteCurrency={resultsQuote}
           canCreateBot={extensionReady}
-          creatingBotFor={creatingBotFor}
+          isCreatingBot={isCreatingBot}
           onCreateGroup={handleCreateGroup}
           onCopyJson={(target) => void handleCopyJson(target)}
           onCreateBot={(target) => void handleCreateBot(target)}

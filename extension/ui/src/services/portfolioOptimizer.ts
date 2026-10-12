@@ -8,6 +8,9 @@
  *    проверяются на полной корзине (бэктесты отборочной корзины переиспользуются) → новый лучший
  *    принимается только по полной корзине.
  * 3. Корзина оценивается только целиком: если хоть одна монета не посчиталась, у этапа нет score.
+ * 4. Сбои Veles и сети (исчерпаны повторы создания бэктеста, таймаут бэктеста, не загрузились результаты
+ *    готовой корзины) не считаются неудачей кандидата: запуск останавливается так, чтобы его можно было
+ *    продолжить, а незавершённые этапы пересчитываются (уже готовые бэктесты берутся из кеша).
  *
  * Всё состояние (кандидаты, кеш бэктестов, созданные и ещё не завершённые бэктесты, статистика
  * параметров, журнал) сохраняется после каждого изменения, поэтому запуск можно продолжить после
@@ -20,13 +23,25 @@
 
 import type { BotStrategy } from '../api/backtestRunner';
 import { buildBacktestPayload, composeSymbol } from '../api/backtestRunner';
-import { baseValues, describeParamChange, paramsHash, patchStrategy } from '../lib/botParams';
+import type { BacktestConfigDto } from '../api/backtests.dtos';
+import {
+  baseValues,
+  describeParamChange,
+  formatParamValue,
+  getAtPath,
+  paramsHash,
+  patchStrategy,
+  roundTo,
+} from '../lib/botParams';
 import { MS_IN_DAY, toTimestamp } from '../lib/dateTime';
 import {
   computeObjective,
   createRng,
+  hasEnoughDeals,
   isImprovement,
   proposeCandidates,
+  scaleObjective,
+  screenStageScale,
   selectForPromotion,
   updateParamStats,
 } from '../lib/portfolioSearch';
@@ -41,6 +56,7 @@ import type {
   ObjectiveKind,
   ParamSpec,
   PortfolioLogEntry,
+  PortfolioMetrics,
   PortfolioOptimizerCallbacks,
   PortfolioOptimizerConfig,
   PortfolioOptimizerProgress,
@@ -53,8 +69,9 @@ import type {
 import {
   abortableSleep,
   BacktestScheduler,
-  extractHttpStatus,
   isAbortError,
+  isAuthError as isSchedulerAuthError,
+  isTransientBacktestError,
   mergeSchedulerConfig,
   SchedulerAbortError,
   type SchedulerEvents,
@@ -109,8 +126,13 @@ export const DEFAULT_OBJECTIVE: ObjectiveConfig = {
 };
 
 /** Попыток посчитать метрики корзины (загрузка результатов может упасть из-за сети). */
-const EVALUATION_MAX_ATTEMPTS = 3;
-const EVALUATION_RETRY_DELAYS_MS = [5_000, 15_000];
+const EVALUATION_MAX_ATTEMPTS = 4;
+const EVALUATION_RETRY_DELAYS_MS = [5_000, 30_000, 120_000];
+/**
+ * После скольких сеансов подряд с неудачным расчётом метрик готовой корзины этап считается неудачным
+ * (в первый раз запуск останавливается с возможностью продолжить — обычно это сбой сети или Veles).
+ */
+const METRICS_MAX_FAILED_SESSIONS = 2;
 
 /** Ожидание ответа на POST, отправленный до остановки (чтобы не потерять id созданного бэктеста). */
 const DRAIN_POLL_INTERVAL_MS = 250;
@@ -134,8 +156,6 @@ const RUN_STATUSES: ReadonlySet<string> = new Set<PortfolioRunStatus>([
   'error',
 ]);
 
-const AUTH_ERROR_PATTERNS = [/\bunauthori[sz]ed\b/i, /\bforbidden\b/i, /не\s+авторизован/i, /требуется\s+авторизац/i];
-
 const STAGE_TITLES: Readonly<Record<EvaluationStage, string>> = {
   screen: 'отбор',
   full: 'полная корзина',
@@ -148,7 +168,8 @@ const STAGE_TITLES: Readonly<Record<EvaluationStage, string>> = {
 /** Планировщик бэктестов, которым пользуется оркестратор (BacktestScheduler или тестовая подмена). */
 export interface PortfolioScheduler {
   run(job: SchedulerJobRequest, signal: AbortSignal): Promise<number>;
-  attach(key: string, backtestId: number, signal: AbortSignal): Promise<number>;
+  /** submittedAt — когда бэктест был создан (таймаут отсчитывается от него). */
+  attach(key: string, backtestId: number, signal: AbortSignal, submittedAt?: number | null): Promise<number>;
   setPaused(paused: boolean): void;
   updateConfig(config: Partial<SchedulerConfig>): void;
   readonly inFlight: number;
@@ -169,6 +190,24 @@ export type PortfolioBasketEvaluator = (
   folds: number,
 ) => Promise<Pick<BasketEvaluation, 'metrics' | 'folds'>>;
 
+/** Комиссии бэктеста группы, % (null — неизвестно). */
+export interface GroupBacktestCommissions {
+  maker: number | null;
+  taker: number | null;
+}
+
+/** Депозит бэктеста группы (null — неизвестно). */
+export interface GroupBacktestDeposit {
+  amount: number | null;
+  leverage: number | null;
+}
+
+/** Настройки стратегии бэктеста группы — те же пути, что у параметров базового бота (ParamSpec.path). */
+export type GroupBacktestStrategy = Pick<
+  BacktestConfigDto,
+  'conditions' | 'settings' | 'profit' | 'stopLoss' | 'pullUp'
+>;
+
 /** Краткие сведения о бэктесте группы, нужные для подстановки результатов базы. */
 export interface GroupBacktestSummary {
   backtestId: number;
@@ -179,6 +218,11 @@ export interface GroupBacktestSummary {
   to: string | null;
   useWicks: boolean | null;
   algorithm: string | null;
+  /** Необязательные сведения ниже: отсутствующие не проверяются. */
+  commissions?: GroupBacktestCommissions | null;
+  deposit?: GroupBacktestDeposit | null;
+  exchange?: string | null;
+  strategy?: GroupBacktestStrategy | null;
 }
 
 export interface GroupBacktestsLoadResult {
@@ -195,6 +239,10 @@ export interface PortfolioOptimizerDeps {
   loadGroupBacktests: (groupId: string) => Promise<GroupBacktestsLoadResult>;
   /** Сохранение состояния (сериализовать сразу: объект продолжает меняться). false — не сохранилось. */
   saveState: (state: PortfolioOptimizerState) => boolean;
+  /** Сохранённое состояние (для бэктеста, созданного уже после окончания сеанса). */
+  loadSavedState: () => PortfolioOptimizerState | null;
+  /** Удаление сохранённого состояния: устаревшую копию нельзя предлагать к продолжению. */
+  clearSavedState: () => void;
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
   now: () => number;
 }
@@ -223,6 +271,10 @@ export interface GroupBaseMatchInput {
   run: BacktestRunSettings;
   /** Алгоритм базового бота (LONG/SHORT) для проверки. */
   algorithm?: string | null;
+  /** Базовый бот: биржа и депозит бэктестов группы должны совпадать с ним. */
+  baseStrategy?: Pick<BotStrategy, 'exchange' | 'pair' | 'deposit'> | null;
+  /** Параметры базового бота: их значения в бэктестах группы должны совпадать с базовыми. */
+  params?: ParamSpec[];
   toleranceMs?: number;
 }
 
@@ -348,18 +400,20 @@ const describeEvaluationResult = (evaluation: CandidateEvaluation): string => {
 };
 
 /** Ошибка авторизации Veles (401/403): продолжать бессмысленно, пока пользователь не войдёт заново. */
-export const isAuthError = (error: unknown): boolean => {
-  const status = extractHttpStatus(error);
-  if (status === 401 || status === 403) {
-    return true;
-  }
-  const message = describeError(error);
-  return AUTH_ERROR_PATTERNS.some((pattern) => pattern.test(message));
-};
+export const isAuthError = (error: unknown): boolean => isSchedulerAuthError(error);
 
 const authErrorMessage = (error: unknown): string =>
   `Нет доступа к Veles: ${describeError(error)}. Войдите в аккаунт Veles и продолжите запуск — ` +
   'созданные бэктесты сохранены.';
+
+/** Сбой Veles или сети: кандидат ни при чём, запуск останавливается с возможностью продолжить. */
+const infrastructureErrorMessage = (detail: string): string =>
+  `Veles или сеть недоступны: ${detail}. Запуск остановлен, чтобы не списывать кандидатов из-за сбоя: ` +
+  'созданные бэктесты сохранены, незавершённые этапы будут пересчитаны — продолжите запуск, когда Veles снова доступен.';
+
+/** Метрики посчитанного этапа (null — этап не посчитан). */
+const doneMetrics = (evaluation: CandidateEvaluation | null): PortfolioMetrics | null =>
+  evaluation?.status === 'done' ? evaluation.metrics : null;
 
 // ═══════════════════════════════════════════════════════════════════
 // КОНФИГУРАЦИЯ
@@ -504,9 +558,103 @@ const resolveBaseTicker = (base: unknown, symbol: unknown): string => {
   return pair ? (nonEmptyString(pair.split('/')[0]) ?? '') : '';
 };
 
+/** Число из DTO: конечное число или числовая строка ("0.02"), иначе null. */
+const readNumeric = (value: unknown): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+/** Сравнение чисел так, как они уходят в Veles (комиссии — 6 знаков, как в buildBacktestPayload). */
+const sameRounded = (left: number, right: number, decimals = 6): boolean =>
+  roundTo(left, decimals) === roundTo(right, decimals);
+
+type GroupMismatchKind = 'commissions' | 'deposit' | 'exchange' | 'strategy';
+
+const GROUP_MISMATCH_KINDS: readonly GroupMismatchKind[] = ['commissions', 'deposit', 'exchange', 'strategy'];
+
+interface GroupMismatch {
+  kind: GroupMismatchKind;
+  detail: string;
+}
+
+/**
+ * Почему бэктест группы нельзя взять результатом базы: другие комиссии, депозит/плечо, биржа или
+ * значения параметров бота. null — совместим (неизвестные сведения не проверяются).
+ */
+const findGroupMismatch = (summary: GroupBacktestSummary, input: GroupBaseMatchInput): GroupMismatch | null => {
+  const { maker, taker } = summary.commissions ?? { maker: null, taker: null };
+  if (
+    (maker !== null && !sameRounded(maker, input.run.makerCommission)) ||
+    (taker !== null && !sameRounded(taker, input.run.takerCommission))
+  ) {
+    return { kind: 'commissions', detail: `${maker ?? '—'}/${taker ?? '—'}%` };
+  }
+
+  const baseDeposit = input.baseStrategy?.deposit ?? null;
+  const deposit = summary.deposit ?? null;
+  if (baseDeposit && deposit) {
+    const amountDiffers =
+      deposit.amount !== null && isFiniteNumber(baseDeposit.amount) && !sameRounded(deposit.amount, baseDeposit.amount);
+    const leverageDiffers =
+      deposit.leverage !== null &&
+      isFiniteNumber(baseDeposit.leverage) &&
+      !sameRounded(deposit.leverage, baseDeposit.leverage);
+    if (amountDiffers || leverageDiffers) {
+      return { kind: 'deposit', detail: `${deposit.amount ?? '—'} × ${deposit.leverage ?? '—'}` };
+    }
+  }
+
+  const baseExchange =
+    nonEmptyString(input.baseStrategy?.exchange)?.toUpperCase() ??
+    nonEmptyString(input.baseStrategy?.pair?.exchange)?.toUpperCase() ??
+    null;
+  const exchange = nonEmptyString(summary.exchange)?.toUpperCase() ?? null;
+  if (baseExchange && exchange && exchange !== baseExchange) {
+    return { kind: 'exchange', detail: exchange };
+  }
+
+  if (summary.strategy && input.params) {
+    for (const param of input.params) {
+      const value = readNumeric(getAtPath(summary.strategy, param.path));
+      if (value === null || roundTo(value, param.decimals) !== roundTo(param.base, param.decimals)) {
+        const shown = value === null ? 'нет' : formatParamValue(value, param.decimals);
+        return {
+          kind: 'strategy',
+          detail: `${param.label}: ${shown} вместо ${formatParamValue(param.base, param.decimals)}`,
+        };
+      }
+    }
+  }
+  return null;
+};
+
+const GROUP_MISMATCH_WARNINGS: Readonly<
+  Record<GroupMismatchKind, (list: string, input: GroupBaseMatchInput) => string>
+> = {
+  commissions: (list, input) =>
+    `Комиссии в бэктестах группы отличаются от запуска (${input.run.makerCommission}/${input.run.takerCommission}%): ` +
+    `${list}. Эти монеты будут посчитаны бэктестами заново.`,
+  deposit: (list) =>
+    `Депозит или плечо в бэктестах группы отличаются от базового бота: ${list}. ` +
+    'Эти монеты будут посчитаны бэктестами заново.',
+  exchange: (list) =>
+    `Биржа бэктестов группы отличается от базового бота: ${list}. Эти монеты будут посчитаны бэктестами заново.`,
+  strategy: (list) =>
+    `Настройки бота в бэктестах группы отличаются от текущих (группа посчитана для другой версии бота?): ${list}. ` +
+    'Эти монеты будут посчитаны бэктестами заново.',
+};
+
 /**
  * Сопоставляет бэктесты группы с корзиной по базовой монете. Бэктесты с другой котировкой
- * пропускаются; при нескольких бэктестах одной монеты берётся самый новый (больший id).
+ * пропускаются; при нескольких бэктестах одной монеты берётся самый новый совместимый (больший id).
+ * Несовместимые бэктесты — другие комиссии, депозит/плечо, биржа или значения параметров бота — не
+ * берутся: такие монеты считаются недостающими и будут посчитаны бэктестами (с предупреждением).
  * Период, учёт теней и алгоритм проверяются — расхождения попадают в предупреждения,
  * но результаты всё равно используются (решение за пользователем).
  */
@@ -514,8 +662,7 @@ export const matchGroupBacktestsToBasket = (input: GroupBaseMatchInput): GroupBa
   const basket = uniqueTickers(input.basket);
   const inBasket = new Set(basket);
   const quote = normalizeTicker(input.quoteCurrency);
-  const chosen = new Map<string, GroupBacktestSummary>();
-  const duplicates = new Set<string>();
+  const byTicker = new Map<string, GroupBacktestSummary[]>();
   const wrongQuote: string[] = [];
   let outsideBasket = 0;
 
@@ -530,15 +677,9 @@ export const matchGroupBacktestsToBasket = (input: GroupBaseMatchInput): GroupBa
       wrongQuote.push(`${ticker}/${summaryQuote}`);
       continue;
     }
-    const existing = chosen.get(ticker);
-    if (existing) {
-      duplicates.add(ticker);
-      if (summary.backtestId > existing.backtestId) {
-        chosen.set(ticker, summary);
-      }
-      continue;
-    }
-    chosen.set(ticker, summary);
+    const options = byTicker.get(ticker) ?? [];
+    options.push(summary);
+    byTicker.set(ticker, options);
   }
 
   const tolerance = isFiniteNumber(input.toleranceMs) ? Math.max(0, input.toleranceMs) : GROUP_PERIOD_TOLERANCE_MS;
@@ -547,15 +688,37 @@ export const matchGroupBacktestsToBasket = (input: GroupBaseMatchInput): GroupBa
   const algorithm = nonEmptyString(input.algorithm)?.toUpperCase() ?? null;
 
   const backtestIds: Record<string, number> = {};
+  const duplicates: string[] = [];
   const periodMismatch: string[] = [];
   const wicksMismatch: string[] = [];
   const algorithmMismatch: string[] = [];
+  const excluded: Record<GroupMismatchKind, string[]> = { commissions: [], deposit: [], exchange: [], strategy: [] };
 
   for (const ticker of basket) {
-    const summary = chosen.get(ticker);
-    if (!summary) {
+    const options = [...(byTicker.get(ticker) ?? [])].sort((left, right) => right.backtestId - left.backtestId);
+    if (options.length === 0) {
       continue;
     }
+    if (options.length > 1) {
+      duplicates.push(ticker);
+    }
+    let summary: GroupBacktestSummary | null = null;
+    let firstMismatch: GroupMismatch | null = null;
+    for (const option of options) {
+      const mismatch = findGroupMismatch(option, input);
+      if (mismatch === null) {
+        summary = option;
+        break;
+      }
+      firstMismatch ??= mismatch;
+    }
+    if (!summary) {
+      if (firstMismatch) {
+        excluded[firstMismatch.kind].push(`${ticker} (${firstMismatch.detail})`);
+      }
+      continue;
+    }
+
     backtestIds[ticker] = summary.backtestId;
     const from = toTimestamp(summary.from);
     const to = toTimestamp(summary.to);
@@ -594,8 +757,13 @@ export const matchGroupBacktestsToBasket = (input: GroupBaseMatchInput): GroupBa
   if (algorithmMismatch.length > 0) {
     warnings.push(`Алгоритм бэктестов группы отличается от базового бота: ${formatList(algorithmMismatch)}.`);
   }
-  if (duplicates.size > 0) {
-    warnings.push(`В группе несколько бэктестов для ${formatList([...duplicates])} — взяты самые новые.`);
+  for (const kind of GROUP_MISMATCH_KINDS) {
+    if (excluded[kind].length > 0) {
+      warnings.push(GROUP_MISMATCH_WARNINGS[kind](formatList(excluded[kind]), input));
+    }
+  }
+  if (duplicates.length > 0) {
+    warnings.push(`В группе несколько бэктестов для ${formatList(duplicates)} — взяты самые новые подходящие.`);
   }
   if (wrongQuote.length > 0) {
     warnings.push(`Бэктесты группы с другой котировкой пропущены: ${formatList(wrongQuote)}.`);
@@ -631,6 +799,10 @@ export const loadGroupBacktestsFromStore = async (groupId: string): Promise<Grou
       failed.push({ backtestId, error: 'не удалось определить монету бэктеста' });
       return;
     }
+    const commissions: Partial<BacktestConfigDto['commissions']> | null = isRecord(config.commissions)
+      ? config.commissions
+      : null;
+    const deposit: Partial<BacktestConfigDto['deposit']> | null = isRecord(config.deposit) ? config.deposit : null;
     backtests.push({
       backtestId,
       base,
@@ -639,6 +811,18 @@ export const loadGroupBacktestsFromStore = async (groupId: string): Promise<Grou
       to: nonEmptyString(statistics.to) ?? nonEmptyString(config.to),
       useWicks: typeof config.useWicks === 'boolean' ? config.useWicks : null,
       algorithm: nonEmptyString(statistics.algorithm) ?? nonEmptyString(config.algorithm),
+      commissions: commissions
+        ? { maker: readNumeric(commissions.maker), taker: readNumeric(commissions.taker) }
+        : null,
+      deposit: deposit ? { amount: readNumeric(deposit.amount), leverage: readNumeric(deposit.leverage) } : null,
+      exchange: nonEmptyString(config.exchange) ?? nonEmptyString(statistics.exchange),
+      strategy: {
+        conditions: config.conditions,
+        settings: config.settings,
+        profit: config.profit,
+        stopLoss: config.stopLoss,
+        pullUp: config.pullUp,
+      },
     });
   });
 
@@ -720,6 +904,28 @@ export const clearSavedPortfolioState = (): void => {
 };
 
 /**
+ * Учитывает в состоянии бэктест, созданный POST, ответ на который пришёл уже после окончания сеанса:
+ * +1 к созданным и запись о незавершённом бэктесте (к нему подключатся при продолжении). Мутирует state.
+ * false — этот бэктест уже учтён (тот же id в кеше или среди незавершённых).
+ */
+export const applyLateSubmission = (state: PortfolioOptimizerState, job: ScheduledJob): boolean => {
+  if (!isPositiveInteger(job.backtestId)) {
+    return false;
+  }
+  const known =
+    Object.values(state.backtestCache).includes(job.backtestId) ||
+    state.inFlightJobs.some((item) => item.backtestId === job.backtestId);
+  if (known) {
+    return false;
+  }
+  state.backtestsSubmitted += 1;
+  if (!Object.hasOwn(state.backtestCache, job.key)) {
+    state.inFlightJobs = [...state.inFlightJobs.filter((item) => item.key !== job.key), { ...job }];
+  }
+  return true;
+};
+
+/**
  * Состояние для продолжения: конфигурация — нормализованная, активный статус (running/paused —
  * страница закрылась во время запуска) становится 'stopped', в журнале не больше 300 записей,
  * из незавершённых задач остаются только созданные бэктесты с корректным id.
@@ -788,6 +994,8 @@ export const createDefaultPortfolioOptimizerDeps = (): PortfolioOptimizerDeps =>
   evaluateBasket,
   loadGroupBacktests: loadGroupBacktestsFromStore,
   saveState: savePortfolioState,
+  loadSavedState: () => loadSavedPortfolioState(),
+  clearSavedState: () => clearSavedPortfolioState(),
   sleep: abortableSleep,
   now: () => Date.now(),
 });
@@ -802,6 +1010,8 @@ export const resolvePortfolioOptimizerDeps = (
     evaluateBasket: overrides.evaluateBasket ?? defaults.evaluateBasket,
     loadGroupBacktests: overrides.loadGroupBacktests ?? defaults.loadGroupBacktests,
     saveState: overrides.saveState ?? defaults.saveState,
+    loadSavedState: overrides.loadSavedState ?? defaults.loadSavedState,
+    clearSavedState: overrides.clearSavedState ?? defaults.clearSavedState,
     sleep: overrides.sleep ?? defaults.sleep,
     now: overrides.now ?? defaults.now,
   };
@@ -822,6 +1032,10 @@ interface JobHandle {
   controller: AbortController;
   /** Бэктест уже создан в Veles. */
   submitted: boolean;
+  /** POST уже отправлялся (бэктест может создаваться прямо сейчас) — отменять задачу нельзя. */
+  posting: boolean;
+  /** Этап отменён, пока шёл POST: задача отменяется перед следующей попыткой, если та понадобится. */
+  cancelPending: boolean;
   /** Задача занимает место в лимите бэктестов, пока ещё не создана. */
   reserved: boolean;
   promise: Promise<number>;
@@ -863,6 +1077,8 @@ export class PortfolioOptimizer {
   private sessionSubmittedAtStart = 0;
   private readonly patchedStrategies = new Map<string, BotStrategy>();
   private saveFailureReported = false;
+  /** Сеанс закончен: состояние больше не сохраняется (запуск мог продолжиться в новом экземпляре). */
+  private disposed = false;
 
   constructor(
     input: PortfolioOptimizerInput,
@@ -1028,6 +1244,25 @@ export class PortfolioOptimizer {
     this.persist();
   }
 
+  /**
+   * Бэктест, созданный предыдущим (уже остановленным) экземпляром этого же запуска: ответ на его POST
+   * пришёл позже. Учитывается в лимите, к нему подключимся вместо повторного создания.
+   * false — это другой запуск (или оптимизатор уже не работает).
+   */
+  adoptLateSubmission(runId: string, job: ScheduledJob): boolean {
+    if (this.disposed || !this.runPromise || runId !== this.state.runId) {
+      return false;
+    }
+    if (applyLateSubmission(this.state, job)) {
+      this.log(
+        'info',
+        `Бэктест ${job.symbol} (#${job.backtestId}) создан ещё до продолжения запуска — учтён, повторно не создаётся.`,
+      );
+      this.persist();
+    }
+    return true;
+  }
+
   // ─── Сеанс запуска ───────────────────────────────────────────────
 
   private async execute(): Promise<void> {
@@ -1055,6 +1290,7 @@ export class PortfolioOptimizer {
   }
 
   private beginSession(): void {
+    this.disposed = false;
     this.haltReason = null;
     this.paused = false;
     this.pauseWaiters = [];
@@ -1068,6 +1304,7 @@ export class PortfolioOptimizer {
     this.scheduler = this.deps.createScheduler(this.state.config.scheduler, {
       onSubmitted: (key, backtestId) => this.handleSubmitted(key, backtestId),
       onLog: (level, message) => this.log(level, message),
+      beforeSubmit: (key) => this.handleBeforeSubmit(key),
     });
     this.scheduler.setPaused(false);
   }
@@ -1091,9 +1328,15 @@ export class PortfolioOptimizer {
     this.patchedStrategies.clear();
     this.releasePauseWaiters();
     this.persist();
+    // Этапы, прерванные остановкой, остаются «в работе» — UI показывает их по сохранённому состоянию.
+    this.notifyCandidates();
+    this.disposed = true;
   }
 
-  /** Ждём ответа на POST, отправленный до остановки, чтобы id созданного бэктеста попал в состояние. */
+  /**
+   * Ждём ответа на POST, отправленный до остановки, чтобы id созданного бэктеста попал в состояние.
+   * Если ответ придёт позже (вкладка Veles отключена), его примет handleSubmitted после окончания сеанса.
+   */
   private async drainScheduler(): Promise<void> {
     const scheduler = this.scheduler;
     if (!scheduler) {
@@ -1128,22 +1371,22 @@ export class PortfolioOptimizer {
   /** Подключение к бэктестам, созданным до перезагрузки (результаты попадут в кеш). */
   private attachInFlightJobs(): void {
     const scheduler = this.requireScheduler();
-    const pending: Array<{ key: string; backtestId: number }> = [];
+    const pending: Array<{ key: string; backtestId: number; submittedAt: number | null }> = [];
     for (const job of this.state.inFlightJobs) {
       if (this.cachedBacktestId(job.key) !== null) {
         this.removeInFlightJob(job.key);
         continue;
       }
       if (job.backtestId !== null && !this.jobs.has(job.key)) {
-        pending.push({ key: job.key, backtestId: job.backtestId });
+        pending.push({ key: job.key, backtestId: job.backtestId, submittedAt: job.submittedAt });
       }
     }
     if (pending.length === 0) {
       return;
     }
     this.log('info', `Подключаюсь к незавершённым бэктестам: ${pending.length}.`);
-    for (const { key, backtestId } of pending) {
-      this.trackJob(key, true, (signal) => scheduler.attach(key, backtestId, signal));
+    for (const { key, backtestId, submittedAt } of pending) {
+      this.trackJob(key, true, (signal) => scheduler.attach(key, backtestId, signal, submittedAt));
     }
   }
 
@@ -1191,6 +1434,15 @@ export class PortfolioOptimizer {
         return false;
       }
       if (!isStageDone(full)) {
+        if (this.budgetLeft() <= 0) {
+          const { maxBacktests } = this.state.config.search;
+          this.fail(
+            `Базовый бот не оценён на полной корзине: не хватило лимита бэктестов (создано ` +
+              `${this.state.backtestsSubmitted} из ${maxBacktests}). Продолжение этого запуска не поможет — ` +
+              'начните новый запуск с лимитом не меньше числа монет корзины, без готовых результатов базы.',
+          );
+          return false;
+        }
         const groupHint = this.state.config.baseGroupId ? ', либо запустите оптимизацию без результатов группы' : '';
         this.fail(
           `Базовый бот не оценён на полной корзине: ${full.error ?? 'неизвестная ошибка'}. ` +
@@ -1263,6 +1515,8 @@ export class PortfolioOptimizer {
       quoteCurrency: this.state.quoteCurrency,
       run,
       algorithm: this.state.baseStrategy.algorithm ?? null,
+      baseStrategy: this.state.baseStrategy,
+      params: this.state.config.params,
     });
     for (const warning of match.warnings) {
       this.log('warning', warning);
@@ -1402,10 +1656,13 @@ export class PortfolioOptimizer {
     return created;
   }
 
-  /** Родители мутаций: кандидаты с посчитанной полной корзиной, от лучшего к худшему (иначе база). */
+  /**
+   * Родители мутаций: кандидаты с посчитанной полной корзиной и достаточным числом сделок, от лучшего
+   * к худшему (иначе база).
+   */
   private rankedParents(): RankedParent[] {
     const ranked = this.state.candidates.flatMap((candidate): RankedParent[] => {
-      const score = stageScore(candidate.full);
+      const score = this.eligibleScore(candidate, 'full');
       return score === null ? [] : [{ candidate, score }];
     });
     ranked.sort((left, right) => right.score - left.score);
@@ -1416,8 +1673,18 @@ export class PortfolioOptimizer {
   private promoteCandidates(generation: number, candidates: Candidate[]): Candidate[] {
     const { search, basket } = this.state.config;
     const bestScreenScore = stageScore(this.bestCandidate()?.screen ?? null);
+    const fewDeals = candidates.filter(
+      (candidate) => stageScore(candidate.screen) !== null && this.eligibleScore(candidate, 'screen') === null,
+    );
+    if (fewDeals.length > 0) {
+      this.log(
+        'info',
+        `Поколение ${generation}: слишком мало сделок на отборе по сравнению с базой — ` +
+          `${formatList(fewDeals.map((item) => `${this.label(item)} (${this.describeDeals(item, 'screen')})`))}.`,
+      );
+    }
     const selected = selectForPromotion(
-      candidates.map((candidate) => ({ candidate, screenScore: stageScore(candidate.screen) })),
+      candidates.map((candidate) => ({ candidate, screenScore: this.eligibleScore(candidate, 'screen') })),
       bestScreenScore,
       search.promotePerGeneration,
       search.screenTolerance,
@@ -1472,7 +1739,15 @@ export class PortfolioOptimizer {
     let newBest: RankedParent | null = null;
     for (const candidate of candidates) {
       const mutated = candidate.mutated ?? candidate.changed;
-      const score = stageScore(candidate.full);
+      const rawScore = stageScore(candidate.full);
+      const score = this.eligibleScore(candidate, 'full');
+      if (score === null && rawScore !== null && isImprovement(rawScore, referenceScore, search.minImprovement)) {
+        this.log(
+          'warning',
+          `${this.label(candidate)}: score ${formatScore(rawScore)} выше лучшего, но сделок слишком мало ` +
+            `(${this.describeDeals(candidate, 'full')}) — лучшим не становится.`,
+        );
+      }
       const improved = score !== null && isImprovement(score, referenceScore, search.minImprovement);
       stats = updateParamStats(stats, mutated, improved);
       if (improved && score !== null && (newBest === null || score > newBest.score)) {
@@ -1537,6 +1812,14 @@ export class PortfolioOptimizer {
     this.releasePauseWaiters();
   }
 
+  /**
+   * Сбой Veles или сети (исчерпаны повторы, таймаут, не загрузились результаты): этап не помечается
+   * неудачным, статистика параметров не обновляется — запуск останавливается с возможностью продолжить.
+   */
+  private haltForInfrastructure(detail: string): void {
+    this.fail(infrastructureErrorMessage(detail));
+  }
+
   // ─── Оценка этапа ────────────────────────────────────────────────
 
   /** Оценка этапа кандидата. Никогда не отклоняется: ошибки кандидата не прерывают запуск. */
@@ -1558,6 +1841,7 @@ export class PortfolioOptimizer {
   }
 
   private async runStage(candidate: Candidate, evaluation: CandidateEvaluation): Promise<void> {
+    const previousMetricsFailures = evaluation.metricsFailures ?? 0;
     evaluation.status = 'running';
     evaluation.failedSymbols = [];
     evaluation.metrics = null;
@@ -1579,6 +1863,12 @@ export class PortfolioOptimizer {
           }
           if (isAuthError(error)) {
             this.fail(authErrorMessage(error));
+            return;
+          }
+          if (isTransientBacktestError(error)) {
+            // Монета не посчиталась из-за Veles или сети, а не из-за кандидата: этап досчитается после продолжения.
+            evaluation.error = `${symbol}: ${describeError(error)}`;
+            this.haltForInfrastructure(describeError(error));
             return;
           }
           failures.push({ symbol, error: describeError(error) });
@@ -1604,14 +1894,38 @@ export class PortfolioOptimizer {
       }
       ids.push(backtestId);
     }
+    // Как в группе бэктестов (она хранит id по возрастанию): порядок важен для сделок с одинаковым входом.
+    ids.sort((left, right) => left - right);
 
-    const result = await this.evaluateWithRetry(ids, candidate);
+    let result: Pick<BasketEvaluation, 'metrics' | 'folds'> | null;
+    try {
+      result = await this.evaluateWithRetry(ids, candidate);
+    } catch (error) {
+      if (this.isHalted()) {
+        return;
+      }
+      if (isAuthError(error)) {
+        this.fail(authErrorMessage(error));
+        return;
+      }
+      // Все бэктесты готовы и закешированы — не загрузились результаты. Обычно это сбой сети или Veles:
+      // первый раз запуск останавливается (после продолжения этап пересчитается без новых бэктестов).
+      evaluation.metricsFailures = previousMetricsFailures + 1;
+      if (evaluation.metricsFailures < METRICS_MAX_FAILED_SESSIONS) {
+        evaluation.error = `метрики не посчитаны: ${describeError(error)}`;
+        this.haltForInfrastructure(`${this.label(candidate)}: не удалось посчитать метрики — ${describeError(error)}`);
+        return;
+      }
+      this.markStageFailed(candidate, evaluation, [], describeError(error));
+      return;
+    }
     if (result === null || this.isHalted()) {
       return;
     }
     evaluation.metrics = result.metrics;
     evaluation.folds = result.folds;
-    evaluation.score = computeObjective(result.metrics, result.folds, this.state.config.objective);
+    evaluation.score = computeObjective(result.metrics, result.folds, this.stageObjective(evaluation));
+    evaluation.metricsFailures = undefined;
     evaluation.status = 'done';
     this.persist();
     this.notifyCandidates();
@@ -1619,6 +1933,52 @@ export class PortfolioOptimizer {
       'info',
       `${this.label(candidate)}: ${STAGE_TITLES[evaluation.stage]} — ${describeEvaluationResult(evaluation)}.`,
     );
+  }
+
+  /**
+   * Цель этапа. Минимум сделок и ограничение МПУ заданы для полной корзины, поэтому на отборочной
+   * масштабируются долями отбора по базе (для самой базы — по её же отбору): ранжирование на отборе
+   * согласуется с полной корзиной.
+   */
+  private stageObjective(evaluation: CandidateEvaluation): ObjectiveConfig {
+    const { objective, basket, screenBasket } = this.state.config;
+    if (evaluation.stage !== 'screen') {
+      return objective;
+    }
+    const base = this.baseCandidate();
+    const baseScreen = base.screen === evaluation ? evaluation.metrics : doneMetrics(base.screen);
+    return scaleObjective(
+      objective,
+      screenStageScale({
+        baseFull: doneMetrics(base.full),
+        baseScreen,
+        screenSize: screenBasket.length,
+        basketSize: basket.length,
+      }),
+    );
+  }
+
+  /**
+   * Score этапа кандидата, если у него достаточно сделок по сравнению с базой на той же корзине
+   * (hasEnoughDeals): почти не торгующий кандидат не проходит отбор и не становится лучшим. У базы порога нет.
+   */
+  private eligibleScore(candidate: Candidate, stage: EvaluationStage): number | null {
+    const evaluation = stage === 'full' ? candidate.full : candidate.screen;
+    const score = stageScore(evaluation);
+    if (score === null || candidate.id === this.state.baseCandidateId) {
+      return score;
+    }
+    const base = this.baseCandidate();
+    const reference = doneMetrics(stage === 'full' ? base.full : base.screen)?.totalDeals;
+    return hasEnoughDeals(doneMetrics(evaluation)?.totalDeals, reference) ? score : null;
+  }
+
+  /** «12 сделок при 1500 у базы» для журнала. */
+  private describeDeals(candidate: Candidate, stage: EvaluationStage): string {
+    const base = this.baseCandidate();
+    const deals = doneMetrics(stage === 'full' ? candidate.full : candidate.screen)?.totalDeals;
+    const baseDeals = doneMetrics(stage === 'full' ? base.full : base.screen)?.totalDeals;
+    return `${deals ?? '—'} сделок при ${baseDeals ?? '—'} у базы`;
   }
 
   private markStageFailed(
@@ -1700,10 +2060,11 @@ export class PortfolioOptimizer {
     }
 
     const scheduler = this.requireScheduler();
-    const resumedId = this.state.inFlightJobs.find((job) => job.key === key)?.backtestId ?? null;
+    const resumed = this.state.inFlightJobs.find((job) => job.key === key && job.backtestId !== null);
     let handle: JobHandle;
-    if (resumedId !== null) {
-      handle = this.trackJob(key, true, (signal) => scheduler.attach(key, resumedId, signal));
+    if (resumed?.backtestId) {
+      const { backtestId, submittedAt } = resumed;
+      handle = this.trackJob(key, true, (signal) => scheduler.attach(key, backtestId, signal, submittedAt));
     } else {
       if (this.budgetLeft() <= 0) {
         return Promise.reject(new Error(`исчерпан лимит бэктестов (${this.state.config.search.maxBacktests})`));
@@ -1722,7 +2083,9 @@ export class PortfolioOptimizer {
 
   /**
    * Регистрирует задачу сеанса: результат попадает в кеш, запись о незавершённом бэктесте удаляется.
-   * При общей остановке запись сохраняется — после продолжения к бэктесту подключимся заново.
+   * Запись сохраняется (после продолжения к бэктесту подключимся заново) при общей остановке, ошибке
+   * авторизации и сбое Veles/сети, в том числе при таймауте только что созданного бэктеста. Удаляется она
+   * только при окончательной неудаче: бэктест завершился ошибкой или не завершился и после продолжения.
    */
   private trackJob(key: string, alreadySubmitted: boolean, start: (signal: AbortSignal) => Promise<number>): JobHandle {
     const sessionSignal = this.requireController().signal;
@@ -1738,6 +2101,8 @@ export class PortfolioOptimizer {
       key,
       controller,
       submitted: alreadySubmitted,
+      posting: false,
+      cancelPending: false,
       reserved: !alreadySubmitted,
       // Заменяется ниже: задача должна быть зарегистрирована до старта (onSubmitted может прийти сразу).
       promise: Promise.resolve(0),
@@ -1754,7 +2119,15 @@ export class PortfolioOptimizer {
         this.removeInFlightJob(key);
         return backtestId;
       } catch (error) {
-        if (!sessionSignal.aborted) {
+        if (sessionSignal.aborted || isAuthError(error)) {
+          throw error;
+        }
+        if (isTransientBacktestError(error) && error.reason === 'timeout' && alreadySubmitted) {
+          // Бэктест, к которому подключились после продолжения, так и не завершился (таймаут от его создания).
+          this.removeInFlightJob(key);
+          throw new Error(`${error.message} Бэктест не завершился и после продолжения запуска.`, { cause: error });
+        }
+        if (!isTransientBacktestError(error)) {
           // Бэктест завершился ошибкой или больше не нужен — продолжать его не будем.
           this.removeInFlightJob(key);
         }
@@ -1776,6 +2149,10 @@ export class PortfolioOptimizer {
 
   /** Бэктест создан в Veles: учитываем в лимите и запоминаем для продолжения после перезагрузки. */
   private handleSubmitted(key: string, backtestId: number): void {
+    if (this.disposed) {
+      this.recordLateSubmission(key, backtestId);
+      return;
+    }
     const handle = this.jobs.get(key);
     if (handle) {
       handle.submitted = true;
@@ -1798,12 +2175,80 @@ export class PortfolioOptimizer {
     this.persist();
   }
 
+  /**
+   * Ответ на POST пришёл после окончания сеанса. Состояние этого экземпляра больше не сохраняется (запуск
+   * мог продолжиться в новом экземпляре), поэтому бэктест передаётся живому оптимизатору того же запуска,
+   * а если его нет — дописывается в сохранённое состояние. Иначе id был бы потерян, а бэктест создан повторно.
+   */
+  private recordLateSubmission(key: string, backtestId: number): void {
+    const job: ScheduledJob = {
+      key,
+      symbol: symbolFromKey(key),
+      backtestId,
+      state: 'submitted',
+      attempts: 1,
+      submittedAt: this.deps.now(),
+      error: null,
+    };
+    let adopted = false;
+    try {
+      adopted = this.callbacks.onLateSubmission?.(this.state.runId, job) ?? false;
+    } catch (error) {
+      console.warn('[PortfolioOptimizer] Ошибка в обработчике событий', error);
+    }
+    if (adopted) {
+      return;
+    }
+    try {
+      const saved = this.deps.loadSavedState();
+      if (saved && saved.runId === this.state.runId && applyLateSubmission(saved, job)) {
+        this.deps.saveState(saved);
+      }
+    } catch (error) {
+      console.warn('[PortfolioOptimizer] Не удалось записать бэктест, созданный после остановки', error);
+    }
+  }
+
+  /**
+   * Перед отправкой POST: отменённый этап отменяет задачу (бэктест ещё не создан); бэктест, который уже
+   * создан для этой задачи (ответ остановленного сеанса пришёл позже), подключается без повторного создания.
+   */
+  private handleBeforeSubmit(key: string): number | null {
+    const handle = this.jobs.get(key);
+    if (handle?.cancelPending && !handle.submitted) {
+      handle.controller.abort();
+      return null;
+    }
+    const existing = this.state.inFlightJobs.find((job) => job.key === key && isPositiveInteger(job.backtestId));
+    if (existing?.backtestId) {
+      if (handle) {
+        handle.submitted = true;
+        this.releaseReservation(handle);
+      }
+      return existing.backtestId;
+    }
+    if (handle) {
+      handle.posting = true;
+    }
+    return null;
+  }
+
+  /**
+   * Отмена этапа: ещё не созданные бэктесты отменяются. Задачи, чей POST уже отправлялся, не прерываются —
+   * бэктест может уже создаваться в Veles; созданный досчитается и попадёт в кеш, а не созданный
+   * отменится перед повторной попыткой.
+   */
   private cancelStage(scope: StageScope): void {
     scope.cancelled = true;
     for (const handle of scope.handles) {
-      if (!handle.submitted) {
-        handle.controller.abort();
+      if (handle.submitted) {
+        continue;
       }
+      if (handle.posting) {
+        handle.cancelPending = true;
+        continue;
+      }
+      handle.controller.abort();
     }
   }
 
@@ -1983,6 +2428,9 @@ export class PortfolioOptimizer {
   }
 
   private persist(): void {
+    if (this.disposed) {
+      return;
+    }
     this.state.updatedAt = this.deps.now();
     let saved: boolean;
     try {
@@ -1991,13 +2439,21 @@ export class PortfolioOptimizer {
       console.warn('[PortfolioOptimizer] Ошибка сохранения состояния', error);
       saved = false;
     }
-    if (!(saved || this.saveFailureReported)) {
-      this.saveFailureReported = true;
-      this.log(
-        'warning',
-        'Не удалось сохранить состояние запуска (хранилище недоступно или переполнено): после перезагрузки ' +
-          'страницы продолжить его не получится.',
-      );
+    if (!saved) {
+      // Старая сохранённая копия устарела: продолжение с неё создало бы бэктесты повторно и превысило лимит.
+      try {
+        this.deps.clearSavedState();
+      } catch (error) {
+        console.warn('[PortfolioOptimizer] Не удалось удалить устаревшее состояние', error);
+      }
+      if (!this.saveFailureReported) {
+        this.saveFailureReported = true;
+        this.log(
+          'warning',
+          'Не удалось сохранить состояние запуска (хранилище недоступно или переполнено): устаревшая ' +
+            'сохранённая копия удалена, после перезагрузки страницы продолжить запуск не получится.',
+        );
+      }
     }
     this.invokeCallback(() => this.callbacks.onProgress(this.getProgress()));
   }

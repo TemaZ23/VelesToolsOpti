@@ -420,4 +420,32 @@ describe('formState: конфигурация запуска', () => {
     expect(problems[0]).toContain('Корзина монет пуста');
     expect(problems[1]).toContain('Некорректный период');
   });
+
+  it('validateRunDraft не пускает запуск, если лимита бэктестов не хватит на базу и одного кандидата', () => {
+    const params = createParams();
+    const basketText = Array.from({ length: 40 }, (_, index) => `C${index}`).join(', ');
+    const withLimit = (maxBacktests: number, patch: Partial<PortfolioOptimizerFormState> = {}) =>
+      formWith({ botId: 77, basketText, screenSize: 10, ...patch, search: { ...DEFAULT_SEARCH_CONFIG, maxBacktests } });
+
+    // Без группы база — все 40 монет.
+    const [problem] = validateRunDraft({ form: withLimit(30), loadedBotId: 77, params });
+    expect(problem).toContain('Лимит бэктестов (30) меньше, чем нужно для оценки базы (40)');
+    expect(problem).toContain('готовые результаты базы');
+    expect(validateRunDraft({ form: withLimit(45), loadedBotId: 77, params })[0]).toContain(
+      'ни для одного кандидата: база — 40, отбор одного кандидата — 10',
+    );
+    expect(validateRunDraft({ form: withLimit(50), loadedBotId: 77, params })).toEqual([]);
+
+    // С проверенной группой база — только недостающие монеты; с непроверенной — не известно.
+    const grouped = withLimit(12, { baseGroupId: 'g1' });
+    expect(validateRunDraft({ form: grouped, loadedBotId: 77, params, baseBacktests: 2 })).toEqual([]);
+    expect(validateRunDraft({ form: grouped, loadedBotId: 77, params, baseBacktests: 5 })[0]).toContain(
+      'не оставляет места',
+    );
+    expect(validateRunDraft({ form: grouped, loadedBotId: 77, params, baseBacktests: 13 })[0]).toContain(
+      'Увеличьте лимит.',
+    );
+    expect(validateRunDraft({ form: grouped, loadedBotId: 77, params })).toEqual([]);
+    expect(validateRunDraft({ form: grouped, loadedBotId: 77, params, baseBacktests: null })).toEqual([]);
+  });
 });

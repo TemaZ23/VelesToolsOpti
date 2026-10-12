@@ -138,6 +138,12 @@ export interface RunValidationInput {
   /** id бота, стратегия которого загружена (null — не загружена). */
   loadedBotId: number | null;
   params: ParamSpec[];
+  /**
+   * Сколько бэктестов нужно на оценку базы: без группы базы — вся корзина, с проверенной группой —
+   * недостающие в ней монеты, null — неизвестно (группа выбрана, но не проверена). По умолчанию —
+   * вся корзина, если группа базы не выбрана.
+   */
+  baseBacktests?: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -553,7 +559,7 @@ export const buildPortfolioConfig = ({ form, botId, botName, params }: RunDraftI
 };
 
 /** Проблемы, из-за которых запуск невозможен (пустой список — можно запускать). */
-export const validateRunDraft = ({ form, loadedBotId, params }: RunValidationInput): string[] => {
+export const validateRunDraft = ({ form, loadedBotId, params, baseBacktests }: RunValidationInput): string[] => {
   const problems: string[] = [];
   if (form.botId === null) {
     problems.push('Выберите базового бота.');
@@ -564,11 +570,28 @@ export const validateRunDraft = ({ form, loadedBotId, params }: RunValidationInp
   } else if (!params.some((param) => param.enabled)) {
     problems.push('Включите хотя бы один параметр для поиска.');
   }
-  if (parseBasket(form.basketText).length === 0) {
+  const basketSize = parseBasket(form.basketText).length;
+  if (basketSize === 0) {
     problems.push('Корзина монет пуста — добавьте хотя бы одну монету.');
   }
   if (toRunPeriod(form.periodFrom, form.periodTo) === null) {
     problems.push('Некорректный период: дата начала должна быть не позже даты окончания.');
+  }
+  const baseCost = baseBacktests !== undefined ? baseBacktests : form.baseGroupId ? null : basketSize;
+  if (basketSize > 0 && baseCost !== null) {
+    const limit = form.search.maxBacktests;
+    const screenCost = resolveScreenSize(basketSize, form.screenSize);
+    if (limit < baseCost) {
+      problems.push(
+        `Лимит бэктестов (${limit}) меньше, чем нужно для оценки базы (${baseCost}): запуск остановится на базе. ` +
+          `Увеличьте лимит${form.baseGroupId ? '' : ' или выберите готовые результаты базы из группы бэктестов'}.`,
+      );
+    } else if (limit < baseCost + screenCost) {
+      problems.push(
+        `Лимит бэктестов (${limit}) не оставляет места ни для одного кандидата: база — ${baseCost}, ` +
+          `отбор одного кандидата — ${screenCost}.`,
+      );
+    }
   }
   return problems;
 };

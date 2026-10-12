@@ -8,6 +8,10 @@
  *
  * Снимок (snapshot) неизменяемый: каждое событие оптимизатора создаёт новый объект, поэтому
  * сеанс подходит для useSyncExternalStore.
+ *
+ * Между вкладками расширения запуск защищён блокировкой Web Locks (runLock): пока оптимизатор жив
+ * (в том числе на паузе), вкладка держит блокировку, и другая вкладка не начнёт и не продолжит запуск.
+ * Без Web Locks вкладка с оптимизатором пишет «пульс», по которому другая вкладка предупреждает о запуске.
  */
 
 import type { BotStrategy } from '../../api/backtestRunner';
@@ -25,9 +29,21 @@ import type {
   PortfolioOptimizerConfig,
   PortfolioOptimizerProgress,
   PortfolioOptimizerState,
+  ScheduledJob,
   SchedulerConfig,
 } from '../../types/portfolioOptimizer';
-import { progressFromState } from './runView';
+import {
+  clearRunHeartbeat,
+  createTabId,
+  createWebLockProvider,
+  type OtherTabRun,
+  RUN_HEARTBEAT_INTERVAL_MS,
+  type RunLockHandle,
+  type RunLockProvider,
+  readRunHeartbeat,
+  writeRunHeartbeat,
+} from './runLock';
+import { isProbablyRunningElsewhere, progressFromState } from './runView';
 
 /** Как часто обновлять прогресс (в работе, очередь, ETA) между событиями оптимизатора. */
 export const PROGRESS_REFRESH_INTERVAL_MS = 5_000;
@@ -62,7 +78,17 @@ export interface PortfolioRunSessionOptions {
   deps?: Partial<PortfolioOptimizerDeps>;
   /** Интервал обновления прогресса, мс; 0 — без таймера. */
   refreshIntervalMs?: number;
+  /** Блокировка между вкладками; null — без Web Locks («пульс»). По умолчанию — Web Locks браузера. */
+  lock?: RunLockProvider | null;
+  /** Интервал «пульса» вкладки с оптимизатором, мс; 0 — без «пульса». */
+  heartbeatIntervalMs?: number;
 }
+
+/** Сообщение, если блокировку запуска держит другая вкладка. */
+export const OTHER_TAB_RUN_MESSAGE =
+  'Запуск не начат: портфельный оптимизатор уже работает в другой вкладке расширения. ' +
+  'Остановите его там (или закройте ту вкладку) — два запуска создавали бы бэктесты дважды и перезаписывали ' +
+  'сохранённое состояние друг друга.';
 
 type Listener = () => void;
 
@@ -98,9 +124,18 @@ export class PortfolioRunSession {
   private readonly options: PortfolioRunSessionOptions;
   private nextLogId = 1;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly lock: RunLockProvider | null;
+  /** id этой вкладки для «пульса». */
+  readonly tabId: string;
+  /** Оптимизатор создан, но ждёт блокировки: остановка до старта отменяет его запуск. */
+  private stopBeforeStart = false;
+  private readonly onPageHide = (): void => clearRunHeartbeat(this.tabId);
 
   constructor(options: PortfolioRunSessionOptions = {}) {
     this.options = options;
+    this.lock = options.lock === undefined ? createWebLockProvider() : options.lock;
+    this.tabId = createTabId();
   }
 
   /** Подписка на изменения снимка (для useSyncExternalStore). */
@@ -168,7 +203,29 @@ export class PortfolioRunSession {
   }
 
   stop(): void {
-    this.optimizer?.stop();
+    const optimizer = this.optimizer;
+    if (optimizer && !optimizer.isRunning) {
+      this.stopBeforeStart = true;
+    }
+    optimizer?.stop();
+  }
+
+  /**
+   * Выполняется ли сохранённый запуск в другой вкладке: 'locked' — её блокировка Web Locks (точно),
+   * 'probable' — без Web Locks, по недавнему сохранению или «пульсу» другой вкладки, 'none' — нет.
+   */
+  async detectOtherTabRun(state: PortfolioOptimizerState | null, now: number): Promise<OtherTabRun> {
+    if (this.optimizer) {
+      return 'none';
+    }
+    if (this.lock) {
+      try {
+        return (await this.lock.isHeld()) ? 'locked' : 'none';
+      } catch (error) {
+        console.warn('[PortfolioOptimizer] Не удалось проверить блокировку запуска', error);
+      }
+    }
+    return state && isProbablyRunningElsewhere(state, now, readRunHeartbeat(), this.tabId) ? 'probable' : 'none';
   }
 
   /** Потоки, интервал и таймауты планировщика на ходу. */
@@ -224,12 +281,17 @@ export class PortfolioRunSession {
           this.update((snapshot) => ({ ...snapshot, candidates, bestCandidateId }));
         }
       },
+      // Ответ на POST остановленного экземпляра пришёл позже — передаём его живому оптимизатору того же запуска.
+      onLateSubmission: (runId: string, job: ScheduledJob) =>
+        !isCurrent() && this.optimizer !== null && this.optimizer.adoptLateSubmission(runId, job),
     };
 
     const optimizer = create(callbacks);
     instance = optimizer;
+    const previous = this.snapshot;
     const state = optimizer.getState();
     this.optimizer = optimizer;
+    this.stopBeforeStart = false;
     this.snapshot = {
       meta: toMeta(state),
       candidates: state.candidates,
@@ -239,9 +301,35 @@ export class PortfolioRunSession {
       active: true,
     };
     this.emit();
-    this.startRefreshTimer();
 
+    if (!this.lock) {
+      return this.run(optimizer, null);
+    }
+    return this.lock.acquire().then(
+      (handle) => (handle ? this.run(optimizer, handle) : this.rejectLaunch(optimizer, previous)),
+      (error: unknown) => {
+        console.warn('[PortfolioOptimizer] Блокировка запуска недоступна — запуск без неё', error);
+        return this.run(optimizer, null);
+      },
+    );
+  }
+
+  /** Выполнение оптимизатора; блокировка и «пульс» держатся до его окончания (включая паузу). */
+  private run(optimizer: PortfolioOptimizer, handle: RunLockHandle | null): Promise<void> {
+    if (this.optimizer !== optimizer || this.stopBeforeStart) {
+      handle?.release();
+      this.stopBeforeStart = false;
+      if (this.optimizer === optimizer) {
+        this.optimizer = null;
+        this.update((snapshot) => ({ ...snapshot, active: false }));
+      }
+      return Promise.resolve();
+    }
+    this.startRefreshTimer();
+    this.startHeartbeat(optimizer.getState().runId);
     return optimizer.start().finally(() => {
+      handle?.release();
+      this.stopHeartbeat();
       if (this.optimizer !== optimizer) {
         return;
       }
@@ -250,6 +338,21 @@ export class PortfolioRunSession {
       const progress = optimizer.getProgress();
       this.update((snapshot) => ({ ...snapshot, progress, active: false }));
     });
+  }
+
+  /** Блокировку держит другая вкладка: оптимизатор не запускается, показывается прежний снимок. */
+  private rejectLaunch(optimizer: PortfolioOptimizer, previous: PortfolioRunSnapshot | null): Promise<void> {
+    if (this.optimizer !== optimizer) {
+      return Promise.resolve();
+    }
+    this.optimizer = null;
+    const shown = previous ?? this.snapshot;
+    if (shown) {
+      const notice: PortfolioLogEntry = { timestamp: Date.now(), level: 'error', message: OTHER_TAB_RUN_MESSAGE };
+      this.snapshot = { ...shown, active: false, logs: this.appendLog(shown.logs, notice) };
+      this.emit();
+    }
+    return Promise.resolve();
   }
 
   private update(mutator: (snapshot: PortfolioRunSnapshot) => PortfolioRunSnapshot): void {
@@ -298,6 +401,32 @@ export class PortfolioRunSession {
       clearInterval(this.refreshTimer);
       this.refreshTimer = null;
     }
+  }
+
+  /** «Пульс» для вкладок без Web Locks: пишется и во время паузы, пока оптимизатор жив. */
+  private startHeartbeat(runId: string): void {
+    this.stopHeartbeat();
+    const interval = this.options.heartbeatIntervalMs ?? RUN_HEARTBEAT_INTERVAL_MS;
+    if (interval <= 0) {
+      return;
+    }
+    const beat = (): void => writeRunHeartbeat({ runId, tabId: this.tabId, at: Date.now() });
+    beat();
+    this.heartbeatTimer = setInterval(beat, interval);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pagehide', this.onPageHide);
+    }
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer !== null) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', this.onPageHide);
+    }
+    clearRunHeartbeat(this.tabId);
   }
 }
 

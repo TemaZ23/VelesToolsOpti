@@ -20,6 +20,7 @@ import type {
   BacktestRunSettings,
   Candidate,
   CandidateEvaluation,
+  ObjectiveConfig,
   ParamSpec,
   PortfolioLogEntry,
   PortfolioMetrics,
@@ -27,6 +28,7 @@ import type {
   PortfolioOptimizerConfig,
   PortfolioOptimizerProgress,
   PortfolioOptimizerState,
+  ScheduledJob,
   SchedulerConfig,
   SearchConfig,
 } from '../../types/portfolioOptimizer';
@@ -35,8 +37,10 @@ import {
   SchedulerAbortError,
   type SchedulerEvents,
   type SchedulerJobRequest,
+  TransientBacktestError,
 } from '../backtestScheduler';
 import {
+  applyLateSubmission,
   buildCandidateBacktestName,
   candidateShortLabel,
   clearSavedPortfolioState,
@@ -45,6 +49,7 @@ import {
   DEFAULT_SEARCH_CONFIG,
   estimateBacktests,
   GROUP_PERIOD_TOLERANCE_MS,
+  type GroupBacktestStrategy,
   type GroupBacktestSummary,
   type GroupBacktestsLoadResult,
   isAuthError,
@@ -213,7 +218,7 @@ class FakeVeles {
   }
 }
 
-type FakeJobState = 'queued' | 'submitted' | 'done' | 'failed' | 'aborted';
+type FakeJobState = 'queued' | 'posting' | 'submitted' | 'done' | 'failed' | 'aborted';
 
 interface FakeJob {
   kind: 'run' | 'attach';
@@ -221,6 +226,8 @@ interface FakeJob {
   symbol: string;
   payload: BotStrategy | null;
   backtestId: number | null;
+  /** attach: время создания бэктеста, переданное оркестратором. */
+  submittedAt: number | null;
   state: FakeJobState;
   signal: AbortSignal;
   resolve: (backtestId: number) => void;
@@ -238,6 +245,8 @@ interface FakeSchedulerBehavior {
   submitError: (job: FakeJob) => Error | null;
   /** Ошибка выполнения: бэктест создан, но завершился неудачно. */
   runError: (job: FakeJob) => Error | null;
+  /** POST «зависает» до вызова completePost / failPost из теста. */
+  deferPost: (job: FakeJob) => boolean;
 }
 
 const createBehavior = (patch: Partial<FakeSchedulerBehavior> = {}): FakeSchedulerBehavior => ({
@@ -246,6 +255,7 @@ const createBehavior = (patch: Partial<FakeSchedulerBehavior> = {}): FakeSchedul
   hold: () => false,
   submitError: () => null,
   runError: () => null,
+  deferPost: () => false,
   ...patch,
 });
 
@@ -282,8 +292,8 @@ class FakeScheduler implements PortfolioScheduler {
     return this.track('run', job.key, job.symbol, job.payload, null, signal);
   }
 
-  attach(key: string, backtestId: number, signal: AbortSignal): Promise<number> {
-    return this.track('attach', key, key.split('|')[1] ?? key, null, backtestId, signal);
+  attach(key: string, backtestId: number, signal: AbortSignal, submittedAt: number | null = null): Promise<number> {
+    return this.track('attach', key, key.split('|')[1] ?? key, null, backtestId, signal, submittedAt);
   }
 
   setPaused(paused: boolean): void {
@@ -336,6 +346,30 @@ class FakeScheduler implements PortfolioScheduler {
     }
   }
 
+  /** Ответ на «зависший» POST: бэктест создан. */
+  completePost(job: FakeJob): void {
+    if (job.state !== 'posting' && job.state !== 'aborted') {
+      return;
+    }
+    const wasAborted = job.state === 'aborted';
+    job.backtestId = this.veles.create(job.key, job.symbol, readRsi(job.payload));
+    this.events.onSubmitted(job.key, job.backtestId);
+    if (wasAborted || job.signal.aborted) {
+      job.state = 'aborted';
+      return;
+    }
+    job.state = 'submitted';
+    this.scheduleCompletion(job);
+  }
+
+  /** «Зависший» POST не удался (восстановимо): задача снова в очереди. */
+  failPost(job: FakeJob): void {
+    if (job.state === 'posting') {
+      job.state = 'queued';
+      this.schedulePump();
+    }
+  }
+
   private track(
     kind: FakeJob['kind'],
     key: string,
@@ -343,6 +377,7 @@ class FakeScheduler implements PortfolioScheduler {
     payload: BotStrategy | null,
     backtestId: number | null,
     signal: AbortSignal,
+    submittedAt: number | null = null,
   ): Promise<number> {
     if (signal.aborted) {
       return Promise.reject(new SchedulerAbortError());
@@ -354,6 +389,7 @@ class FakeScheduler implements PortfolioScheduler {
         symbol,
         payload,
         backtestId,
+        submittedAt,
         state: kind === 'attach' ? 'submitted' : 'queued',
         signal,
         resolve,
@@ -362,7 +398,7 @@ class FakeScheduler implements PortfolioScheduler {
       signal.addEventListener(
         'abort',
         () => {
-          if (job.state === 'queued' || job.state === 'submitted') {
+          if (job.state === 'queued' || job.state === 'submitted' || job.state === 'posting') {
             job.state = 'aborted';
             reject(new SchedulerAbortError());
           }
@@ -378,6 +414,20 @@ class FakeScheduler implements PortfolioScheduler {
   }
 
   private submit(job: FakeJob): void {
+    const existing = this.events.beforeSubmit?.(job.key) ?? null;
+    if (job.signal.aborted) {
+      return;
+    }
+    if (existing !== null) {
+      job.backtestId = existing;
+      job.state = 'submitted';
+      this.scheduleCompletion(job);
+      return;
+    }
+    if (this.behavior.deferPost(job)) {
+      job.state = 'posting';
+      return;
+    }
     const error = this.behavior.submitError(job);
     if (error) {
       job.state = 'failed';
@@ -419,12 +469,15 @@ interface FakeEvaluator {
   calls: EvaluatorCall[];
   /** Ошибка для вызова (по умолчанию — успех). */
   failWhen: (call: EvaluatorCall) => Error | null;
+  /** Правка метрик корзины (по умолчанию — без изменений); rsi — пороги RSI бэктестов корзины. */
+  adjust: (metrics: PortfolioMetrics, rsi: number[]) => PortfolioMetrics;
 }
 
 const createEvaluator = (veles: FakeVeles): FakeEvaluator => {
   const evaluator: FakeEvaluator = {
     calls: [],
     failWhen: () => null,
+    adjust: (metrics) => metrics,
     evaluate: async (ids, block, run, folds) => {
       const call: EvaluatorCall = { ids: [...ids], block, run: { ...run }, folds };
       evaluator.calls.push(call);
@@ -432,15 +485,15 @@ const createEvaluator = (veles: FakeVeles): FakeEvaluator => {
       if (error) {
         throw error;
       }
-      const scores = ids.map((id) => {
+      const rsi = ids.map((id) => {
         const backtest = veles.backtests.get(id);
         if (!backtest) {
           throw new Error(`Неизвестный бэктест ${id}`);
         }
-        return scoreForRsi(backtest.rsi);
+        return backtest.rsi;
       });
-      const mean = scores.reduce((total, score) => total + score, 0) / scores.length;
-      return { metrics: metricsWith(mean, ids.length), folds: [] };
+      const mean = rsi.reduce((total, value) => total + scoreForRsi(value), 0) / rsi.length;
+      return { metrics: evaluator.adjust(metricsWith(mean, ids.length), rsi), folds: [] };
     },
   };
   return evaluator;
@@ -457,6 +510,7 @@ interface Harness {
   candidateUpdates: Array<{ candidates: Candidate[]; bestCandidateId: string | null }>;
   sleep: Mock<(ms: number, signal?: AbortSignal) => Promise<void>>;
   loadGroupBacktests: Mock<(groupId: string) => Promise<GroupBacktestsLoadResult>>;
+  clearSavedState: Mock<() => void>;
   callbacks: PortfolioOptimizerCallbacks;
   deps: Partial<PortfolioOptimizerDeps>;
   scheduler: () => FakeScheduler;
@@ -486,6 +540,15 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
     backtests: [],
     failed: [],
   }));
+  const clearSavedState = vi.fn<() => void>();
+  const readSaved = (): PortfolioOptimizerState | null => {
+    const raw = saves.at(-1);
+    if (!raw) {
+      return null;
+    }
+    const parsed: unknown = JSON.parse(raw);
+    return isPortfolioOptimizerState(parsed) ? parsed : null;
+  };
 
   return {
     veles,
@@ -498,6 +561,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
     candidateUpdates,
     sleep,
     loadGroupBacktests,
+    clearSavedState,
     callbacks: {
       onLog: (entry) => logs.push(entry),
       onProgress: (snapshot) => progress.push(snapshot),
@@ -515,6 +579,8 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
         saves.push(JSON.stringify(state));
         return true;
       },
+      loadSavedState: readSaved,
+      clearSavedState,
       sleep,
       now: () => {
         time += 1000;
@@ -730,6 +796,18 @@ describe('normalizePortfolioConfig', () => {
   });
 });
 
+/** Настройки стратегии бэктеста группы: базовый бот с заданным порогом RSI. */
+const groupStrategy = (rsi: number): GroupBacktestStrategy => {
+  const strategy = createStrategy();
+  return {
+    conditions: (strategy.conditions ?? []).map((item, index) => (index === 0 ? { ...item, value: rsi } : item)),
+    settings: strategy.settings ?? { type: 'CUSTOM' },
+    profit: strategy.profit ?? null,
+    stopLoss: null,
+    pullUp: 0,
+  };
+};
+
 describe('matchGroupBacktestsToBasket', () => {
   const summary = (
     backtestId: number,
@@ -794,6 +872,71 @@ describe('matchGroupBacktestsToBasket', () => {
     expect(match.warnings[0]).toContain('ADA (2022-01-31 – 2024-01-01)');
     expect(match.warnings[1]).toContain('учёта теней (SOL)');
     expect(match.warnings[2]).toContain('LINK (SHORT)');
+  });
+
+  it('не берёт бэктесты с другими комиссиями, депозитом, биржей или настройками бота — монеты считаются недостающими', () => {
+    const params = createParams();
+    const match = matchGroupBacktestsToBasket({
+      backtests: [
+        summary(1, 'ADA', { commissions: { maker: 0, taker: 0 } }),
+        summary(2, 'XRP', { deposit: { amount: 10, leverage: 10 } }),
+        summary(3, 'SOL', { exchange: 'BINANCE_FUTURES' }),
+        summary(4, 'DOGE', { strategy: groupStrategy(35) }),
+        summary(5, 'LINK', {
+          commissions: { maker: 0.02, taker: 0.055 },
+          deposit: { amount: 100, leverage: 10 },
+          exchange: 'bybit_futures',
+          strategy: groupStrategy(40),
+        }),
+      ],
+      basket: BASKET,
+      quoteCurrency: 'USDT',
+      run: RUN,
+      algorithm: 'LONG',
+      baseStrategy: createStrategy(),
+      params,
+    });
+    expect(match.backtestIds).toEqual({ LINK: 5 });
+    expect(match.missing).toEqual(['ADA', 'XRP', 'SOL', 'DOGE', 'AVAX']);
+    expect(match.warnings.find((warning) => warning.includes('Комиссии'))).toContain('ADA (0/0%)');
+    expect(match.warnings.find((warning) => warning.includes('Депозит'))).toContain('XRP (10 × 10)');
+    expect(match.warnings.find((warning) => warning.includes('Биржа'))).toContain('SOL (BINANCE_FUTURES)');
+    expect(match.warnings.find((warning) => warning.includes('Настройки бота'))).toContain('DOGE (RSI');
+    expect(match.warnings.find((warning) => warning.includes('Настройки бота'))).toContain('35 вместо 40');
+    for (const warning of match.warnings) {
+      expect(warning).toContain('будут посчитаны бэктестами заново');
+    }
+  });
+
+  it('из нескольких бэктестов монеты берёт самый новый совместимый', () => {
+    const match = matchGroupBacktestsToBasket({
+      backtests: [
+        summary(1, 'ADA', { commissions: { maker: 0.02, taker: 0.055 } }),
+        summary(9, 'ADA', { commissions: { maker: 0, taker: 0 } }),
+        summary(4, 'ADA', { commissions: { maker: 0.02, taker: 0.055 } }),
+      ],
+      basket: BASKET,
+      quoteCurrency: 'USDT',
+      run: RUN,
+    });
+    expect(match.backtestIds).toEqual({ ADA: 4 });
+    expect(match.warnings).toEqual([expect.stringContaining('несколько бэктестов для ADA')]);
+  });
+
+  it('неизвестные комиссии, депозит, биржа и настройки не проверяются', () => {
+    const match = matchGroupBacktestsToBasket({
+      backtests: [
+        summary(1, 'ADA', { commissions: null, deposit: null, exchange: null, strategy: null }),
+        summary(2, 'SOL', { commissions: { maker: null, taker: null }, deposit: { amount: null, leverage: null } }),
+      ],
+      basket: BASKET,
+      quoteCurrency: 'USDT',
+      run: RUN,
+      baseStrategy: createStrategy(),
+      params: createParams(),
+    });
+    expect(match.backtestIds).toEqual({ ADA: 1, SOL: 2 });
+    expect(match.warnings).toEqual([]);
   });
 
   it('не предупреждает о расхождении периода в пределах допуска', () => {
@@ -900,6 +1043,13 @@ describe('loadGroupBacktestsFromStore', () => {
 
     const result = await loadGroupBacktestsFromStore('g1');
     expect(result.groupName).toBe('База LONG');
+    const strategy = {
+      conditions: [],
+      settings: { type: 'CUSTOM' },
+      profit: null,
+      stopLoss: null,
+      pullUp: 0,
+    };
     expect(result.backtests).toEqual([
       {
         backtestId: 11,
@@ -909,6 +1059,10 @@ describe('loadGroupBacktestsFromStore', () => {
         to: RUN.periodTo,
         useWicks: false,
         algorithm: 'LONG',
+        commissions: { maker: 0.02, taker: 0.055 },
+        deposit: { amount: 100, leverage: 10 },
+        exchange: 'BYBIT_FUTURES',
+        strategy,
       },
       {
         backtestId: 12,
@@ -918,6 +1072,10 @@ describe('loadGroupBacktestsFromStore', () => {
         to: RUN.periodTo,
         useWicks: false,
         algorithm: 'LONG',
+        commissions: { maker: 0.02, taker: 0.055 },
+        deposit: { amount: 100, leverage: 10 },
+        exchange: 'BYBIT_FUTURES',
+        strategy,
       },
     ]);
     expect(result.failed).toEqual([{ backtestId: 13, error: 'HTTP 500 Internal Server Error' }]);
@@ -1055,7 +1213,8 @@ describe('PortfolioOptimizer: основной сценарий', () => {
         for (const symbol of SCREEN) {
           expect(candidate.full.backtestIds[symbol]).toBe(candidate.screen?.backtestIds[symbol]);
         }
-        const fullIds = idsInOrder(candidate.full, BASKET);
+        // В оценку id идут по возрастанию — как их хранит группа бэктестов.
+        const fullIds = idsInOrder(candidate.full, BASKET).sort((left, right) => left - right);
         expect(harness.evaluator.calls.some((call) => call.ids.join() === fullIds.join())).toBe(true);
       } else {
         expect(runs).toEqual(SCREEN);
@@ -1232,6 +1391,10 @@ describe('PortfolioOptimizer: основной сценарий', () => {
     });
     await optimizer.start();
     expect(harness.logs.filter((entry) => entry.message.includes('Не удалось сохранить состояние'))).toHaveLength(1);
+    expect(hasLog(harness, 'warning', 'устаревшая сохранённая копия удалена')).toBe(true);
+    // Устаревшая копия удаляется при каждой неудаче: её нельзя продолжить с неверным числом бэктестов.
+    expect(harness.clearSavedState).toHaveBeenCalled();
+    expect(harness.clearSavedState.mock.calls.length).toBeGreaterThan(1);
     expect(optimizer.getState().status).toBe('completed');
   });
 
@@ -1332,7 +1495,8 @@ describe('PortfolioOptimizer: результаты базы из группы б
     const full = requireEvaluation(base.full);
     expect(full.status).toBe('done');
     expect(full.backtestIds).toMatchObject({ ADA: 501, SOL: 503, LINK: 505 });
-    expect(harness.evaluator.calls[0].ids).toEqual(idsInOrder(base.full, BASKET));
+    // id корзины передаются в оценку по возрастанию — как их хранит и складывает группа бэктестов.
+    expect(harness.evaluator.calls[0].ids).toEqual([501, 503, 505, 1000, 1001, 1002]);
     expect(harness.evaluator.calls[1].ids).toEqual([501, 503, 505]);
     expect(state.backtestCache[`${base.hash}|ADA`]).toBe(501);
 
@@ -1525,28 +1689,78 @@ describe('PortfolioOptimizer: ошибки и неполные корзины', 
     const candidate = optimizer.getState().candidates.find((item) => item.hash === target);
     expect(candidate?.screen?.status).toBe('done');
     expect(harness.sleep).toHaveBeenCalledWith(5_000, expect.any(AbortSignal));
-    expect(hasLog(harness, 'warning', 'не удалось посчитать метрики (попытка 1/3)')).toBe(true);
+    expect(hasLog(harness, 'warning', 'не удалось посчитать метрики (попытка 1/4)')).toBe(true);
   });
 
-  it('после исчерпания попыток расчёта метрик этап получает статус failed', async () => {
-    const harness = createHarness();
+  it('после исчерпания попыток расчёта метрик запуск останавливается, а после продолжения этап пересчитывается из кеша', async () => {
+    const veles = new FakeVeles();
+    const first = createHarness({ veles });
     let target: string | null = null;
-    harness.evaluator.failWhen = (call) => {
-      const hash = harness.veles.hashOf(call.ids[0]);
+    first.evaluator.failWhen = (call) => {
+      const hash = veles.hashOf(call.ids[0]);
       if (hash === BASE_HASH) {
         return null;
       }
       target ??= hash;
       return hash === target ? new Error('Не удалось загрузить результаты бэктеста: сеть недоступна') : null;
     };
-    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
     await optimizer.start();
-    const state = optimizer.getState();
-    const candidate = state.candidates.find((item) => item.hash === target);
-    expect(candidate?.screen?.status).toBe('failed');
+    const stopped = optimizer.getState();
+    const candidate = stopped.candidates.find((item) => item.hash === target);
+
+    // Этап не помечен неудачным: бэктесты готовы, не загрузились только результаты.
+    expect(stopped.status).toBe('error');
+    expect(candidate?.screen?.status).toBe('running');
+    expect(candidate?.screen?.metricsFailures).toBe(1);
     expect(candidate?.screen?.error).toContain('сеть недоступна');
-    expect(harness.evaluator.calls.filter((call) => harness.veles.hashOf(call.ids[0]) === target)).toHaveLength(3);
-    expect(harness.sleep.mock.calls.map(([ms]) => ms)).toEqual(expect.arrayContaining([5_000, 15_000]));
+    expect(first.evaluator.calls.filter((call) => veles.hashOf(call.ids[0]) === target)).toHaveLength(4);
+    expect(first.sleep.mock.calls.map(([ms]) => ms)).toEqual(expect.arrayContaining([5_000, 30_000, 120_000]));
+    expect(hasLog(first, 'error', 'Veles или сеть недоступны')).toBe(true);
+    expect(hasLog(first, 'error', 'продолжите запуск')).toBe(true);
+    // Поколение не подведено — статистика параметров не испорчена сбоем.
+    expect(stopped.generation).toBe(0);
+    expect(stopped.paramStats).toEqual({});
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    const resumed = PortfolioOptimizer.fromSaved(first.lastSaved(), second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    const rescored = state.candidates.find((item) => item.hash === target);
+    expect(state.status).toBe('completed');
+    expect(rescored?.screen?.status).toBe('done');
+    expect(rescored?.screen?.metricsFailures).toBeUndefined();
+    // Бэктесты отбора этого кандидата не создавались заново.
+    expect(runsFor(second, target ?? '').filter((job) => SCREEN.includes(job.symbol))).toHaveLength(0);
+  });
+
+  it('если метрики не считаются и после продолжения, этап получает статус failed и запуск идёт дальше', async () => {
+    const veles = new FakeVeles();
+    const failing = (harness: Harness, target: { hash: string | null }) => {
+      harness.evaluator.failWhen = (call) => {
+        const hash = veles.hashOf(call.ids[0]);
+        if (hash === BASE_HASH) {
+          return null;
+        }
+        target.hash ??= hash;
+        return hash === target.hash ? new Error('Не удалось загрузить результаты бэктеста: битые данные') : null;
+      };
+    };
+    const target: { hash: string | null } = { hash: null };
+    const first = createHarness({ veles });
+    failing(first, target);
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    expect(optimizer.getState().status).toBe('error');
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    failing(second, target);
+    const resumed = PortfolioOptimizer.fromSaved(first.lastSaved(), second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    const candidate = state.candidates.find((item) => item.hash === target.hash);
+    expect(candidate?.screen?.status).toBe('failed');
+    expect(candidate?.screen?.error).toContain('битые данные');
     expect(state.status).toBe('completed');
   });
 });
@@ -1593,6 +1807,9 @@ describe('PortfolioOptimizer: лимит бэктестов', () => {
     expect(state.backtestsSubmitted).toBeLessThanOrEqual(4);
     expect(state.status).toBe('error');
     expect(findBase(state).full?.error).toContain('исчерпан лимит бэктестов');
+    // Причина — лимит: продолжать этот запуск бессмысленно, сообщение не предлагает этого.
+    expect(hasLog(harness, 'error', 'не хватило лимита бэктестов (создано 4 из 4)')).toBe(true);
+    expect(hasLog(harness, 'error', 'начните новый запуск')).toBe(true);
   });
 });
 
@@ -1660,6 +1877,8 @@ describe('PortfolioOptimizer: пауза, остановка и продолже
     expect(findBase(stopped).full?.status).toBe('running');
     expect(first.scheduler().jobs.every((job) => job.state === 'aborted')).toBe(true);
     expect(hasLog(first, 'warning', 'Запуск остановлен')).toBe(true);
+    // После окончания сеанса UI получает итоговые кандидаты (этапы, прерванные остановкой, — «в работе»).
+    expect(first.candidateUpdates.at(-1)?.candidates).toEqual(stopped.candidates);
     const submittedIds = first.scheduler().jobs.map((job) => job.backtestId);
 
     const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
@@ -1800,5 +2019,452 @@ describe('PortfolioOptimizer: пауза, остановка и продолже
     const state = optimizer.getState();
     expect(state.logs.length).toBeLessThanOrEqual(MAX_PORTFOLIO_LOG_ENTRIES);
     expect(state.logs.at(-1)?.message).toContain('Оптимизация завершена');
+  });
+});
+
+describe('PortfolioOptimizer: точность сравнения с базой', () => {
+  it('на отборе минимум сделок масштабируется долей отборочной корзины (по базе)', async () => {
+    const harness = createHarness();
+    const objective: ObjectiveConfig = { kind: 'pnlToRisk', folds: 3, maxMaeCap: null, minDeals: 300 };
+    const optimizer = new PortfolioOptimizer(createInput({ objective }, { generations: 1 }), harness.callbacks, {
+      ...harness.deps,
+    });
+    await optimizer.start();
+    const state = optimizer.getState();
+    const base = findBase(state);
+    // Полная корзина: 6 монет × 50 сделок = 300 — без штрафа. Отбор: 150 сделок при минимуме 300 × 150/300.
+    expect(requireScore(base.full)).toBe(80);
+    expect(requireScore(base.screen)).toBe(80);
+    for (const candidate of nonBase(state)) {
+      expect(requireScore(candidate.screen)).toBe(scoreForRsi(candidate.values[RSI_ID]));
+    }
+  });
+
+  it('кандидат с малым числом сделок на отборе не продвигается на полную корзину', async () => {
+    const harness = createHarness();
+    // Кандидаты с RSI < 40 лучше по score, но почти не торгуют.
+    harness.evaluator.adjust = (metrics, rsi) =>
+      rsi.every((value) => value < 40) ? { ...metrics, totalDeals: rsi.length } : metrics;
+    const optimizer = new PortfolioOptimizer(
+      createInput({}, { generations: 2, promotePerGeneration: 3 }),
+      harness.callbacks,
+      harness.deps,
+    );
+    await optimizer.start();
+    const state = optimizer.getState();
+    const quiet = nonBase(state).filter((candidate) => candidate.values[RSI_ID] < 40);
+    expect(quiet.length).toBeGreaterThan(0);
+    for (const candidate of quiet) {
+      expect(requireScore(candidate.screen)).toBeGreaterThan(requireScore(findBase(state).screen));
+      expect(candidate.full).toBeNull();
+    }
+    expect(quiet.some((candidate) => candidate.id === state.bestCandidateId)).toBe(false);
+    expect(hasLog(harness, 'info', 'слишком мало сделок на отборе')).toBe(true);
+  });
+
+  it('кандидат с малым числом сделок на полной корзине не становится лучшим и родителем', async () => {
+    const harness = createHarness();
+    harness.evaluator.adjust = (metrics, rsi) =>
+      rsi.length === BASKET.length && rsi.every((value) => value < 40) ? { ...metrics, totalDeals: 6 } : metrics;
+    const optimizer = new PortfolioOptimizer(
+      createInput({}, { generations: 1, promotePerGeneration: 3 }),
+      harness.callbacks,
+      harness.deps,
+    );
+    await optimizer.start();
+    const state = optimizer.getState();
+    const quiet = nonBase(state).filter(
+      (candidate) => candidate.full?.status === 'done' && candidate.values[RSI_ID] < 40,
+    );
+    expect(quiet.length).toBeGreaterThan(0);
+    const base = findBase(state);
+    for (const candidate of quiet) {
+      expect(requireScore(candidate.full)).toBeGreaterThan(requireScore(base.full) * 1.01);
+      expect(state.bestCandidateId).not.toBe(candidate.id);
+    }
+    expect(hasLog(harness, 'warning', 'лучшим не становится')).toBe(true);
+    expect(hasLog(harness, 'warning', '6 сделок при 300 у базы')).toBe(true);
+    for (const candidate of quiet) {
+      for (const id of candidate.mutated ?? []) {
+        expect(state.paramStats[id].wins).toBeLessThan(state.paramStats[id].tries);
+      }
+    }
+  });
+
+  it('бэктесты группы с другими комиссиями не берутся результатами базы и считаются заново', async () => {
+    const harness = createHarness();
+    harness.veles.register(501, 'ADA', 40);
+    harness.veles.register(503, 'SOL', 40);
+    harness.loadGroupBacktests.mockResolvedValue({
+      groupName: 'Старая группа',
+      backtests: [
+        {
+          backtestId: 501,
+          base: 'ADA',
+          quote: 'USDT',
+          from: RUN.periodFrom,
+          to: RUN.periodTo,
+          useWicks: true,
+          algorithm: 'LONG',
+          commissions: { maker: 0, taker: 0 },
+        },
+        {
+          backtestId: 503,
+          base: 'SOL',
+          quote: 'USDT',
+          from: RUN.periodFrom,
+          to: RUN.periodTo,
+          useWicks: true,
+          algorithm: 'LONG',
+          commissions: { maker: 0.02, taker: 0.055 },
+          strategy: groupStrategy(40),
+        },
+      ],
+      failed: [],
+    });
+    const optimizer = new PortfolioOptimizer(
+      createInput({ baseGroupId: 'group-old' }, { generations: 0 }),
+      harness.callbacks,
+      harness.deps,
+    );
+    await optimizer.start();
+    const base = findBase(optimizer.getState());
+    expect(runsFor(harness, base.hash).map((job) => job.symbol)).toEqual(['ADA', 'XRP', 'DOGE', 'LINK', 'AVAX']);
+    expect(requireEvaluation(base.full).backtestIds.SOL).toBe(503);
+    expect(requireEvaluation(base.full).backtestIds.ADA).not.toBe(501);
+    expect(hasLog(harness, 'warning', 'Комиссии в бэктестах группы отличаются от запуска')).toBe(true);
+  });
+});
+
+describe('PortfolioOptimizer: сбои Veles и сети', () => {
+  it('таймаут нового бэктеста останавливает запуск, запись о бэктесте сохраняется и он подключается после продолжения', async () => {
+    const veles = new FakeVeles();
+    let timedOut: string | null = null;
+    const first = createHarness({
+      veles,
+      behavior: {
+        runError: (job) => {
+          if (timedOut === null && !job.key.startsWith(BASE_HASH)) {
+            timedOut = job.key;
+            return new TransientBacktestError(
+              `Таймаут бэктеста ${job.backtestId} (${job.symbol}): нет результата за 45 мин.`,
+              'timeout',
+              job.backtestId,
+            );
+          }
+          return null;
+        },
+      },
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    const stopped = first.lastSaved();
+
+    expect(stopped.status).toBe('error');
+    expect(hasLog(first, 'error', 'Veles или сеть недоступны: Таймаут бэктеста')).toBe(true);
+    expect(nonBase(stopped).some((candidate) => candidate.screen?.status === 'failed')).toBe(false);
+    const entry = stopped.inFlightJobs.find((job) => job.key === timedOut);
+    expect(entry?.backtestId).not.toBeNull();
+    expect(stopped.paramStats).toEqual({});
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    const resumed = PortfolioOptimizer.fromSaved(stopped, second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    const attach = second.scheduler().jobs.find((job) => job.kind === 'attach' && job.key === timedOut);
+    // Таймаут после продолжения отсчитывается от создания бэктеста.
+    expect(attach?.submittedAt).toBe(entry?.submittedAt);
+    expect(runsFor(second, (timedOut ?? '').split('|')[0]).some((job) => job.key === timedOut)).toBe(false);
+    expect(state.status).toBe('completed');
+    expect(state.backtestCache[timedOut ?? '']).toBe(entry?.backtestId);
+  });
+
+  it('бэктест, который не завершился и после продолжения, считается неудачным', async () => {
+    const veles = new FakeVeles();
+    const first = createHarness({ veles, behavior: { hold: () => true } });
+    const optimizer = new PortfolioOptimizer(createInput(), first.callbacks, first.deps);
+    const done = optimizer.start();
+    await waitFor(() => first.scheduler().inFlight === BASKET.length, 'созданы бэктесты базы');
+    optimizer.stop();
+    await done;
+
+    const second = createHarness({
+      veles,
+      startTime: START_TIME + 3_600_000,
+      behavior: {
+        runError: (job) =>
+          job.kind === 'attach' && job.symbol === 'ADA'
+            ? new TransientBacktestError('Таймаут бэктеста 1000 (ADA): нет результата за 45 мин.', 'timeout', 1000)
+            : null,
+      },
+    });
+    const resumed = PortfolioOptimizer.fromSaved(first.lastSaved(), second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    const full = requireEvaluation(findBase(state).full);
+    expect(full.status).toBe('failed');
+    expect(full.failedSymbols).toEqual(['ADA']);
+    expect(full.error).toContain('не завершился и после продолжения');
+    expect(state.inFlightJobs.some((job) => job.symbol === 'ADA')).toBe(false);
+    expect(hasLog(second, 'error', 'Базовый бот не оценён')).toBe(true);
+  });
+
+  it('исчерпанные повторы создания бэктеста останавливают запуск без «провала» кандидата', async () => {
+    const veles = new FakeVeles();
+    let failedKey: string | null = null;
+    const first = createHarness({
+      veles,
+      behavior: {
+        submitError: (job) => {
+          if (failedKey === null && !job.key.startsWith(BASE_HASH)) {
+            failedKey = job.key;
+            return new TransientBacktestError(
+              `Не удалось создать бэктест ${job.symbol} за 5 попыток: Failed to fetch`,
+              'submit',
+            );
+          }
+          return null;
+        },
+      },
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    const stopped = first.lastSaved();
+    expect(stopped.status).toBe('error');
+    expect(nonBase(stopped).every((candidate) => candidate.screen?.status !== 'failed')).toBe(true);
+    expect(stopped.generation).toBe(0);
+    expect(stopped.paramStats).toEqual({});
+    expect(hasLog(first, 'error', 'Failed to fetch')).toBe(true);
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    const resumed = PortfolioOptimizer.fromSaved(stopped, second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    expect(state.status).toBe('completed');
+    expect(state.candidates.find((candidate) => failedKey?.startsWith(candidate.hash))?.screen?.status).toBe('done');
+  });
+
+  it('ошибка авторизации у созданного бэктеста сохраняет запись о нём для продолжения', async () => {
+    const veles = new FakeVeles();
+    let unauthorizedKey: string | null = null;
+    const first = createHarness({
+      veles,
+      behavior: {
+        runError: (job) => {
+          if (unauthorizedKey === null && !job.key.startsWith(BASE_HASH)) {
+            unauthorizedKey = job.key;
+            return new Error('HTTP 401 Unauthorized');
+          }
+          return null;
+        },
+      },
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    const stopped = first.lastSaved();
+    const entry = stopped.inFlightJobs.find((job) => job.key === unauthorizedKey);
+    expect(entry?.backtestId).not.toBeNull();
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    const resumed = PortfolioOptimizer.fromSaved(stopped, second.callbacks, second.deps);
+    await resumed.start();
+    expect(second.scheduler().jobs.some((job) => job.kind === 'attach' && job.key === unauthorizedKey)).toBe(true);
+    expect(resumed.getState().backtestCache[unauthorizedKey ?? '']).toBe(entry?.backtestId);
+  });
+});
+
+describe('PortfolioOptimizer: отмена этапа и поздние ответы на POST', () => {
+  const deferSolOfFirstCandidate = () => {
+    const target: { hash: string | null } = { hash: null };
+    const behavior: Partial<FakeSchedulerBehavior> = {
+      deferPost: (job) => {
+        if (job.key.startsWith(BASE_HASH)) {
+          return false;
+        }
+        target.hash ??= job.key.split('|')[0];
+        return job.key === `${target.hash}|SOL`;
+      },
+      runError: (job) =>
+        job.key === `${target.hash}|ADA` ? new Error('Бэктест (ADA) завершился с ошибкой: статус FAILED') : null,
+    };
+    return { target, behavior };
+  };
+
+  it('не прерывает задачу, чей POST уже отправлен: созданный бэктест досчитывается и попадает в кеш', async () => {
+    const { target, behavior } = deferSolOfFirstCandidate();
+    const harness = createHarness({ behavior });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    const done = optimizer.start();
+    const sol = () => harness.scheduler().jobs.find((job) => job.key === `${target.hash}|SOL`);
+    await waitFor(
+      () =>
+        sol()?.state === 'posting' &&
+        harness.scheduler().jobs.some((job) => job.key === `${target.hash}|ADA` && job.state === 'failed'),
+      'ADA завершился с ошибкой, POST SOL ещё в пути',
+    );
+    await flushMicrotasks(200);
+    expect(sol()?.state).toBe('posting');
+
+    const job = sol();
+    if (!job) {
+      throw new Error('нет задачи SOL');
+    }
+    harness.scheduler().completePost(job);
+    await done;
+    const state = optimizer.getState();
+    expect(job.state).toBe('done');
+    expect(state.backtestCache[`${target.hash}|SOL`]).toBe(job.backtestId);
+    const broken = state.candidates.find((candidate) => candidate.hash === target.hash);
+    expect(broken?.screen?.status).toBe('failed');
+    expect(broken?.screen?.failedSymbols).toEqual(['ADA']);
+    expect(state.backtestsSubmitted).toBe(submittedJobs(harness).length);
+    expect(state.inFlightJobs).toEqual([]);
+    expect(state.status).toBe('completed');
+  });
+
+  it('отменяет такую задачу перед повторной отправкой, если POST не удался', async () => {
+    const { target, behavior } = deferSolOfFirstCandidate();
+    const harness = createHarness({ behavior });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    const done = optimizer.start();
+    const sol = () => harness.scheduler().jobs.find((job) => job.key === `${target.hash}|SOL`);
+    await waitFor(
+      () =>
+        sol()?.state === 'posting' &&
+        harness.scheduler().jobs.some((job) => job.key === `${target.hash}|ADA` && job.state === 'failed'),
+      'ADA завершился с ошибкой, POST SOL ещё в пути',
+    );
+    const job = sol();
+    if (!job) {
+      throw new Error('нет задачи SOL');
+    }
+    harness.scheduler().failPost(job);
+    await done;
+    expect(job.state).toBe('aborted');
+    expect(job.backtestId).toBeNull();
+    expect(optimizer.getState().status).toBe('completed');
+    expect(optimizer.getState().backtestsSubmitted).toBe(submittedJobs(harness).length);
+  });
+
+  it('ответ на POST после остановки дописывается в сохранённое состояние, и после продолжения бэктест не создаётся повторно', async () => {
+    const veles = new FakeVeles();
+    const first = createHarness({
+      veles,
+      behavior: { hold: () => true, deferPost: (job) => job.key === `${BASE_HASH}|SOL` },
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 0 }), first.callbacks, first.deps);
+    const done = optimizer.start();
+    await waitFor(() => first.scheduler().inFlight === BASKET.length - 1, 'созданы бэктесты базы, кроме SOL');
+    optimizer.stop();
+    await done;
+    const stopped = first.lastSaved();
+    expect(stopped.inFlightJobs.some((job) => job.symbol === 'SOL')).toBe(false);
+    const savesAfterStop = first.saves.length;
+
+    const sol = first.scheduler().jobs.find((job) => job.key === `${BASE_HASH}|SOL`);
+    if (!sol) {
+      throw new Error('нет задачи SOL');
+    }
+    first.scheduler().completePost(sol);
+    expect(first.saves.length).toBe(savesAfterStop + 1);
+    const patched = first.lastSaved();
+    expect(patched.backtestsSubmitted).toBe(stopped.backtestsSubmitted + 1);
+    expect(patched.inFlightJobs.find((job) => job.symbol === 'SOL')?.backtestId).toBe(sol.backtestId);
+    // Остальное состояние не перезаписано устаревшей копией экземпляра.
+    expect(patched.updatedAt).toBe(stopped.updatedAt);
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    const resumed = PortfolioOptimizer.fromSaved(patched, second.callbacks, second.deps);
+    await resumed.start();
+    expect(runsFor(second, BASE_HASH)).toHaveLength(0);
+    expect(resumed.getState().backtestCache[`${BASE_HASH}|SOL`]).toBe(sol.backtestId);
+  });
+
+  it('поздний ответ передаётся живому оптимизатору того же запуска, и его задача подключается без POST', async () => {
+    const veles = new FakeVeles();
+    let resumed: PortfolioOptimizer | null = null;
+    const lateJobs: ScheduledJob[] = [];
+    const first = createHarness({
+      veles,
+      behavior: { hold: () => true, deferPost: (job) => job.key === `${BASE_HASH}|SOL` },
+    });
+    const callbacks: PortfolioOptimizerCallbacks = {
+      ...first.callbacks,
+      onLateSubmission: (runId, job) => {
+        lateJobs.push(job);
+        return resumed?.adoptLateSubmission(runId, job) ?? false;
+      },
+    };
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 0 }), callbacks, first.deps);
+    const done = optimizer.start();
+    await waitFor(() => first.scheduler().inFlight === BASKET.length - 1, 'созданы бэктесты базы, кроме SOL');
+    optimizer.stop();
+    await done;
+    const stopped = first.lastSaved();
+    const savesAfterStop = first.saves.length;
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000, behavior: { manualPump: true } });
+    resumed = PortfolioOptimizer.fromSaved(stopped, second.callbacks, second.deps);
+    const resumedDone = resumed.start();
+    await waitFor(() => second.scheduler().queued === 1, 'SOL базы снова в очереди');
+
+    const sol = first.scheduler().jobs.find((job) => job.key === `${BASE_HASH}|SOL`);
+    if (!sol) {
+      throw new Error('нет задачи SOL');
+    }
+    first.scheduler().completePost(sol);
+    expect(lateJobs.map((job) => job.backtestId)).toEqual([sol.backtestId]);
+    expect(first.saves.length).toBe(savesAfterStop);
+    expect(hasLog(second, 'info', 'создан ещё до продолжения запуска')).toBe(true);
+
+    await drive(second, resumedDone);
+    const state = resumed.getState();
+    const queuedSol = second.scheduler().jobs.find((job) => job.key === `${BASE_HASH}|SOL`);
+    expect(queuedSol?.backtestId).toBe(sol.backtestId);
+    // В Veles ровно один бэктест SOL базы — тот, что создал остановленный экземпляр.
+    expect([...veles.backtests.values()].filter((backtest) => backtest.key === `${BASE_HASH}|SOL`)).toHaveLength(1);
+    expect(state.backtestsSubmitted).toBe(stopped.backtestsSubmitted + 1);
+    expect(state.backtestCache[`${BASE_HASH}|SOL`]).toBe(sol.backtestId);
+    expect(state.status).toBe('completed');
+  });
+
+  it('applyLateSubmission не учитывает один бэктест дважды', () => {
+    const state: PortfolioOptimizerState = {
+      version: 1,
+      runId: 'po1',
+      config: createConfig(),
+      baseStrategy: createStrategy(),
+      quoteCurrency: 'USDT',
+      baseCandidateId: 'po1-base',
+      bestCandidateId: null,
+      candidates: [],
+      backtestCache: { 'h|ADA': 7 },
+      inFlightJobs: [],
+      paramStats: {},
+      generation: 0,
+      backtestsSubmitted: 3,
+      status: 'stopped',
+      startedAt: 1,
+      updatedAt: 2,
+      logs: [],
+    };
+    const job = (key: string, backtestId: number): ScheduledJob => ({
+      key,
+      symbol: key.split('|')[1],
+      backtestId,
+      state: 'submitted',
+      attempts: 1,
+      submittedAt: 5,
+      error: null,
+    });
+    expect(applyLateSubmission(state, job('h|ADA', 7))).toBe(false);
+    expect(applyLateSubmission(state, job('h|SOL', 9))).toBe(true);
+    expect(applyLateSubmission(state, job('h|SOL', 9))).toBe(false);
+    expect(state.backtestsSubmitted).toBe(4);
+    expect(state.inFlightJobs.map((item) => item.key)).toEqual(['h|SOL']);
+    // Дубликат уже посчитанной монеты: учитывается в лимите, но кеш не меняется.
+    expect(applyLateSubmission(state, job('h|ADA', 11))).toBe(true);
+    expect(state.backtestsSubmitted).toBe(5);
+    expect(state.backtestCache['h|ADA']).toBe(7);
   });
 });

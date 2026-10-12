@@ -31,7 +31,9 @@ import {
   DEFAULT_SEARCH_CONFIG,
   PORTFOLIO_OPTIMIZER_STATE_KEY,
 } from '../../services/portfolioOptimizer';
-import type { PortfolioOptimizerState } from '../../types/portfolioOptimizer';
+import { readAggregationConfig, writeAggregationConfig } from '../../storage/backtestAggregationConfigStore';
+import { readBacktestGroups, writeBacktestGroups } from '../../storage/backtestGroupsStore';
+import type { Candidate, PortfolioMetrics, PortfolioOptimizerState } from '../../types/portfolioOptimizer';
 import PortfolioOptimizerPage from '../PortfolioOptimizerPage';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -181,6 +183,47 @@ const createSavedState = (): PortfolioOptimizerState => {
   };
 };
 
+const candidateMetrics = (pnlToRisk: number): PortfolioMetrics => ({
+  totalProfit: pnlToRisk * 100,
+  maxConcurrentMae: 80,
+  maxDrawdown: 40,
+  pnlToRisk,
+  totalDeals: 420,
+  profitableDeals: 410,
+  losingDeals: 10,
+  openDeals: 0,
+  activeMae: 0,
+  netPerDay: 0.4,
+  maxConcurrentPositions: 2,
+  backtests: 2,
+});
+
+/** Сохранённый запуск с двумя кандидатами, посчитанными на полной корзине. */
+const createSavedStateWithCandidates = (): PortfolioOptimizerState => {
+  const state = createSavedState();
+  const base = state.candidates[0];
+  const candidate = (index: number, pnlToRisk: number, ids: [number, number]): Candidate => ({
+    ...base,
+    id: `posaved-g1-${index}`,
+    hash: `pg${index}`,
+    parentId: base.id,
+    generation: 1,
+    full: base.full
+      ? {
+          ...base.full,
+          backtestIds: { ADA: ids[0], XRP: ids[1] },
+          metrics: candidateMetrics(pnlToRisk),
+          score: pnlToRisk,
+        }
+      : null,
+  });
+  return {
+    ...state,
+    bestCandidateId: 'posaved-g1-1',
+    candidates: [...state.candidates, candidate(1, 5, [31, 32]), candidate(2, 4.5, [41, 42])],
+  };
+};
+
 // ═══════════════════════════════════════════════════════════════════
 // РЕНДЕР
 // ═══════════════════════════════════════════════════════════════════
@@ -215,6 +258,27 @@ const findButton = (label: string): HTMLButtonElement => {
     throw new Error(`Кнопка «${label}» не найдена`);
   }
   return button;
+};
+
+const findByLabel = (label: string): HTMLButtonElement => {
+  const button = document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`);
+  if (!button) {
+    throw new Error(`Кнопка «${label}» не найдена`);
+  }
+  return button;
+};
+
+/** Подтверждение в последнем открытом Popconfirm. */
+const confirmPopover = async () => {
+  const popovers = Array.from(document.querySelectorAll('.ant-popover:not(.ant-popover-hidden)'));
+  const ok = popovers.at(-1)?.querySelector<HTMLButtonElement>('.ant-btn-primary');
+  if (!ok) {
+    throw new Error('Нет открытого подтверждения');
+  }
+  await act(async () => {
+    ok.click();
+  });
+  await flush();
 };
 
 const setTextAreaValue = async (element: HTMLTextAreaElement, value: string) => {
@@ -322,6 +386,7 @@ describe('PortfolioOptimizerPage', () => {
     await act(async () => {
       findButton('Старт').click();
     });
+    await flush();
     expect(start).toHaveBeenCalledTimes(1);
     const input = start.mock.calls[0][0];
     expect(input.quoteCurrency).toBe('USDT');
@@ -366,5 +431,155 @@ describe('PortfolioOptimizerPage', () => {
     expect(text).toContain('321.50');
     expect(text).toContain('Запуск остановлен.');
     expect(text).toContain('Остановлен');
+  });
+
+  it('группа бэктестов кандидата открывается с блокировкой по ботам, с которой его считал оптимизатор', async () => {
+    window.localStorage.setItem(PORTFOLIO_OPTIMIZER_STATE_KEY, JSON.stringify(createSavedStateWithCandidates()));
+    await render(true);
+
+    await act(async () => {
+      findButton('Группа бэктестов').click();
+    });
+    const group = readBacktestGroups().find((item) => item.name.endsWith('g1-1'));
+    expect(group?.backtestIds).toEqual([31, 32]);
+    // Блокировка запуска 60, но в группе только 2 бэктеста — как страница группы, ограничиваем их числом.
+    expect(readAggregationConfig(group?.id ?? '')).toEqual({ maxConcurrentPositions: 2 });
+    expect(document.body.textContent).toContain('блокировка по ботам 2 — как в оптимизаторе');
+  });
+
+  it('«Продолжить» читает сохранённый запуск в момент нажатия и применяет потоки и интервал из формы', async () => {
+    const resume = vi.spyOn(portfolioRunSession, 'resume').mockReturnValue(Promise.resolve());
+    window.localStorage.setItem(PORTFOLIO_OPTIMIZER_STATE_KEY, JSON.stringify(createSavedState()));
+    window.localStorage.setItem(
+      PORTFOLIO_FORM_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        scheduler: { maxInFlight: 2, submitDelaySeconds: 45, pollIntervalSeconds: 10, backtestTimeoutMinutes: 60 },
+      }),
+    );
+    await render(true);
+    // Пока страница открыта, состояние дописали (например, бэктест, созданный после остановки).
+    window.localStorage.setItem(
+      PORTFOLIO_OPTIMIZER_STATE_KEY,
+      JSON.stringify({ ...createSavedState(), backtestsSubmitted: 15 }),
+    );
+
+    await act(async () => {
+      findButton('Продолжить').click();
+    });
+    await flush();
+    expect(resume).toHaveBeenCalledTimes(1);
+    const state = resume.mock.calls[0][0];
+    expect(state.backtestsSubmitted).toBe(15);
+    expect(state.config.scheduler).toEqual({
+      maxInFlight: 2,
+      submitDelaySeconds: 45,
+      pollIntervalSeconds: 10,
+      backtestTimeoutMinutes: 60,
+    });
+    expect(state.config.block).toBe(60);
+  });
+
+  it('запуск, который держит блокировку другой вкладки, нельзя продолжить или заменить здесь', async () => {
+    const detect = vi.spyOn(portfolioRunSession, 'detectOtherTabRun').mockResolvedValue('locked');
+    const resume = vi.spyOn(portfolioRunSession, 'resume').mockReturnValue(Promise.resolve());
+    const start = vi.spyOn(portfolioRunSession, 'start').mockReturnValue(Promise.resolve());
+    window.localStorage.setItem(
+      PORTFOLIO_OPTIMIZER_STATE_KEY,
+      JSON.stringify({ ...createSavedState(), status: 'paused' }),
+    );
+    window.localStorage.setItem(
+      PORTFOLIO_FORM_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        botId: 77,
+        basketText: 'ADA, XRP',
+        periodFrom: '2022-01-01',
+        periodTo: '2024-01-01',
+      }),
+    );
+    await render(true);
+
+    const text = container.textContent ?? '';
+    expect(detect).toHaveBeenCalled();
+    expect(text).toContain('статус «выполняется в другой вкладке»');
+    expect(text).not.toContain('«прерван»');
+    expect(findButton('Продолжить').disabled).toBe(true);
+
+    await act(async () => {
+      findButton('Старт').click();
+    });
+    await flush();
+    expect(start).not.toHaveBeenCalled();
+    expect(resume).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Оптимизатор уже работает в другой вкладке');
+  });
+
+  it('отдельно показывает загрузку создания бота для каждого кандидата', async () => {
+    const pending: Array<(value: { id: number }) => void> = [];
+    createBotMock.mockImplementation(
+      () =>
+        new Promise<{ id: number }>((resolve) => {
+          pending.push(resolve);
+        }),
+    );
+    const saved = createSavedStateWithCandidates();
+    // apiKey приходит в полном DTO бота (в типе BotStrategy его нет) — без него бота не создать.
+    window.localStorage.setItem(
+      PORTFOLIO_OPTIMIZER_STATE_KEY,
+      JSON.stringify({ ...saved, baseStrategy: { ...saved.baseStrategy, apiKey: 5 } }),
+    );
+    await render(true);
+    const isLoading = (label: string) => findByLabel(label).classList.contains('ant-btn-loading');
+
+    await act(async () => {
+      findByLabel('Создать бота g1-1').click();
+    });
+    await flush();
+    await confirmPopover();
+    await act(async () => {
+      findByLabel('Создать бота g1-2').click();
+    });
+    await confirmPopover();
+    expect(createBotMock).toHaveBeenCalledTimes(2);
+    expect(isLoading('Создать бота g1-1')).toBe(true);
+    expect(isLoading('Создать бота g1-2')).toBe(true);
+
+    // Второй бот создан — загрузка первого не пропадает.
+    await act(async () => {
+      pending[1]({ id: 902 });
+    });
+    await flush();
+    expect(isLoading('Создать бота g1-1')).toBe(true);
+    expect(isLoading('Создать бота g1-2')).toBe(false);
+    await act(async () => {
+      pending[0]({ id: 901 });
+    });
+    await flush();
+    expect(isLoading('Создать бота g1-1')).toBe(false);
+  });
+
+  it('предупреждает, если блокировка группы базы отличается от формы, и берёт её по кнопке', async () => {
+    writeBacktestGroups([{ id: 'g-base', name: 'База LONG', backtestIds: [1, 2, 3, 4], createdAt: 1, updatedAt: 1 }]);
+    writeAggregationConfig('g-base', { maxConcurrentPositions: 3 });
+    window.localStorage.setItem(PORTFOLIO_FORM_STORAGE_KEY, JSON.stringify({ version: 1, baseGroupId: 'g-base' }));
+    await render(true);
+
+    expect(container.textContent).toContain('В группе «База LONG» блокировка по ботам 3, в форме — 60');
+    await act(async () => {
+      findButton('Взять из группы').click();
+    });
+    expect(container.textContent).not.toContain('В группе «База LONG» блокировка по ботам');
+    expect(JSON.parse(window.localStorage.getItem(PORTFOLIO_FORM_STORAGE_KEY) ?? '{}').block).toBe(3);
+  });
+
+  it('не даёт начать запуск, если лимита бэктестов не хватит на базу', async () => {
+    window.localStorage.setItem(
+      PORTFOLIO_FORM_STORAGE_KEY,
+      JSON.stringify({ version: 1, botId: 77, basketText: 'ADA, XRP, SOL', search: { maxBacktests: 2 } }),
+    );
+    await render(true);
+    expect(container.textContent).toContain('Лимит бэктестов (2) меньше, чем нужно для оценки базы (3)');
+    expect(findButton('Старт').disabled).toBe(true);
   });
 });

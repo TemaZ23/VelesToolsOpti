@@ -19,7 +19,8 @@ interface BestCandidateCardProps {
   botName: string;
   quoteCurrency: string;
   canCreateBot: boolean;
-  creatingBotFor: string | null;
+  /** Создаётся ли сейчас бот для кандидата. */
+  isCreatingBot: (candidateId: string) => boolean;
   onCreateGroup: (target: CandidateActionTarget) => void;
   onCopyJson: (target: CandidateActionTarget) => void;
   onCreateBot: (target: CandidateActionTarget) => void;
@@ -107,7 +108,7 @@ const BestCandidateCard = ({
   botName,
   quoteCurrency,
   canCreateBot,
-  creatingBotFor,
+  isCreatingBot,
   onCreateGroup,
   onCopyJson,
   onCreateBot,
@@ -165,7 +166,7 @@ const BestCandidateCard = ({
               type="primary"
               icon={<RobotOutlined />}
               disabled={summary.isBase || !canCreateBot}
-              loading={creatingBotFor === summary.best.id}
+              loading={isCreatingBot(summary.best.id)}
             >
               Создать бота
             </Button>

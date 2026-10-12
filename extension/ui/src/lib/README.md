@@ -147,7 +147,10 @@ Scoring для walk-forward валидации:
 - `createRng(seed)` – детерминированный генератор mulberry32, значения в `[0, 1)`.
 - `pickWeighted(items, weights, rng)` – выбор элемента пропорционально весу (некорректные веса = 0; все нули — равновероятно).
 - `proposeCandidates(input)` – новые наборы значений от лучших родителей: меняет 1–N включённых параметров на ±шаг (чаще 1 шаг), выбирает параметры с весом `(wins+1)/(tries+2)` по `paramStats`, прогоняет `prepareValues`, отбрасывает уже виденные хеши; возвращает `values`, `hash`, `parentIndex`, `changed` (отличия от базы) и `mutated` (что изменено относительно родителя).
-- `computeObjective(metrics, folds, cfg)` – score кандидата: `pnlToRisk`, `robust` (0.5 × весь период + 0.5 × худший под-период) или `profitCapped` (P&L со штрафом за превышение МПУ), со штрафом за малое число сделок.
+- `computeObjective(metrics, folds, cfg)` – score кандидата: `pnlToRisk`, `robust` (0.5 × весь период + 0.5 × худший под-период; под-период без сделок = 0) или `profitCapped` (P&L со штрафом за превышение МПУ), со штрафом за малое число сделок; без сделок — `null` (кандидат не оценён).
+- `screenStageScale({ baseFull, baseScreen, screenSize, basketSize })` – доли отборочной корзины от полной (сделки и МПУ базы; иначе по размеру корзин), в `(0, 1]`.
+- `scaleObjective(cfg, scale)` – цель для отборочной корзины: `minDeals` и `maxMaeCap` умножаются на доли отбора.
+- `hasEnoughDeals(deals, referenceDeals, share = MIN_DEALS_SHARE_OF_BASE)` – хватает ли кандидату сделок относительно базы (по умолчанию ≥ 25%); без сделок базы порога нет.
 - `selectForPromotion(candidates, bestScreenScore, promoteCount, tolerance)` – кого отправить с отборочной корзины на полную.
 - `updateParamStats(stats, changed, improved)` – новая статистика успеха изменений по параметрам.
 - `isImprovement(score, bestScore, minImprovement)` – принимать ли нового лучшего.

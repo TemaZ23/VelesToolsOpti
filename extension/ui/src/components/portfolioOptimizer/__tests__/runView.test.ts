@@ -22,15 +22,19 @@ import {
   buildCandidateRows,
   buildOptimizedBotName,
   CANDIDATE_PHASE_LABELS,
+  type CandidateRow,
   candidateBacktests,
   canResumeSavedRun,
   compareMetric,
+  compareNullable,
+  compareRowMetric,
   describeCandidateChanges,
   formatDuration,
   formatEta,
   formatNumber,
   formatSigned,
   isProbablyRunningElsewhere,
+  metricsStageRank,
   OTHER_TAB_ACTIVITY_WINDOW_MS,
   progressFromState,
   RUN_STATUS_LABELS,
@@ -40,6 +44,7 @@ import {
   savedRunStatusLabel,
   stageScore,
   withGroupMissing,
+  withSchedulerConfig,
 } from '../runView';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -221,7 +226,7 @@ describe('runView: форматирование', () => {
 
   it('у всех статусов есть подписи', () => {
     expect(RUN_STATUS_LABELS.running.text).toBe('Выполняется');
-    expect(Object.keys(CANDIDATE_PHASE_LABELS)).toHaveLength(10);
+    expect(Object.keys(CANDIDATE_PHASE_LABELS)).toHaveLength(11);
   });
 });
 
@@ -260,6 +265,31 @@ describe('runView: этапы кандидатов', () => {
     expect(resolveCandidatePhase(screened(1), context)).toBe('rejected');
     expect(resolveCandidatePhase(screened(2), { ...context, active: false })).toBe('rejected');
     expect(resolveCandidatePhase(screened(3), { ...context, active: false })).toBe('screenDone');
+  });
+
+  it('без живого оптимизатора считающийся этап — «прерван», а не «в работе»', () => {
+    const inactive = { ...context, active: false };
+    expect(resolveCandidatePhase(candidate('a', { screen: evaluation('screen', 'running', null) }), inactive)).toBe(
+      'interrupted',
+    );
+    expect(resolveCandidatePhase(candidate('a', { full: evaluation('full', 'running', null) }), inactive)).toBe(
+      'interrupted',
+    );
+    expect(resolveCandidatePhase(candidate('a', { full: evaluation('full', 'pending', null) }), inactive)).toBe(
+      'interrupted',
+    );
+    expect(
+      resolveCandidatePhase(candidate(BASE_ID, { full: evaluation('full', 'running', null) }), {
+        ...inactive,
+        isBase: true,
+      }),
+    ).toBe('interrupted');
+    // Посчитанные и неудачные этапы показываются как есть.
+    expect(resolveCandidatePhase(candidate('a', { full: evaluation('full', 'done', 2) }), inactive)).toBe('fullDone');
+    expect(resolveCandidatePhase(candidate('a', { screen: evaluation('screen', 'failed', null) }), inactive)).toBe(
+      'screenFailed',
+    );
+    expect(CANDIDATE_PHASE_LABELS.interrupted).toEqual({ text: 'Прерван', tone: 'warning' });
   });
 
   it('база', () => {
@@ -351,6 +381,33 @@ describe('runView: строки кандидатов', () => {
     expect(failed.phase).toBe('screenFailed');
     expect(failed.error).toContain('не посчитаны');
     expect(failed.metrics).toBeNull();
+  });
+});
+
+describe('runView: сортировка метрик в таблице', () => {
+  const row = (stage: CandidateRow['metricsStage'], pnlToRisk: number | null) => ({
+    metricsStage: stage,
+    metrics: pnlToRisk === null ? null : metrics(pnlToRisk),
+  });
+
+  it('compareNullable ставит отсутствующие значения в начало', () => {
+    expect([3, null, 1, Number.NaN, 2].sort(compareNullable)).toEqual([null, Number.NaN, 1, 2, 3]);
+  });
+
+  it('не смешивает метрики отборочной и полной корзины', () => {
+    expect(metricsStageRank({ metricsStage: 'full' })).toBe(2);
+    expect(metricsStageRank({ metricsStage: 'screen' })).toBe(1);
+    expect(metricsStageRank({ metricsStage: null })).toBe(0);
+    // Отбор 2.4 (меньше монет) не «обгоняет» полную корзину 1.9.
+    const rows = [row('screen', 2.4), row('full', 1.9), row(null, null), row('full', 1.2), row('screen', 0.5)];
+    const ascending = [...rows].sort((left, right) => compareRowMetric(left, right, (item) => item.pnlToRisk));
+    expect(ascending.map((item) => [item.metricsStage, item.metrics?.pnlToRisk ?? null])).toEqual([
+      [null, null],
+      ['screen', 0.5],
+      ['screen', 2.4],
+      ['full', 1.2],
+      ['full', 1.9],
+    ]);
   });
 });
 
@@ -465,6 +522,8 @@ describe('runView: прогресс и сохранённый запуск', () 
     expect(savedRunStatus('idle')).toBe('idle');
     expect(savedRunStatusLabel('paused')).toEqual({ text: 'Прерван', tone: 'warning' });
     expect(savedRunStatusLabel('completed')).toEqual(RUN_STATUS_LABELS.completed);
+    // Запуск, который держит блокировку другой вкладки, — не «прерван».
+    expect(savedRunStatusLabel('paused', true)).toEqual({ text: 'Выполняется в другой вкладке', tone: 'processing' });
   });
 
   it('продолжить можно всё, кроме завершённого запуска', () => {
@@ -475,12 +534,40 @@ describe('runView: прогресс и сохранённый запуск', () 
 
   it('недавно обновлявшийся «выполняющийся» запуск — вероятно, в другой вкладке', () => {
     const now = 10 * OTHER_TAB_ACTIVITY_WINDOW_MS;
-    expect(isProbablyRunningElsewhere({ status: 'running', updatedAt: now - 1_000 }, now)).toBe(true);
-    expect(isProbablyRunningElsewhere({ status: 'paused', updatedAt: now - 1_000 }, now)).toBe(true);
-    expect(isProbablyRunningElsewhere({ status: 'running', updatedAt: now - OTHER_TAB_ACTIVITY_WINDOW_MS }, now)).toBe(
+    const run = (status: PortfolioOptimizerState['status'], updatedAt: number) => ({
+      status,
+      updatedAt,
+      runId: RUN_ID,
+    });
+    expect(isProbablyRunningElsewhere(run('running', now - 1_000), now)).toBe(true);
+    expect(isProbablyRunningElsewhere(run('paused', now - 1_000), now)).toBe(true);
+    expect(isProbablyRunningElsewhere(run('running', now - OTHER_TAB_ACTIVITY_WINDOW_MS), now)).toBe(false);
+    expect(isProbablyRunningElsewhere(run('stopped', now), now)).toBe(false);
+  });
+
+  it('«пульс» другой вкладки показывает запуск на паузе, хотя состояние давно не сохранялось', () => {
+    const now = 10 * OTHER_TAB_ACTIVITY_WINDOW_MS;
+    const paused = { status: 'paused' as const, updatedAt: now - 5 * OTHER_TAB_ACTIVITY_WINDOW_MS, runId: RUN_ID };
+    const beat = { runId: RUN_ID, tabId: 'other', at: now - 20_000 };
+    expect(isProbablyRunningElsewhere(paused, now)).toBe(false);
+    expect(isProbablyRunningElsewhere(paused, now, beat, 'mine')).toBe(true);
+    // Свой «пульс», чужой запуск и устаревший «пульс» не считаются.
+    expect(isProbablyRunningElsewhere(paused, now, beat, 'other')).toBe(false);
+    expect(isProbablyRunningElsewhere(paused, now, { ...beat, runId: 'po-other' }, 'mine')).toBe(false);
+    expect(isProbablyRunningElsewhere(paused, now, { ...beat, at: now - OTHER_TAB_ACTIVITY_WINDOW_MS }, 'mine')).toBe(
       false,
     );
-    expect(isProbablyRunningElsewhere({ status: 'stopped', updatedAt: now }, now)).toBe(false);
+    expect(isProbablyRunningElsewhere({ ...paused, status: 'stopped' }, now, beat, 'mine')).toBe(false);
+  });
+
+  it('продолжение берёт настройки планировщика из формы, остальное — из сохранённого запуска', () => {
+    const state = createState();
+    const scheduler = { maxInFlight: 2, submitDelaySeconds: 45, pollIntervalSeconds: 15, backtestTimeoutMinutes: 90 };
+    const patched = withSchedulerConfig(state, scheduler);
+    expect(patched.config.scheduler).toEqual(scheduler);
+    expect(patched.config.scheduler).not.toBe(scheduler);
+    expect({ ...patched.config, scheduler: state.config.scheduler }).toEqual(state.config);
+    expect(state.config.scheduler).toEqual(DEFAULT_SCHEDULER_CONFIG);
   });
 
   it('проценты прогресса', () => {

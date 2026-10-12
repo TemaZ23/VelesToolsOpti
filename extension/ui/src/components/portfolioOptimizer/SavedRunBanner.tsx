@@ -1,13 +1,15 @@
 import { DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { Alert, Button, Flex, Popconfirm, Typography } from 'antd';
 import type { PortfolioOptimizerState } from '../../types/portfolioOptimizer';
-import { canResumeSavedRun, formatDateTime, isProbablyRunningElsewhere, savedRunStatusLabel } from './runView';
+import type { OtherTabRun } from './runLock';
+import { canResumeSavedRun, formatDateTime, savedRunStatusLabel } from './runView';
 
 const { Text } = Typography;
 
 interface SavedRunBannerProps {
   state: PortfolioOptimizerState;
-  now: number;
+  /** Выполняется ли этот запуск в другой вкладке (блокировка или недавняя активность). */
+  elsewhere: OtherTabRun;
   /** Продолжение недоступно (например, расширение не подключено). */
   resumeDisabled: boolean;
   onResume: () => void;
@@ -15,15 +17,15 @@ interface SavedRunBannerProps {
 }
 
 /** Сохранённый запуск: краткие сведения, «Продолжить» и «Удалить». */
-const SavedRunBanner = ({ state, now, resumeDisabled, onResume, onClear }: SavedRunBannerProps) => {
-  const resumable = canResumeSavedRun(state);
-  const elsewhere = isProbablyRunningElsewhere(state, now);
+const SavedRunBanner = ({ state, elsewhere, resumeDisabled, onResume, onClear }: SavedRunBannerProps) => {
+  const locked = elsewhere === 'locked';
+  const resumable = canResumeSavedRun(state) || locked;
   const { search } = state.config;
-  const status = savedRunStatusLabel(state.status);
+  const status = savedRunStatusLabel(state.status, locked);
 
   return (
     <Alert
-      type={elsewhere ? 'warning' : 'info'}
+      type={elsewhere === 'none' ? 'info' : 'warning'}
       showIcon
       message={resumable ? 'Найден незавершённый запуск портфельного оптимизатора' : 'Последний запуск завершён'}
       description={
@@ -34,9 +36,15 @@ const SavedRunBanner = ({ state, now, resumeDisabled, onResume, onClear }: Saved
             {status.text.toLowerCase()}»
           </Text>
           <Text type="secondary">Сохранено: {formatDateTime(state.updatedAt)}</Text>
-          {elsewhere ? (
+          {locked ? (
             <Text type="warning">
-              Запуск обновлялся несколько минут назад — возможно, он выполняется в другой вкладке расширения.
+              Этот запуск выполняется в другой вкладке расширения — управляйте им там. Продолжить или начать новый
+              запуск здесь можно после того, как он остановится или та вкладка закроется.
+            </Text>
+          ) : null}
+          {elsewhere === 'probable' ? (
+            <Text type="warning">
+              Запуск был активен несколько минут назад — возможно, он выполняется в другой вкладке расширения.
               Продолжайте его здесь, только если та вкладка закрыта, иначе оптимизация пойдёт дважды.
             </Text>
           ) : null}
@@ -46,7 +54,7 @@ const SavedRunBanner = ({ state, now, resumeDisabled, onResume, onClear }: Saved
                 type="primary"
                 size="small"
                 icon={<PlayCircleOutlined />}
-                disabled={resumeDisabled}
+                disabled={resumeDisabled || locked}
                 onClick={onResume}
               >
                 Продолжить
@@ -58,8 +66,9 @@ const SavedRunBanner = ({ state, now, resumeDisabled, onResume, onClear }: Saved
               okText="Удалить"
               cancelText="Отмена"
               onConfirm={onClear}
+              disabled={locked}
             >
-              <Button size="small" danger icon={<DeleteOutlined />}>
+              <Button size="small" danger icon={<DeleteOutlined />} disabled={locked}>
                 Удалить
               </Button>
             </Popconfirm>

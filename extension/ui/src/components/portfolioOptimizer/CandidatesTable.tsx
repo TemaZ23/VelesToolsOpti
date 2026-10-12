@@ -7,6 +7,8 @@ import {
   CANDIDATE_PHASE_LABELS,
   type CandidateActionTarget,
   type CandidateRow,
+  compareNullable,
+  compareRowMetric,
   formatNumber,
 } from './runView';
 
@@ -20,38 +22,48 @@ interface CandidatesTableProps {
   quoteCurrency: string;
   /** Создание бота доступно (расширение подключено). */
   canCreateBot: boolean;
-  /** id кандидата, для которого сейчас создаётся бот. */
-  creatingBotFor: string | null;
+  /** Создаётся ли сейчас бот для кандидата (одновременно может создаваться несколько). */
+  isCreatingBot: (candidateId: string) => boolean;
   onCreateGroup: (target: CandidateActionTarget) => void;
   onCopyJson: (target: CandidateActionTarget) => void;
   onCreateBot: (target: CandidateActionTarget) => void;
 }
 
-/** Сравнение для сортировки по возрастанию: отсутствующие значения — в начале. */
-const compareNullable = (left: number | null | undefined, right: number | null | undefined): number => {
-  const a = typeof left === 'number' && Number.isFinite(left) ? left : null;
-  const b = typeof right === 'number' && Number.isFinite(right) ? right : null;
-  if (a === null || b === null) {
-    return a === b ? 0 : a === null ? -1 : 1;
-  }
-  return a - b;
-};
-
 const ScreenMark = ({ row }: { row: CandidateRow }) =>
   row.metricsStage === 'screen' ? (
-    <Tooltip title="Пока посчитана только отборочная корзина">
+    <Tooltip title="Пока посчитана только отборочная корзина (меньше монет — не сравнивайте с полной)">
       <Text type="secondary" style={{ fontSize: 11, marginLeft: 4 }}>
         отб.
       </Text>
     </Tooltip>
   ) : null;
 
+/** Значение метрики: по отборочной корзине — приглушённо и с пометкой «отб.». */
+const MetricCell = ({
+  row,
+  value,
+  digits = 2,
+}: {
+  row: CandidateRow;
+  value: number | null | undefined;
+  digits?: number;
+}) => (
+  <span>
+    {row.metricsStage === 'screen' ? (
+      <Text type="secondary">{formatNumber(value, digits)}</Text>
+    ) : (
+      formatNumber(value, digits)
+    )}
+    <ScreenMark row={row} />
+  </span>
+);
+
 const CandidatesTable = ({
   rows,
   botName,
   quoteCurrency,
   canCreateBot,
-  creatingBotFor,
+  isCreatingBot,
   onCreateGroup,
   onCopyJson,
   onCreateBot,
@@ -126,7 +138,7 @@ const CandidatesTable = ({
         key: 'profit',
         width: 120,
         align: 'right',
-        sorter: (left, right) => compareNullable(left.metrics?.totalProfit, right.metrics?.totalProfit),
+        sorter: (left, right) => compareRowMetric(left, right, (metrics) => metrics.totalProfit),
         render: (_value, row) => {
           const profit = row.metrics?.totalProfit ?? null;
           return (
@@ -144,24 +156,24 @@ const CandidatesTable = ({
         key: 'mae',
         width: 100,
         align: 'right',
-        sorter: (left, right) => compareNullable(left.metrics?.maxConcurrentMae, right.metrics?.maxConcurrentMae),
-        render: (_value, row) => formatNumber(row.metrics?.maxConcurrentMae),
+        sorter: (left, right) => compareRowMetric(left, right, (metrics) => metrics.maxConcurrentMae),
+        render: (_value, row) => <MetricCell row={row} value={row.metrics?.maxConcurrentMae} />,
       },
       {
         title: 'P&L/риск',
         key: 'pnlToRisk',
         width: 96,
         align: 'right',
-        sorter: (left, right) => compareNullable(left.metrics?.pnlToRisk, right.metrics?.pnlToRisk),
-        render: (_value, row) => formatNumber(row.metrics?.pnlToRisk),
+        sorter: (left, right) => compareRowMetric(left, right, (metrics) => metrics.pnlToRisk),
+        render: (_value, row) => <MetricCell row={row} value={row.metrics?.pnlToRisk} />,
       },
       {
         title: 'Сделок',
         key: 'deals',
         width: 84,
         align: 'right',
-        sorter: (left, right) => compareNullable(left.metrics?.totalDeals, right.metrics?.totalDeals),
-        render: (_value, row) => formatNumber(row.metrics?.totalDeals, 0),
+        sorter: (left, right) => compareRowMetric(left, right, (metrics) => metrics.totalDeals),
+        render: (_value, row) => <MetricCell row={row} value={row.metrics?.totalDeals} digits={0} />,
       },
       {
         title: 'Статус',
@@ -224,7 +236,7 @@ const CandidatesTable = ({
                     icon={<RobotOutlined />}
                     aria-label={`Создать бота ${row.label}`}
                     disabled={row.isBase || !canCreateBot}
-                    loading={creatingBotFor === row.candidate.id}
+                    loading={isCreatingBot(row.candidate.id)}
                   />
                 </Tooltip>
               </Popconfirm>
@@ -233,7 +245,7 @@ const CandidatesTable = ({
         },
       },
     ],
-    [botName, canCreateBot, creatingBotFor, onCopyJson, onCreateBot, onCreateGroup, quoteCurrency],
+    [botName, canCreateBot, isCreatingBot, onCopyJson, onCreateBot, onCreateGroup, quoteCurrency],
   );
 
   if (rows.length === 0) {

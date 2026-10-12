@@ -16,7 +16,9 @@ import type {
   PortfolioOptimizerProgress,
   PortfolioOptimizerState,
   PortfolioRunStatus,
+  SchedulerConfig,
 } from '../../types/portfolioOptimizer';
+import type { RunHeartbeat } from './runLock';
 
 // ═══════════════════════════════════════════════════════════════════
 // ФОРМАТИРОВАНИЕ
@@ -107,7 +109,8 @@ export type CandidatePhase =
   | 'fullPending'
   | 'fullRunning'
   | 'fullDone'
-  | 'fullFailed';
+  | 'fullFailed'
+  | 'interrupted';
 
 export const CANDIDATE_PHASE_LABELS: Readonly<Record<CandidatePhase, StatusLabel>> = {
   base: { text: 'База', tone: 'default' },
@@ -120,6 +123,7 @@ export const CANDIDATE_PHASE_LABELS: Readonly<Record<CandidatePhase, StatusLabel
   fullRunning: { text: 'Полная корзина…', tone: 'processing' },
   fullDone: { text: 'Полная корзина', tone: 'success' },
   fullFailed: { text: 'Ошибка полной корзины', tone: 'error' },
+  interrupted: { text: 'Прерван', tone: 'warning' },
 };
 
 export interface CandidatePhaseContext {
@@ -133,19 +137,21 @@ export interface CandidatePhaseContext {
 /**
  * Этап кандидата для таблицы. Кандидат без полной оценки «не прошёл отбор», только если его
  * поколение уже подведено: оно раньше текущего или запуск не активен и поколение завершено.
+ * Без живого оптимизатора считающийся (или ждущий полной корзины) этап показывается «прерванным»,
+ * а не «в работе»: после остановки или перезагрузки его никто не считает (досчитается при продолжении).
  */
 export const resolveCandidatePhase = (candidate: Candidate, context: CandidatePhaseContext): CandidatePhase => {
   const { full, screen } = candidate;
   if (full) {
     switch (full.status) {
       case 'running':
-        return 'fullRunning';
+        return context.active ? 'fullRunning' : 'interrupted';
       case 'done':
         return context.isBase ? 'base' : 'fullDone';
       case 'failed':
         return 'fullFailed';
       default:
-        return 'fullPending';
+        return context.active ? 'fullPending' : 'interrupted';
     }
   }
   if (context.isBase) {
@@ -155,7 +161,7 @@ export const resolveCandidatePhase = (candidate: Candidate, context: CandidatePh
     return 'queued';
   }
   if (screen.status === 'running') {
-    return 'screenRunning';
+    return context.active ? 'screenRunning' : 'interrupted';
   }
   if (screen.status === 'failed') {
     return 'screenFailed';
@@ -253,6 +259,33 @@ export interface CandidateRowsInput {
   currentGeneration: number;
   active: boolean;
 }
+
+/** Сравнение для сортировки по возрастанию: отсутствующие (и нечисловые) значения — в начале. */
+export const compareNullable = (left: number | null | undefined, right: number | null | undefined): number => {
+  const a = isFiniteNumber(left) ? left : null;
+  const b = isFiniteNumber(right) ? right : null;
+  if (a === null || b === null) {
+    return a === b ? 0 : a === null ? -1 : 1;
+  }
+  return a - b;
+};
+
+/** Ранг этапа метрик строки: полная корзина выше отбора, строки без метрик — ниже всех. */
+export const metricsStageRank = (row: Pick<CandidateRow, 'metricsStage'>): number =>
+  row.metricsStage === 'full' ? 2 : row.metricsStage === 'screen' ? 1 : 0;
+
+/**
+ * Сравнение строк по метрике (для сортировки по возрастанию): сначала этап — метрики отборочной и полной
+ * корзины не сравниваются между собой (отбор — меньше монет), затем значение. В любом направлении
+ * сортировки строки полной корзины остаются вместе, отдельно от строк только с отбором.
+ */
+export const compareRowMetric = (
+  left: Pick<CandidateRow, 'metricsStage' | 'metrics'>,
+  right: Pick<CandidateRow, 'metricsStage' | 'metrics'>,
+  pick: (metrics: PortfolioMetrics) => number,
+): number =>
+  metricsStageRank(left) - metricsStageRank(right) ||
+  compareNullable(left.metrics ? pick(left.metrics) : null, right.metrics ? pick(right.metrics) : null);
 
 /** null в конце при сортировке по убыванию. */
 const compareNullableDesc = (left: number | null, right: number | null): number => {
@@ -399,9 +432,16 @@ const isStageFinished = (evaluation: CandidateEvaluation | null): boolean =>
 export const savedRunStatus = (status: PortfolioRunStatus): PortfolioRunStatus =>
   status === 'running' || status === 'paused' ? 'stopped' : status;
 
-/** Подпись статуса сохранённого запуска: прерванный выделяется отдельно. */
-export const savedRunStatusLabel = (status: PortfolioRunStatus): StatusLabel =>
-  status === 'running' || status === 'paused' ? { text: 'Прерван', tone: 'warning' } : RUN_STATUS_LABELS[status];
+/**
+ * Подпись статуса сохранённого запуска: прерванный выделяется отдельно; запуск, который точно
+ * выполняется в другой вкладке (её блокировка), — «Выполняется в другой вкладке».
+ */
+export const savedRunStatusLabel = (status: PortfolioRunStatus, runningElsewhere = false): StatusLabel => {
+  if (runningElsewhere) {
+    return { text: 'Выполняется в другой вкладке', tone: 'processing' };
+  }
+  return status === 'running' || status === 'paused' ? { text: 'Прерван', tone: 'warning' } : RUN_STATUS_LABELS[status];
+};
 
 /** Прогресс по сохранённому состоянию (запуск не выполняется в этой вкладке). */
 export const progressFromState = (state: PortfolioOptimizerState): PortfolioOptimizerProgress => ({
@@ -428,16 +468,38 @@ export const canResumeSavedRun = (state: Pick<PortfolioOptimizerState, 'status'>
 export const OTHER_TAB_ACTIVITY_WINDOW_MS = 3 * MS_IN_MINUTE;
 
 /**
- * Сохранённый запуск помечен выполняющимся и недавно обновлялся — вероятно, он идёт в другой
- * вкладке расширения (в этой вкладке его нет).
+ * Сохранённый запуск помечен выполняющимся и недавно обновлялся (сохранение или «пульс» другой
+ * вкладки, который пишется и во время паузы) — вероятно, он идёт в другой вкладке расширения
+ * (в этой вкладке его нет). «Пульс» этой же вкладки (ownTabId) не учитывается.
  */
 export const isProbablyRunningElsewhere = (
-  state: Pick<PortfolioOptimizerState, 'status' | 'updatedAt'>,
+  state: Pick<PortfolioOptimizerState, 'status' | 'updatedAt' | 'runId'>,
   now: number,
-): boolean =>
-  (state.status === 'running' || state.status === 'paused') &&
-  isFiniteNumber(state.updatedAt) &&
-  now - state.updatedAt < OTHER_TAB_ACTIVITY_WINDOW_MS;
+  heartbeat: RunHeartbeat | null = null,
+  ownTabId: string | null = null,
+): boolean => {
+  if (!(state.status === 'running' || state.status === 'paused')) {
+    return false;
+  }
+  const beat =
+    heartbeat && heartbeat.runId === state.runId && heartbeat.tabId !== ownTabId && isFiniteNumber(heartbeat.at)
+      ? heartbeat.at
+      : Number.NEGATIVE_INFINITY;
+  const lastActivity = Math.max(isFiniteNumber(state.updatedAt) ? state.updatedAt : Number.NEGATIVE_INFINITY, beat);
+  return now - lastActivity < OTHER_TAB_ACTIVITY_WINDOW_MS;
+};
+
+/**
+ * Состояние для продолжения с настройками планировщика из формы: потоки, интервал, опрос и таймаут,
+ * изменённые перед «Продолжить», применяются к продолжению (остальная конфигурация — сохранённая).
+ */
+export const withSchedulerConfig = (
+  state: PortfolioOptimizerState,
+  scheduler: SchedulerConfig,
+): PortfolioOptimizerState => ({
+  ...state,
+  config: { ...state.config, scheduler: { ...scheduler } },
+});
 
 /**
  * Прогресс запуска в процентах: созданные бэктесты относительно оценки их общего числа

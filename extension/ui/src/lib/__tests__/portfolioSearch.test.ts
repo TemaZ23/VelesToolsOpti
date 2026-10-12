@@ -13,11 +13,15 @@ import {
   type CandidateProposal,
   computeObjective,
   createRng,
+  hasEnoughDeals,
   isImprovement,
+  MIN_DEALS_SHARE_OF_BASE,
   type ParamStats,
   type ProposeCandidatesInput,
   pickWeighted,
   proposeCandidates,
+  scaleObjective,
+  screenStageScale,
   selectForPromotion,
   updateParamStats,
 } from '../portfolioSearch';
@@ -524,10 +528,11 @@ describe('proposeCandidates', () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('computeObjective', () => {
-  it('returns null without metrics and 0 without deals', () => {
+  it('returns null without metrics and without deals (a silent candidate is not scored)', () => {
     expect(computeObjective(null, [], objective())).toBeNull();
-    expect(computeObjective(makeMetrics({ totalDeals: 0, pnlToRisk: 5 }), [], objective())).toBe(0);
-    expect(computeObjective(makeMetrics({ totalDeals: 0 }), [], objective({ kind: 'profitCapped' }))).toBe(0);
+    expect(computeObjective(makeMetrics({ totalDeals: 0, pnlToRisk: 5 }), [], objective())).toBeNull();
+    expect(computeObjective(makeMetrics({ totalDeals: 0 }), [], objective({ kind: 'profitCapped' }))).toBeNull();
+    expect(computeObjective(makeMetrics({ totalDeals: 0 }), [], objective({ kind: 'robust' }))).toBeNull();
   });
 
   it('uses the group P&L to risk for pnlToRisk', () => {
@@ -536,15 +541,44 @@ describe('computeObjective', () => {
 
   it('blends the full period with the worst fold for robust', () => {
     const metrics = makeMetrics({ pnlToRisk: 3 });
-    const folds = [makeFold(4, 100), makeFold(1, 50), makeFold(-5, 0), makeFold(2, 80)];
+    const folds = [makeFold(4, 100), makeFold(1, 50), makeFold(2, 80)];
     expect(computeObjective(metrics, folds, objective({ kind: 'robust' }))).toBe(2);
     expect(computeObjective(metrics, [makeFold(-1, 5)], objective({ kind: 'robust' }))).toBe(1);
   });
 
-  it('falls back to the full period when no fold has deals', () => {
+  it('counts a fold without deals as zero instead of skipping it', () => {
     const metrics = makeMetrics({ pnlToRisk: 3 });
-    expect(computeObjective(metrics, [], objective({ kind: 'robust' }))).toBe(3);
-    expect(computeObjective(metrics, [makeFold(-2, 0), makeFold(-3, 0)], objective({ kind: 'robust' }))).toBe(3);
+    // Под-период без сделок (его pnlToRisk игнорируется) = 0 → худший 0, а не 1.
+    const folds = [makeFold(4, 100), makeFold(1, 50), makeFold(-5, 0), makeFold(2, 80)];
+    expect(computeObjective(metrics, folds, objective({ kind: 'robust' }))).toBe(1.5);
+    expect(computeObjective(metrics, [makeFold(-2, 0), makeFold(-3, 0)], objective({ kind: 'robust' }))).toBe(1.5);
+    // Убыток в под-периоде по-прежнему хуже «молчания» в нём.
+    expect(computeObjective(metrics, [makeFold(2, 10), makeFold(-1, 10)], objective({ kind: 'robust' }))).toBe(1);
+  });
+
+  it('falls back to the full period when there are no folds', () => {
+    expect(computeObjective(makeMetrics({ pnlToRisk: 3 }), [], objective({ kind: 'robust' }))).toBe(3);
+  });
+
+  it('a silent or barely trading candidate cannot beat a base with a negative robust score', () => {
+    const cfg = objective({ kind: 'robust', minDeals: 200 });
+    // База: прибыльна за весь период, но провалилась в одном под-периоде.
+    const baseMetrics = makeMetrics({ pnlToRisk: 0.4, totalDeals: 1500 });
+    const baseScore = computeObjective(baseMetrics, [makeFold(1.2, 600), makeFold(0.8, 500), makeFold(-1.5, 400)], cfg);
+    expect(baseScore).toBeCloseTo(-0.55, 10);
+
+    // Мутация, которая блокирует все входы: не оценивается и не считается улучшением.
+    const silent = computeObjective(makeMetrics({ totalDeals: 0, pnlToRisk: 0 }), [], cfg);
+    expect(silent).toBeNull();
+    expect(isImprovement(silent, baseScore, 0.01)).toBe(false);
+
+    // 12 сделок, все в первом под-периоде: «молчание» в провальном под-периоде больше не прячет его.
+    const fewMetrics = makeMetrics({ pnlToRisk: 0.3, totalDeals: 12 });
+    const few = computeObjective(fewMetrics, [makeFold(0.9, 12), makeFold(0, 0), makeFold(0, 0)], cfg);
+    expect(few).toBeCloseTo((0.5 * 0.3 + 0.5 * 0) * (12 / 200), 10);
+    // Score формально выше отрицательной базы, но сделок слишком мало, чтобы стать лучшим.
+    expect(hasEnoughDeals(fewMetrics.totalDeals, baseMetrics.totalDeals)).toBe(false);
+    expect(hasEnoughDeals(0, baseMetrics.totalDeals)).toBe(false);
   });
 
   it('penalizes profit above the MAE cap quadratically', () => {
@@ -584,6 +618,82 @@ describe('computeObjective', () => {
     expect(computeObjective(makeMetrics({ pnlToRisk: Number.NaN }), [], objective())).toBeNull();
     expect(computeObjective(makeMetrics({ pnlToRisk: Number.POSITIVE_INFINITY }), [], objective())).toBeNull();
     expect(Object.is(computeObjective(makeMetrics({ pnlToRisk: -0 }), [], objective()), 0)).toBe(true);
+  });
+});
+
+describe('screenStageScale / scaleObjective', () => {
+  it('scales by the base screen/full ratios of deals and MAE', () => {
+    const scale = screenStageScale({
+      baseFull: { totalDeals: 1000, maxConcurrentMae: 800 },
+      baseScreen: { totalDeals: 200, maxConcurrentMae: 200 },
+      screenSize: 10,
+      basketSize: 50,
+    });
+    expect(scale).toEqual({ deals: 0.2, mae: 0.25 });
+    expect(scaleObjective(objective({ minDeals: 1000, maxMaeCap: 400 }), scale)).toEqual(
+      objective({ minDeals: 200, maxMaeCap: 100 }),
+    );
+  });
+
+  it('falls back to the basket size ratio and clamps the ratio to 1', () => {
+    expect(screenStageScale({ baseFull: null, baseScreen: null, screenSize: 10, basketSize: 40 })).toEqual({
+      deals: 0.25,
+      mae: 0.25,
+    });
+    expect(
+      screenStageScale({
+        baseFull: { totalDeals: 0, maxConcurrentMae: 100 },
+        baseScreen: { totalDeals: 50, maxConcurrentMae: 300 },
+        screenSize: 5,
+        basketSize: 10,
+      }),
+    ).toEqual({ deals: 0.5, mae: 1 });
+    expect(screenStageScale({ baseFull: null, baseScreen: null, screenSize: 3, basketSize: 0 })).toEqual({
+      deals: 1,
+      mae: 1,
+    });
+  });
+
+  it('keeps a missing MAE cap and does not mutate the input', () => {
+    const cfg = objective({ minDeals: 100, maxMaeCap: null });
+    expect(scaleObjective(cfg, { deals: 0.5, mae: 0.5 })).toEqual(objective({ minDeals: 50, maxMaeCap: null }));
+    expect(cfg.minDeals).toBe(100);
+  });
+
+  it('keeps the screen ranking consistent with the full basket for the minimum deals penalty', () => {
+    // База: 200 сделок на отборе из 1200 на полной корзине, minDeals 1000 рассчитан на полную корзину.
+    const scaled = scaleObjective(
+      objective({ kind: 'pnlToRisk', minDeals: 1000 }),
+      screenStageScale({
+        baseFull: { totalDeals: 1200, maxConcurrentMae: 500 },
+        baseScreen: { totalDeals: 200, maxConcurrentMae: 120 },
+        screenSize: 10,
+        basketSize: 50,
+      }),
+    );
+    const base = computeObjective(makeMetrics({ pnlToRisk: 1, totalDeals: 200 }), [], scaled);
+    const better = computeObjective(makeMetrics({ pnlToRisk: 1.2, totalDeals: 150 }), [], scaled);
+    expect(base).toBe(1);
+    expect(better).toBeCloseTo(1.08, 10);
+    expect(selectForPromotion([{ screenScore: better }], base, 1, 0.05)).toHaveLength(1);
+  });
+});
+
+describe('hasEnoughDeals', () => {
+  it('requires a share of the base deals', () => {
+    expect(MIN_DEALS_SHARE_OF_BASE).toBe(0.25);
+    expect(hasEnoughDeals(375, 1500)).toBe(true);
+    expect(hasEnoughDeals(374, 1500)).toBe(false);
+    expect(hasEnoughDeals(12, 1500)).toBe(false);
+    expect(hasEnoughDeals(5, 10, 0.5)).toBe(true);
+  });
+
+  it('has no floor without base deals and rejects non-numeric deals', () => {
+    expect(hasEnoughDeals(0, 0)).toBe(true);
+    expect(hasEnoughDeals(0, null)).toBe(true);
+    expect(hasEnoughDeals(3, Number.NaN)).toBe(true);
+    expect(hasEnoughDeals(Number.NaN, 100)).toBe(false);
+    expect(hasEnoughDeals(null, 100)).toBe(false);
   });
 });
 

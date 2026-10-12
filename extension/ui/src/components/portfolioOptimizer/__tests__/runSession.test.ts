@@ -19,7 +19,8 @@ import type {
   PortfolioOptimizerState,
   SchedulerConfig,
 } from '../../../types/portfolioOptimizer';
-import { PortfolioRunSession } from '../runSession';
+import { PORTFOLIO_RUN_HEARTBEAT_KEY, type RunLockProvider, readRunHeartbeat } from '../runLock';
+import { OTHER_TAB_RUN_MESSAGE, PortfolioRunSession } from '../runSession';
 
 // ═══════════════════════════════════════════════════════════════════
 // ФИКСТУРЫ
@@ -127,6 +128,8 @@ interface FakeControl {
   saved: PortfolioOptimizerState | null;
   /** Шаг фейковых часов на каждый вызов now(), мс (0 — время стоит). */
   clockStep: number;
+  /** События каждого созданного планировщика (по порядку сеансов). */
+  events: SchedulerEvents[];
 }
 
 const createControl = (hold = false): FakeControl => ({
@@ -138,6 +141,7 @@ const createControl = (hold = false): FakeControl => ({
   pausedCalls: [],
   saved: null,
   clockStep: 1_000,
+  events: [],
 });
 
 const waitForBacktest = (control: FakeControl, backtestId: number, signal: AbortSignal): Promise<number> =>
@@ -157,29 +161,32 @@ const waitForBacktest = (control: FakeControl, backtestId: number, signal: Abort
 
 const createFakeScheduler =
   (control: FakeControl) =>
-  (_config: SchedulerConfig, events: SchedulerEvents): PortfolioScheduler => ({
-    run: (job, signal) => {
-      if (signal.aborted) {
-        return Promise.reject(new SchedulerAbortError());
-      }
-      control.submitted += 1;
-      const backtestId = 1000 + control.submitted;
-      events.onSubmitted(job.key, backtestId);
-      return waitForBacktest(control, backtestId, signal);
-    },
-    attach: (_key, backtestId, signal) => {
-      control.attached.push(backtestId);
-      return waitForBacktest(control, backtestId, signal);
-    },
-    setPaused: (paused) => {
-      control.pausedCalls.push(paused);
-    },
-    updateConfig: (patch) => {
-      control.updates.push(patch);
-    },
-    inFlight: 0,
-    queued: 0,
-  });
+  (_config: SchedulerConfig, events: SchedulerEvents): PortfolioScheduler => {
+    control.events.push(events);
+    return {
+      run: (job, signal) => {
+        if (signal.aborted) {
+          return Promise.reject(new SchedulerAbortError());
+        }
+        control.submitted += 1;
+        const backtestId = 1000 + control.submitted;
+        events.onSubmitted(job.key, backtestId);
+        return waitForBacktest(control, backtestId, signal);
+      },
+      attach: (_key, backtestId, signal) => {
+        control.attached.push(backtestId);
+        return waitForBacktest(control, backtestId, signal);
+      },
+      setPaused: (paused) => {
+        control.pausedCalls.push(paused);
+      },
+      updateConfig: (patch) => {
+        control.updates.push(patch);
+      },
+      inFlight: 0,
+      queued: 0,
+    };
+  };
 
 const createDeps = (control: FakeControl): Partial<PortfolioOptimizerDeps> => {
   let clock = Date.parse('2026-10-12T08:00:00.000Z');
@@ -195,6 +202,8 @@ const createDeps = (control: FakeControl): Partial<PortfolioOptimizerDeps> => {
       control.saved = JSON.parse(JSON.stringify(state)) as PortfolioOptimizerState;
       return true;
     },
+    loadSavedState: () => (control.saved ? JSON.parse(JSON.stringify(control.saved)) : null),
+    clearSavedState: () => undefined,
     sleep: async () => undefined,
     now: () => {
       clock += control.clockStep;
@@ -203,8 +212,39 @@ const createDeps = (control: FakeControl): Partial<PortfolioOptimizerDeps> => {
   };
 };
 
-const createSession = (control: FakeControl) =>
-  new PortfolioRunSession({ deps: createDeps(control), refreshIntervalMs: 0 });
+const createSession = (control: FakeControl, lock: RunLockProvider | null = null) =>
+  new PortfolioRunSession({ deps: createDeps(control), refreshIntervalMs: 0, lock });
+
+interface FakeLock {
+  provider: RunLockProvider;
+  /** Блокировку держит другая вкладка. */
+  heldElsewhere: boolean;
+  acquired: number;
+  released: number;
+}
+
+const createFakeLock = (heldElsewhere = false): FakeLock => {
+  const lock: FakeLock = {
+    heldElsewhere,
+    acquired: 0,
+    released: 0,
+    provider: {
+      acquire: async () => {
+        if (lock.heldElsewhere) {
+          return null;
+        }
+        lock.acquired += 1;
+        return {
+          release: () => {
+            lock.released += 1;
+          },
+        };
+      },
+      isHeld: async () => lock.heldElsewhere || lock.acquired > lock.released,
+    },
+  };
+  return lock;
+};
 
 const requireSaved = (control: FakeControl): PortfolioOptimizerState => {
   if (!control.saved) {
@@ -455,5 +495,115 @@ describe('PortfolioRunSession', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('держит блокировку между вкладками всё время работы, включая паузу, и отпускает её в конце', async () => {
+    const control = createControl(true);
+    const lock = createFakeLock();
+    const session = createSession(control, lock.provider);
+    const done = session.start(createInput());
+    expect(session.isActive).toBe(true);
+    await vi.waitFor(() => expect(control.pending.length).toBeGreaterThan(0));
+    expect(lock.acquired).toBe(1);
+
+    session.pause();
+    expect(lock.released).toBe(0);
+    session.stop();
+    await done;
+    expect(lock.released).toBe(1);
+    expect(session.isActive).toBe(false);
+  });
+
+  it('не запускает оптимизатор, если блокировку держит другая вкладка, и показывает прежний снимок', async () => {
+    const control = createControl();
+    const runner = createSession(control);
+    await runner.start(createInput());
+    const saved = requireSaved(control);
+    const savedBefore = JSON.stringify(saved);
+
+    const lock = createFakeLock(true);
+    const session = createSession(control, lock.provider);
+    session.show(saved);
+    await session.resume(saved);
+
+    expect(session.isActive).toBe(false);
+    expect(control.events).toHaveLength(1);
+    expect(JSON.stringify(control.saved)).toBe(savedBefore);
+    const snapshot = session.getSnapshot();
+    expect(snapshot?.active).toBe(false);
+    expect(snapshot?.meta.runId).toBe(saved.runId);
+    expect(snapshot?.logs.at(-1)?.message).toBe(OTHER_TAB_RUN_MESSAGE);
+    await expect(session.detectOtherTabRun(saved, Date.now())).resolves.toBe('locked');
+  });
+
+  it('остановка до получения блокировки отменяет запуск', async () => {
+    const control = createControl();
+    const lock = createFakeLock();
+    const session = createSession(control, lock.provider);
+    const done = session.start(createInput());
+    session.stop();
+    await done;
+    expect(control.events).toHaveLength(0);
+    expect(control.submitted).toBe(0);
+    expect(session.isActive).toBe(false);
+    expect(lock.released).toBe(lock.acquired);
+  });
+
+  it('без Web Locks пишет «пульс» во время работы и паузы и убирает его после', async () => {
+    vi.useFakeTimers();
+    try {
+      window.localStorage.removeItem(PORTFOLIO_RUN_HEARTBEAT_KEY);
+      const control = createControl(true);
+      const session = new PortfolioRunSession({
+        deps: createDeps(control),
+        refreshIntervalMs: 0,
+        lock: null,
+        heartbeatIntervalMs: 1_000,
+      });
+      const done = session.start(createInput());
+      const runId = session.getSnapshot()?.meta.runId;
+      expect(readRunHeartbeat()).toMatchObject({ runId, tabId: session.tabId });
+      session.pause();
+      const first = readRunHeartbeat()?.at ?? 0;
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(readRunHeartbeat()?.at).toBeGreaterThan(first);
+
+      // Другая вкладка (другой сеанс) видит запуск на паузе как выполняющийся.
+      const other = createSession(createControl(), null);
+      const saved = requireSaved(control);
+      await expect(other.detectOtherTabRun(saved, Date.now() + 10 * 60_000)).resolves.toBe('none');
+      await expect(other.detectOtherTabRun(saved, Date.now())).resolves.toBe('probable');
+      // Своя вкладка свой «пульс» не учитывает.
+      await expect(session.detectOtherTabRun(saved, Date.now())).resolves.toBe('none');
+
+      session.stop();
+      await vi.runAllTimersAsync();
+      await done;
+      expect(readRunHeartbeat()).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('ответ на POST остановленного экземпляра передаётся продолженному запуску', async () => {
+    const control = createControl(true);
+    const session = createSession(control);
+    const done = session.start(createInput());
+    await vi.waitFor(() => expect(control.pending.length).toBeGreaterThan(0));
+    session.stop();
+    await done;
+    const stopped = requireSaved(control);
+    const stoppedEvents = control.events[0];
+
+    const resumed = session.resume(stopped);
+    expect(session.isActive).toBe(true);
+    stoppedEvents.onSubmitted(`${stopped.candidates[0].hash}|LTC`, 9_999);
+    const progress = session.getSnapshot()?.progress;
+    expect(progress?.backtestsSubmitted).toBeGreaterThan(stopped.backtestsSubmitted);
+    expect(session.getSnapshot()?.logs.some((entry) => entry.message.includes('#9999'))).toBe(true);
+    expect(requireSaved(control).inFlightJobs.some((job) => job.backtestId === 9_999)).toBe(true);
+
+    session.stop();
+    await resumed;
   });
 });

@@ -255,7 +255,7 @@ beforeEach(() => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe('sanitizeCycles', () => {
-  it('drops cancelled cycles and cycles without orders, keeping the rest in order', () => {
+  it('drops cycles without orders but keeps cancelled cycles with orders (as the group page does)', () => {
     const finished = createCycle({ date: '2024-01-03T00:00:00.000Z', netQuote: 5 });
     const cancelledWithOrders = createCycle({ status: 'CANCELLED', substatus: 'PULL_UP', netQuote: null });
     const cancelledEmpty = createCycle({ status: 'CANCELLED', substatus: 'PULL_UP', openedAt: null });
@@ -265,9 +265,34 @@ describe('sanitizeCycles', () => {
     const input = [finished, cancelledWithOrders, cancelledEmpty, finishedEmpty, started];
     const result = sanitizeCycles(input);
 
-    expect(result).toEqual([finished, started]);
+    expect(result).toEqual([finished, cancelledWithOrders, started]);
     expect(result[0]).toBe(finished);
+    expect(result[1]).toBe(cancelledWithOrders);
     expect(input).toHaveLength(5);
+  });
+
+  it('a cancelled pull-up cycle with orders counts as a deal with net 0 and occupies a block slot', () => {
+    const detail = createDetail(1, 'BTC');
+    const cancelled = createCycle({
+      status: 'CANCELLED',
+      substatus: 'PULL_UP',
+      netQuote: null,
+      openedAt: '2024-01-02T00:00:00.000Z',
+      date: '2024-01-02T10:00:00.000Z',
+    });
+    const blocked = createCycle({
+      openedAt: '2024-01-02T01:00:00.000Z',
+      date: '2024-01-02T05:00:00.000Z',
+      netQuote: 7,
+    });
+    const cycles = [cancelled, blocked];
+
+    const info = buildBacktestInfo(detail, sanitizeCycles(cycles));
+    expect(info.deals).toHaveLength(2);
+    expect(info.deals[0].net).toBe(0);
+    // Как на странице группы: при блокировке 1 отменённый цикл занимает место, следующая сделка не входит.
+    expect(computePortfolioMetrics([info], 1)).toMatchObject({ totalDeals: 1, totalProfit: 0 });
+    expect(computePortfolioMetrics([buildBacktestInfo(detail, cycles)], 1)).toEqual(computePortfolioMetrics([info], 1));
   });
 
   it('drops cycles whose orders field is not an array or whose dates cannot be parsed', () => {

@@ -120,6 +120,11 @@ export interface CandidateEvaluation {
   folds: FoldMetrics[];
   score: number | null;
   error: string | null;
+  /**
+   * В скольких сеансах подряд не удалось посчитать метрики уже готовой корзины (сбой загрузки результатов).
+   * Первый раз запуск останавливается с возможностью продолжить, повторный — этап считается неудачным.
+   */
+  metricsFailures?: number;
 }
 
 export interface Candidate {
@@ -272,4 +277,9 @@ export interface PortfolioOptimizerCallbacks {
   onProgress: (progress: PortfolioOptimizerProgress) => void;
   /** Вызывается после каждого изменения кандидатов (оценка, новый лучший). */
   onCandidatesChanged: (candidates: Candidate[], bestCandidateId: string | null) => void;
+  /**
+   * Бэктест создан после окончания сеанса оптимизатора (ответ на POST пришёл позже остановки).
+   * true — его принял живой оптимизатор того же запуска; иначе id дописывается в сохранённое состояние.
+   */
+  onLateSubmission?: (runId: string, job: ScheduledJob) => boolean;
 }

@@ -7,12 +7,13 @@ vi.mock('../../api/backtestRunner', () => ({
 vi.mock('../../api/backtests', () => ({
   fetchBacktestConfig: vi.fn(),
   fetchBacktestStatistics: vi.fn(),
+  fetchBacktests: vi.fn(),
 }));
 
 import type { BotStrategy } from '../../api/backtestRunner';
 import { postBacktest } from '../../api/backtestRunner';
-import { fetchBacktestConfig, fetchBacktestStatistics } from '../../api/backtests';
-import type { BacktestConfigDto, BacktestStatisticsDto } from '../../api/backtests.dtos';
+import { fetchBacktestConfig, fetchBacktestStatistics, fetchBacktests } from '../../api/backtests';
+import type { BacktestConfigDto, BacktestStatisticsDto, BacktestStatisticsListDto } from '../../api/backtests.dtos';
 import type { SchedulerConfig } from '../../types/portfolioOptimizer';
 import {
   abortableSleep,
@@ -28,7 +29,10 @@ import {
   extractHttpStatus,
   extractRetryAfterSeconds,
   isAbortError,
+  isAuthError,
+  isTransientBacktestError,
   mergeSchedulerConfig,
+  parseBacktestId,
   parseRetryAfterFromMessage,
   RATE_LIMIT_DELAY_CAP_SECONDS,
   rescaleSubmitDelay,
@@ -36,7 +40,9 @@ import {
   SCHEDULER_ABORT_MESSAGE,
   SchedulerAbortError,
   type SchedulerJobRequest,
+  type SubmitResponse,
   type SubmitWaitInput,
+  TransientBacktestError,
   toBacktestSubmitError,
 } from '../backtestScheduler';
 
@@ -120,6 +126,7 @@ const createVirtualClock = (): VirtualClock => {
 interface FakeBacktest {
   id: number;
   createdAt: number;
+  name: string | null;
 }
 
 interface FakePost {
@@ -142,22 +149,48 @@ const createFakeVeles = (clock: VirtualClock, options: FakeVelesOptions = {}) =>
     ((backtest: FakeBacktest, now: number) => (now - backtest.createdAt >= durationMs ? 'FINISHED' : 'RUNNING'));
   const backtests = new Map<number, FakeBacktest>();
   const posts: FakePost[] = [];
+  /** Ошибки POST, при которых бэктест не создан. */
   const postFailures: Error[] = [];
+  /** Ошибки POST, при которых бэктест создан, но ответ потерялся (таймаут вкладки, 502 после записи). */
+  const lostResponses: Error[] = [];
+  /** Сколько следующих POST создают бэктест, но отвечают 2xx без id. */
+  let idlessResponses = 0;
   let nextId = 1000;
   let inFlightProbe: () => number = () => 0;
 
-  const postBacktest = vi.fn(async (payload: BotStrategy): Promise<{ id: number }> => {
+  const create = (payload: BotStrategy): number => {
+    const id = nextId;
+    nextId += 1;
+    backtests.set(id, { id, createdAt: clock.now(), name: payload.name ?? null });
+    posts.push({ at: clock.now(), name: payload.name, id, inFlight: inFlightProbe() });
+    return id;
+  };
+
+  const postBacktest = vi.fn(async (payload: BotStrategy): Promise<SubmitResponse> => {
     const failure = postFailures.shift();
     if (failure) {
       posts.push({ at: clock.now(), name: payload.name, id: null, inFlight: inFlightProbe() });
       throw failure;
     }
-    const id = nextId;
-    nextId += 1;
-    backtests.set(id, { id, createdAt: clock.now() });
-    posts.push({ at: clock.now(), name: payload.name, id, inFlight: inFlightProbe() });
+    const id = create(payload);
+    const lost = lostResponses.shift();
+    if (lost) {
+      throw lost;
+    }
+    if (idlessResponses > 0) {
+      idlessResponses -= 1;
+      return { id: undefined };
+    }
     return { id };
   });
+
+  const findBacktestsByName = vi.fn(
+    async (name: string, _symbol: string | null, createdAfter: number): Promise<number[]> =>
+      [...backtests.values()]
+        .filter((backtest) => backtest.name === name && backtest.createdAt >= createdAfter)
+        .map((backtest) => backtest.id)
+        .sort((left, right) => right - left),
+  );
 
   const fetchStatus = vi.fn(async (id: number): Promise<string | null> => {
     const backtest = backtests.get(id);
@@ -176,9 +209,14 @@ const createFakeVeles = (clock: VirtualClock, options: FakeVelesOptions = {}) =>
     postBacktest,
     fetchStatus,
     fetchStatisticsExists,
+    findBacktestsByName,
     posts,
     postFailures,
-    addExisting: (id: number, createdAt: number) => backtests.set(id, { id, createdAt }),
+    lostResponses,
+    addExisting: (id: number, createdAt: number) => backtests.set(id, { id, createdAt, name: null }),
+    respondWithoutId: (times: number) => {
+      idlessResponses = times;
+    },
     setInFlightProbe: (probe: () => number) => {
       inFlightProbe = probe;
     },
@@ -212,6 +250,7 @@ const createHarness = (config: Partial<SchedulerConfig> = {}, velesOptions: Fake
       postBacktest: veles.postBacktest,
       fetchStatus: veles.fetchStatus,
       fetchStatisticsExists: veles.fetchStatisticsExists,
+      findBacktestsByName: veles.findBacktestsByName,
       sleep: clock.sleep,
       now: clock.now,
     },
@@ -320,6 +359,34 @@ describe('extractHttpStatus', () => {
     expect(extractHttpStatus('plain string')).toBeNull();
     expect(extractHttpStatus(Object.assign(new Error('x'), { status: 'oops' }))).toBeNull();
     expect(extractHttpStatus(Object.assign(new Error('x'), { status: 42 }))).toBeNull();
+  });
+});
+
+describe('parseBacktestId', () => {
+  it('accepts positive integer ids as numbers or digit strings', () => {
+    expect(parseBacktestId({ id: 42 })).toBe(42);
+    expect(parseBacktestId({ id: '1234' })).toBe(1234);
+    expect(parseBacktestId({ id: ' 77 ' })).toBe(77);
+  });
+
+  it('rejects missing, malformed and non-positive ids', () => {
+    expect(parseBacktestId({ id: Number.NaN })).toBeNull();
+    expect(parseBacktestId({ id: 0 })).toBeNull();
+    expect(parseBacktestId({ id: 1.5 })).toBeNull();
+    expect(parseBacktestId({ id: '12a' })).toBeNull();
+    expect(parseBacktestId({ id: null })).toBeNull();
+    expect(parseBacktestId('created')).toBeNull();
+    expect(parseBacktestId(null)).toBeNull();
+  });
+});
+
+describe('isAuthError', () => {
+  it('recognises 401/403 and auth wording but not backtest numbers', () => {
+    expect(isAuthError(new Error('HTTP 401 Unauthorized'))).toBe(true);
+    expect(isAuthError(new BacktestSubmitError('Доступ запрещён', 403, null))).toBe(true);
+    expect(isAuthError(new Error('Forbidden'))).toBe(true);
+    expect(isAuthError(new Error('Бэктест 401 (ADA) завершился с ошибкой: статус FAILED'))).toBe(false);
+    expect(isAuthError(new Error('HTTP 500 Internal Server Error'))).toBe(false);
   });
 });
 
@@ -705,6 +772,9 @@ describe('BacktestScheduler: POST errors', () => {
     expect(errorMessage(failing.error)).toContain('за 5 попыток');
     expect(errorMessage(failing.error)).toContain('Failed to fetch');
     expect(isAbortError(failing.error)).toBe(false);
+    // Сбой инфраструктуры, а не кандидата: оркестратор остановит запуск с возможностью продолжить.
+    expect(isTransientBacktestError(failing.error)).toBe(true);
+    expect(failing.error).toMatchObject({ reason: 'submit' });
     expect(next.value).toBe(1000);
     expect(veles.posts[5]).toMatchObject({ at: 150_000, name: 'PO BTC' });
     expect(logs.some((log) => log.level === 'error')).toBe(true);
@@ -730,15 +800,145 @@ describe('BacktestScheduler: POST errors', () => {
     expect(logs.find((log) => log.level === 'error')?.message).toContain('Некорректные параметры');
   });
 
-  it('treats a response without a valid id as a recoverable error', async () => {
-    const { clock, veles, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+  it('accepts a numeric-string id from the response', async () => {
+    const { clock, veles, submitted, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    veles.postBacktest.mockResolvedValueOnce({ id: '1000' });
+    veles.addExisting(1000, 0);
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(veles.postBacktest).toHaveBeenCalledTimes(1);
+    expect(result.value).toBe(1000);
+    expect(submitted).toEqual([{ key: 'h1|ADA', id: 1000 }]);
+  });
+
+  it('never re-POSTs a 2xx response without an id: fails without a duplicate when nothing is found', async () => {
+    const { clock, veles, logs, submitted, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
     veles.postBacktest.mockResolvedValueOnce({ id: Number.NaN });
     const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
 
     await clock.runUntil(() => result.settled);
 
+    expect(veles.postBacktest).toHaveBeenCalledTimes(1);
+    expect(veles.findBacktestsByName).toHaveBeenCalledWith('PO ADA', null, 0);
+    expect(result.error).toBeInstanceOf(BacktestSubmitError);
+    expect(errorMessage(result.error)).toContain('не вернул идентификатор');
+    expect(isTransientBacktestError(result.error)).toBe(false);
+    expect(submitted).toEqual([]);
+    expect(logs.some((log) => log.level === 'error')).toBe(true);
+  });
+
+  it('adopts the backtest created by a 2xx response without an id when it is found by name', async () => {
+    const { clock, veles, submitted, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    veles.respondWithoutId(1);
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(veles.posts).toHaveLength(1);
+    expect(result.value).toBe(1000);
+    expect(submitted).toEqual([{ key: 'h1|ADA', id: 1000 }]);
+  });
+
+  it('after a lost response looks the backtest up by name instead of POSTing a duplicate', async () => {
+    const { clock, veles, logs, submitted, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    veles.lostResponses.push(new Error('Таймаут ответа от вкладки'));
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(veles.posts).toHaveLength(1);
+    expect(veles.findBacktestsByName).toHaveBeenCalledTimes(1);
+    expect(result.value).toBe(1000);
+    expect(submitted).toEqual([{ key: 'h1|ADA', id: 1000 }]);
+    expect(logs.some((log) => log.message.includes('уже создан в Veles (#1000)'))).toBe(true);
+  });
+
+  it('re-POSTs after a recoverable error when the lookup finds nothing', async () => {
+    const { clock, veles, submitted, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    veles.postFailures.push(new Error('HTTP 502 Bad Gateway'));
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(veles.findBacktestsByName).toHaveBeenCalledTimes(1);
     expect(veles.postBacktest).toHaveBeenCalledTimes(2);
     expect(result.value).toBe(1000);
+    expect(submitted).toEqual([{ key: 'h1|ADA', id: 1000 }]);
+  });
+
+  it('does not POST again while the lookup itself fails; the failed lookup counts as an attempt', async () => {
+    const { clock, veles, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    veles.postFailures.push(new Error('Таймаут ответа от вкладки'));
+    veles.findBacktestsByName.mockRejectedValueOnce(new Error('Failed to fetch'));
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(veles.findBacktestsByName).toHaveBeenCalledTimes(2);
+    expect(veles.posts.map((post) => post.at)).toEqual([0, 30_000]);
+    expect(result.value).toBe(1000);
+  });
+
+  it('does not adopt backtests it already knows (another job with the same name)', async () => {
+    const { clock, veles, scheduler } = createHarness({ maxInFlight: 5, submitDelaySeconds: 0 });
+    const controller = new AbortController();
+    const first = track(scheduler.run(makeJob('ADA', 'h1'), controller.signal), clock);
+    await clock.runUntil(() => first.settled);
+    veles.postFailures.push(new Error('HTTP 503 Service Unavailable'));
+    const second = track(scheduler.run(makeJob('ADA', 'h2'), controller.signal), clock);
+
+    await clock.runUntil(() => second.settled);
+
+    expect(first.value).toBe(1000);
+    expect(second.value).toBe(1001);
+  });
+});
+
+describe('BacktestScheduler: beforeSubmit', () => {
+  it('lets the caller cancel a job right before its POST', async () => {
+    const clock = createVirtualClock();
+    const veles = createFakeVeles(clock);
+    const controller = new AbortController();
+    const scheduler = new BacktestScheduler(
+      BASE_CONFIG,
+      {
+        onSubmitted: () => undefined,
+        onLog: () => undefined,
+        beforeSubmit: () => {
+          controller.abort();
+          return null;
+        },
+      },
+      { ...veles, sleep: clock.sleep, now: clock.now },
+    );
+    const result = track(scheduler.run(makeJob('ADA'), controller.signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(isAbortError(result.error)).toBe(true);
+    expect(veles.postBacktest).not.toHaveBeenCalled();
+    expect(scheduler.queued).toBe(0);
+  });
+
+  it('polls an already created backtest returned by beforeSubmit instead of POSTing', async () => {
+    const clock = createVirtualClock();
+    const veles = createFakeVeles(clock);
+    veles.addExisting(555, -100_000);
+    const submitted: number[] = [];
+    const scheduler = new BacktestScheduler(
+      BASE_CONFIG,
+      { onSubmitted: (_key, id) => submitted.push(id), onLog: () => undefined, beforeSubmit: () => 555 },
+      { ...veles, sleep: clock.sleep, now: clock.now },
+    );
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(result.value).toBe(555);
+    expect(veles.postBacktest).not.toHaveBeenCalled();
+    expect(submitted).toEqual([]);
   });
 });
 
@@ -847,17 +1047,33 @@ describe('BacktestScheduler: polling', () => {
     expect(scheduler.inFlight).toBe(0);
   });
 
-  it('times out even when every poll fails', async () => {
+  it('reports the timeout as a transient error with the backtest id', async () => {
+    const { clock, scheduler } = createHarness({ backtestTimeoutMinutes: 1 }, { status: () => 'RUNNING' });
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(result.error).toBeInstanceOf(TransientBacktestError);
+    expect(result.error).toMatchObject({ reason: 'timeout', backtestId: 1000 });
+  });
+
+  it('does not time out while polls fail; times out on the first successful read past the deadline', async () => {
     const clock = createVirtualClock();
+    let calls = 0;
     const scheduler = new BacktestScheduler(
       { ...BASE_CONFIG, backtestTimeoutMinutes: 1 },
       { onSubmitted: () => undefined, onLog: () => undefined },
       {
         postBacktest: async () => ({ id: 7 }),
         fetchStatus: async () => {
-          throw new Error('Failed to fetch');
+          calls += 1;
+          if (calls <= 12) {
+            throw new Error('Failed to fetch');
+          }
+          return 'RUNNING';
         },
         fetchStatisticsExists: async () => false,
+        findBacktestsByName: async () => [],
         sleep: clock.sleep,
         now: clock.now,
       },
@@ -867,7 +1083,64 @@ describe('BacktestScheduler: polling', () => {
     await clock.runUntil(() => result.settled);
 
     expect(errorMessage(result.error)).toContain('Таймаут');
-    expect(result.settledAt).toBe(60_000);
+    expect(calls).toBe(13);
+    expect(result.settledAt).toBe(130_000);
+  });
+
+  it('a poll auth error rejects at once instead of counting towards the timeout', async () => {
+    const clock = createVirtualClock();
+    const scheduler = new BacktestScheduler(
+      BASE_CONFIG,
+      { onSubmitted: () => undefined, onLog: () => undefined },
+      {
+        postBacktest: async () => ({ id: 7 }),
+        fetchStatus: async () => {
+          throw new Error('HTTP 401 Unauthorized');
+        },
+        fetchStatisticsExists: async () => false,
+        findBacktestsByName: async () => [],
+        sleep: clock.sleep,
+        now: clock.now,
+      },
+    );
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+
+    await clock.runUntil(() => result.settled);
+
+    expect(errorMessage(result.error)).toContain('HTTP 401');
+    expect(isAuthError(result.error)).toBe(true);
+    expect(isTransientBacktestError(result.error)).toBe(false);
+    expect(result.settledAt).toBe(10_000);
+    expect(scheduler.inFlight).toBe(0);
+  });
+
+  it('ignores a wall-clock gap (laptop sleep) much larger than the poll interval', async () => {
+    const clock = createVirtualClock();
+    let jump = 0;
+    const scheduler = new BacktestScheduler(
+      { ...BASE_CONFIG, backtestTimeoutMinutes: 45 },
+      { onSubmitted: () => undefined, onLog: () => undefined },
+      {
+        postBacktest: async () => ({ id: 7 }),
+        fetchStatus: async () => 'RUNNING',
+        fetchStatisticsExists: async () => false,
+        findBacktestsByName: async () => [],
+        sleep: clock.sleep,
+        now: () => clock.now() + jump,
+      },
+    );
+    const result = track(scheduler.run(makeJob('ADA'), new AbortController().signal), clock);
+    await clock.advanceTo(20_000);
+
+    // Ноутбук «проспал» 2 часа между опросами: скачок часов не засчитывается целиком.
+    jump = 2 * 3_600_000;
+    await clock.advanceTo(40_000);
+    expect(result.settled).toBe(false);
+
+    await clock.runUntil(() => result.settled);
+    expect(isTransientBacktestError(result.error)).toBe(true);
+    // 45 мин ожидания = виртуальное время + не больше (интервал + 2 мин) за шаг со скачком.
+    expect(result.settledAt).toBe(45 * 60_000 - 120_000);
   });
 });
 
@@ -1086,6 +1359,19 @@ describe('BacktestScheduler: attach', () => {
     expect(attached.settledAt).toBe(0);
   });
 
+  it('measures the timeout from the original submission time', async () => {
+    const { clock, veles, scheduler } = createHarness({ backtestTimeoutMinutes: 45 }, { status: () => 'RUNNING' });
+    veles.addExisting(555, 0);
+    await clock.advanceTo(50 * 60_000);
+    const attached = track(scheduler.attach('h0|ADA', 555, new AbortController().signal, 40 * 60_000), clock);
+
+    await clock.runUntil(() => attached.settled);
+
+    // Создан 10 минут назад: до таймаута осталось 35 минут, а не 45 заново.
+    expect(isTransientBacktestError(attached.error)).toBe(true);
+    expect(attached.settledAt).toBe(50 * 60_000 + 35 * 60_000);
+  });
+
   it('rejects invalid ids and can be aborted', async () => {
     const { clock, veles, scheduler } = createHarness({}, { durationMs: 1_000_000 });
     const invalid = track(scheduler.attach('h0|ADA', 0, new AbortController().signal), clock);
@@ -1245,6 +1531,30 @@ describe('createDefaultSchedulerDeps', () => {
     await expect(deps.fetchStatisticsExists(1)).resolves.toBe(false);
     await expect(deps.fetchStatisticsExists(1)).resolves.toBe(false);
     await expect(deps.fetchStatisticsExists(1)).resolves.toBe(false);
+  });
+
+  it('findBacktestsByName looks through the newest backtests by exact name, symbol and creation time', async () => {
+    const item = (id: number, name: string, date: string, symbol = 'ADA/USDT'): BacktestStatisticsDto =>
+      ({ id, name, date, symbol }) as BacktestStatisticsDto;
+    const list: BacktestStatisticsListDto = {
+      totalElements: 5,
+      totalPages: 1,
+      pageNumber: 0,
+      content: [
+        item(15, 'PO ADA', '2026-10-12T10:00:00.000Z'),
+        item(14, 'PO ADA', '2026-10-12T10:00:00.000Z', 'XRP/USDT'),
+        item(13, 'PO ADA ', '2026-10-12T10:00:00.000Z'),
+        item(12, 'PO ADA', 'not-a-date'),
+        item(11, 'PO ADA', '2026-10-11T10:00:00.000Z'),
+      ],
+    };
+    vi.mocked(fetchBacktests).mockResolvedValueOnce(list);
+    const deps = createDefaultSchedulerDeps();
+
+    await expect(
+      deps.findBacktestsByName('PO ADA', 'ADA/USDT', Date.parse('2026-10-12T10:02:00.000Z')),
+    ).resolves.toEqual([15]);
+    expect(fetchBacktests).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'date,desc' });
   });
 
   it('a scheduler without injected deps runs on the real API wrappers and timers', async () => {
