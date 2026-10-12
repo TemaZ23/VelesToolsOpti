@@ -4,3 +4,7 @@ node_modules
 extension/ui/dist
 release-artifacts/
 **/coverage/**
+
+# DCA Lab market data cache
+cache/dca_lab/
+__pycache__/
