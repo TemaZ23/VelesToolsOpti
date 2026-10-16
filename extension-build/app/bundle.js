@@ -66354,7 +66354,7 @@ const RBe = async () => {
         ],
       }),
       j = ({ key: z }) => {
-        typeof z == "string" && z !== $.pathname && T(z);
+        typeof z == "string" && z !== $.pathname && z !== R && T(z);
       };
     return E.jsxs(ed, {
       className: "app-layout",
@@ -136453,6 +136453,21 @@ class Nf {
     return this.config.mode === "portfolio" && this.config.portfolio.foldConsistency === !0;
   }
   async start() {
+    // Errors before the main loop (bot not loaded, nothing to optimise, listing/budget lookups) end the
+    // run with status "error" and a log line, like errors inside it.
+    try {
+      return await this.vtStart();
+    } catch (t) {
+      throw (
+        this.status !== "error" &&
+          ((this.status = "error"),
+          this.log("error", `❌ ${t instanceof Error ? t.message : String(t)}`),
+          this.emitProgress()),
+        t
+      );
+    }
+  }
+  async vtStart() {
     var a;
     (this.status = "running"),
       (this.startedAt = Date.now()),
@@ -136630,7 +136645,12 @@ class Nf {
       inFlight: this.scheduler.activeCount,
       stagnantGenerations: this.stagnant,
       startedAt: this.startedAt,
-      estimatedEndAt: n === "done" ? m : m + h * g + v,
+      estimatedEndAt:
+        n === "done"
+          ? m
+          : vtPick && vtPick.done > 0
+            ? m + ((m - vtPick.startedAt) / vtPick.done) * Math.max(0, vtPick.total - vtPick.done)
+            : m + h * g + v,
     };
   }
   async runLoop() {
@@ -136772,6 +136792,13 @@ class Nf {
   // chosen offline from its deals — no extra backtests. Checked on the last third of the period: the
   // subset picked on the first two thirds against all coins.
   async runCoinSelection() {
+    try {
+      await this.vtRunCoinSelection();
+    } finally {
+      (this.vtCoinProgress = null), this.emitProgress();
+    }
+  }
+  async vtRunCoinSelection() {
     const t = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
       r = this.robustnessSettings(),
       vtExact = (d) => {
@@ -136817,7 +136844,9 @@ class Nf {
     // to the page, honours «Стоп» and reports progress (main set, then the check on the first 2/3).
     const vtStop = () => this.stopRequested,
       vtProgress = (d, f) => {
-        (this.vtCoinProgress = { done: d, total: f }), this.emitProgress();
+        const h = this.vtCoinProgress;
+        (this.vtCoinProgress = { done: d, total: f, startedAt: h && h.total === f ? h.startedAt : Date.now() }),
+          this.emitProgress();
       },
       vtStarted = Date.now(),
       l = await VTMODES.vmSelectCoins(t, n, {
@@ -137575,10 +137604,16 @@ class Nf {
       return;
     }
     const a = this.plateauNeighborCount,
-      // Template modes have no original to beat: the plateau is checked for the top finalists anyway.
+      // Template modes have no original to beat: the plateau is checked for the top profitable finalists
+      // (a loss on all coins is 'overfit' anyway, and retention of a negative score is meaningless).
       i = new Set(
         n
-          .filter((c) => VTMODES.vmIsTemplateGoal(this.config.goal) || (c.validatedScore ?? 0) > r + Tv)
+          .filter((c) =>
+            VTMODES.vmIsTemplateGoal(this.config.goal)
+              ? ((c.validation && c.validation.portfolio ? c.validation.portfolio.adjustedProfit : 0) ?? 0) > 0 &&
+                vtOverallScore(c.fitness) > 0
+              : (c.validatedScore ?? 0) > r + Tv,
+          )
           .slice(0, KX)
           .map((c) => c.key),
       ),
@@ -137771,7 +137806,12 @@ class Nf {
         a
       );
     } catch (a) {
-      throw ((this.status = "error"), this.emitProgress(), a);
+      throw (
+        (this.status = "error"),
+        this.log(this.stopRequested ? "warning" : "error", `❌ ${a instanceof Error ? a.message : String(a)}`),
+        this.emitProgress(),
+        a
+      );
     } finally {
       this.accumulateElapsed();
     }
@@ -138694,19 +138734,24 @@ const U1 =
         const ce = () => {
           const Ne = vtAttached.current;
           if (!Ne || vtRunSession.engine === Ne) return;
+          // An engine that left the session while still "running"/"paused" failed (e.g. in start()).
+          const vtFailed = Ne.status === "error" || Ne.status === "running" || Ne.status === "paused";
           if (((vtAttached.current = null), te.current === Ne && (te.current = null), Ne.stressOnly)) {
             const lr = qC(vtKind);
             lr && (z(lr.leaderboard), B(ay(lr.config, lr.baseStrategy, lr.quoteCurrency))),
-              P("completed"),
-              n.success("Стресс-тест готов");
+              Ne.status === "completed"
+                ? (P("completed"), n.success("Стресс-тест готов"))
+                : vtFailed
+                  ? (P("error"), n.error("Стресс-тест прерван — подробности в логе"))
+                  : P("idle");
             return;
           }
           const nt = Ne.status === "completed";
-          P(nt ? "completed" : Ne.status === "error" ? "error" : "idle"),
+          P(nt ? "completed" : vtFailed ? "error" : "idle"),
             it(Ne, nt),
             nt
               ? n.success(vtDoneText(Ne.getLeaderboard()))
-              : Ne.status === "error" && n.error("Оптимизация прервана — подробности в логе");
+              : vtFailed && n.error("Оптимизация прервана — подробности в логе");
         };
         return (
           vtRunSession.listeners.add(ce),
@@ -138858,9 +138903,18 @@ const U1 =
     }, [e, Pe, g]);
     const vtScope = p.useMemo(() => (vtIsTpl ? { ...o.scope, vtDirectionPresets: !0 } : o.scope), [o.scope]),
       se = p.useMemo(() => (vtBase ? che(vtBase, vtScope, o.precision) : []), [o.precision, vtScope, vtBase]),
-      vtRanges = p.useMemo(
-        () => (vtBase && vtIsTpl ? { ...VTMODES.vmModeRanges(vtKind, se, vtBase), ...C } : C),
-        [vtBase, se, C],
+      vtModeOnly = p.useMemo(() => (vtBase && vtIsTpl ? VTMODES.vmModeRanges(vtKind, se, vtBase) : null), [vtBase, se]),
+      vtRanges = p.useMemo(() => (vtModeOnly ? { ...vtModeOnly, ...C } : C), [vtModeOnly, C]),
+      // Drafts for the ranges editor: in template tabs the mode windows are the defaults.
+      vtDrafts = p.useMemo(
+        () =>
+          vtModeOnly
+            ? se.map((ce) => {
+                const Ne = vtModeOnly[ce.id];
+                return Ne ? { ...ce, defaultEnabled: Ne.enabled, defaultMin: Ne.min, defaultMax: Ne.max } : ce;
+              })
+            : se,
+        [vtModeOnly, se],
       ),
       Se = p.useMemo(
         () => (vtBase ? Tu(vtBase, vtScope, vtRanges, o.precision) : null),
@@ -139168,7 +139222,7 @@ const U1 =
       nr = (ce) => {
         // Template tabs: the editor shows the mode's absolute windows; only rows changed by the user
         // are kept as overrides, so an unchanged «Сохранить» does not replace the mode ranges.
-        const vtMode = vtIsTpl && vtBase ? VTMODES.vmModeRanges(vtKind, se, vtBase) : null,
+        const vtMode = vtModeOnly,
           vtSame = (Ne, nt) =>
             !!Ne &&
             !!nt &&
@@ -139179,7 +139233,7 @@ const U1 =
             ? Object.fromEntries(
                 Object.entries(ce).filter(([Ne, nt]) => {
                   const lr = se.find((tn) => tn.id === Ne);
-                  return !(lr && vtSame(nt, uhe(lr, vtMode[Ne])));
+                  return !(lr && (vtSame(nt, uhe(lr, vtMode[Ne])) || vtSame(nt, vtMode[Ne] ?? uhe(lr, void 0))));
                 }),
               )
             : ce;
@@ -139330,7 +139384,12 @@ const U1 =
       xt = (k == null ? void 0 : k.config.mode) ?? o.mode,
       zt = xt === "portfolio",
       Gr = !!(j && (j.periods.holdout || zt)),
-      nn = D && D.totalBacktests > 0 ? Math.min(99, Math.round((D.completedBacktests / D.totalBacktests) * 100)) : 0,
+      nn =
+        D && D.goal === "coins" && D.phase === "search" && D.generationSize > 0
+          ? Math.min(99, Math.round((D.generationDone / D.generationSize) * 100))
+          : D && D.totalBacktests > 0
+            ? Math.min(99, Math.round((D.completedBacktests / D.totalBacktests) * 100))
+            : 0,
       Pr = pt ? (pt.validation ?? pt.fitness) : null,
       _r = Xe ? (Xe.validation ?? Xe.fitness) : null,
       mt = de,
@@ -141144,7 +141203,7 @@ const U1 =
                         gap: 8,
                         wrap: !0,
                         children: [
-                          R === "running"
+                          R === "running" && !((D == null ? void 0 : D.goal) === "coins" && D.phase === "search")
                             ? E.jsx(Ge, { size: "large", icon: E.jsx(wze, {}), onClick: Qe, children: "Пауза" })
                             : null,
                           R === "paused"
@@ -141156,7 +141215,7 @@ const U1 =
                                 children: "Продолжить",
                               })
                             : null,
-                          (D == null ? void 0 : D.phase) === "search"
+                          (D == null ? void 0 : D.phase) === "search" && D.goal !== "coins"
                             ? E.jsx(ar, {
                                 title: "Досчитать запущенные бэктесты и сразу перейти к финальной проверке и итогам",
                                 children: E.jsx(Ge, {
@@ -141703,7 +141762,7 @@ const U1 =
             }),
           ],
         }),
-        E.jsx(Zdt, { open: _, drafts: se, overrides: vtIsTpl ? vtRanges : C, onClose: () => I(!1), onSave: nr }),
+        E.jsx(Zdt, { open: _, drafts: vtDrafts, overrides: vtIsTpl ? vtRanges : C, onClose: () => I(!1), onSave: nr }),
         je
           ? E.jsx(rft, {
               open: Kt,
