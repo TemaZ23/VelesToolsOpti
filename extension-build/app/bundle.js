@@ -130915,8 +130915,11 @@ ${y}/q1w2e`,
     improveBoth: "Лучше и по прибыли, и по просадке (рекомендуется)",
     portfolioPnlToRisk: "Прибыль / суммарная просадка",
     portfolioProfit: "Максимальный профит в месяц",
+    vtStablePnlToRisk: "Прибыль / просадка, стабильно (поиск с нуля)",
   },
   cut = {
+    vtStablePnlToRisk:
+      "Прибыль портфеля / суммарная просадка × (0.5 + 0.5 × доля прибыльных срезов поиска — полугодий и групп монет). Абсолютная оценка, без сравнения с исходной: вариант, который зарабатывает только в одном периоде или на одной группе монет, получает до 2× меньше.",
     improveBoth:
       "Оценка = min(прибыль / прибыль исходной, просадка исходной / просадка) на тех же монетах и периоде. Больше 1 — только если выросла прибыль И снизилась суммарная просадка; 1.10 — оба показателя лучше минимум на 10%. Если разрешено менять депозит бота, сравнение идёт при депозите, уравновешивающем прибыль и просадку (они пропорциональны депозиту), — так находятся варианты с лучшим соотношением прибыль/просадка.",
     portfolioPnlToRisk:
@@ -134132,7 +134135,7 @@ const Zi = (e, t) => {
                 r.yearsTotal > 0
                   ? E.jsxs(aa, {
                       children: [
-                        "По годам: не хуже исходной в",
+                        r.absolute ? "По годам: прибыльных" : "По годам: не хуже исходной в",
                         " ",
                         E.jsxs(aa, { strong: !0, children: [r.yearsNotWorse, " из ", r.yearsTotal] }),
                       ],
@@ -134144,7 +134147,7 @@ const Zi = (e, t) => {
                         "Лучший вариант слегка сдвинут (примерно половина параметров — на 2–5% от значения) и проверен на монетах поиска. Если результат держится — это плато, а не случайный пик.",
                       children: E.jsxs(aa, {
                         children: [
-                          "Плато: лучше исходной",
+                          r.absolute ? "Плато: лучше шаблона" : "Плато: лучше исходной",
                           " ",
                           E.jsxs(aa, { strong: !0, children: [r.plateau.beatBase, " из ", r.plateau.tested] }),
                           " ",
@@ -134190,6 +134193,22 @@ const Zi = (e, t) => {
   Adt = ({ candidates: e }) => {
     const t = e.filter((a) => a.robustness);
     if (t.length === 0) return null;
+    if (t.some((a) => a.robustness.absolute)) {
+      // Template modes: the verdict is absolute (profitable on its own), not "better than the original".
+      const a = t.some((o) => o.robustness.verdict === "robust"),
+        i = !a && t.some((o) => o.robustness.verdict === "partial");
+      return E.jsx(dn, {
+        type: a ? "success" : "warning",
+        showIcon: !0,
+        style: { marginBottom: 12 },
+        message: a ? "Найден устойчивый вариант" : i ? "Вариант устойчив лишь частично" : "Устойчивого варианта не найдено",
+        description: a
+          ? "Прибылен почти в каждом году, на монетах вне поиска и при небольшом сдвиге настроек. Создайте бота («Создать бота») и запускайте сначала на части монет с малым депозитом — это не гарантия на будущее."
+          : i
+            ? "Прибыль есть не во всех годах или не на всех проверочных монетах. Посмотрите «Устойчивость» и запускайте осторожно — на части монет и с малым депозитом."
+            : "Найденные варианты прибыльны только на части истории или монет — похоже на подгонку. Попробуйте другой шаблон, таймфрейм, монеты или период.",
+      });
+    }
     if (
       t.some((a) => {
         var i;
@@ -135554,12 +135573,15 @@ const { Text: ru } = cr,
     onStart: c,
     searchMonths: vtMonths = 0,
     onSearchMonthsChange: vtSetMonths,
+    vtTitle,
+    vtSteps,
+    vtNoStress = !1,
   }) => {
     const [u, d] = p.useState(!1),
-      f = r.enabled ? n : a,
+      f = r.enabled && !vtNoStress ? n : a,
       h = { backtests: n.totalBacktests - a.totalBacktests, days: n.totalDays - a.totalDays },
       v = n.stages.find((y) => y.key === "stress"),
-      g = [
+      g = vtSteps ?? [
         {
           title: "Исходная стратегия — точка отсчёта",
           description: `${t.coins} монет, ${FX(t.periodFrom)} — ${FX(t.periodTo)} (каждая с даты листинга)`,
@@ -135585,7 +135607,7 @@ const { Text: ru } = cr,
       m = (i == null ? void 0 : i.remainingDays) ?? null;
     return E.jsx(Xr, {
       open: e,
-      title: "🎯 Найти устойчивые настройки",
+      title: vtTitle ?? "🎯 Найти устойчивые настройки",
       width: 620,
       styles: { body: { maxHeight: "68vh", overflowY: "auto", paddingRight: 4 } },
       onCancel: l,
@@ -135648,7 +135670,9 @@ const { Text: ru } = cr,
                 ],
               })
             : null,
-          E.jsxs("div", {
+          vtNoStress
+            ? null
+            : E.jsxs("div", {
             style: { borderTop: "1px solid rgba(128,128,128,0.2)", paddingTop: 10 },
             children: [
               E.jsxs(_n, {
@@ -136669,7 +136693,13 @@ class Nf {
       a = this.universe("final").period,
       i = VTPS.psTimeFolds(a.from, a.to),
       o = (d) => (i.length >= 2 ? VTPS.psFoldMetrics(d, i, (f) => OX(f, r)) : null),
-      s = { minCoins: Math.max(3, Math.min(10, Math.ceil(t.length * 0.3))), folds: o };
+      vtSel = this.config.coinSelection ?? {},
+      s = {
+        minCoins:
+          vtSel.minCoins > 0 ? Math.min(t.length, vtSel.minCoins) : Math.max(3, Math.min(10, Math.ceil(t.length * 0.3))),
+        maxRemoveShare: vtSel.maxRemoveShare ?? 0.6,
+        folds: o,
+      };
     this.log("info", `🪙 Подбор монет по сделкам ${t.length} бэктестов — без новых бэктестов`);
     const l = VTMODES.vmSelectCoins(t, n, s),
       c = Date.parse(a.from),
@@ -137635,10 +137665,15 @@ class Nf {
   logRobustness(t, r) {
     const n = `Вариант ${t.key.slice(0, 6)}`,
       a = [];
-    r.yearsTotal > 0 && a.push(`   по годам: не хуже исходной в ${r.yearsNotWorse} из ${r.yearsTotal}`);
+    r.yearsTotal > 0 &&
+      a.push(
+        r.absolute
+          ? `   по годам: прибыльных ${r.yearsNotWorse} из ${r.yearsTotal}`
+          : `   по годам: не хуже исходной в ${r.yearsNotWorse} из ${r.yearsTotal}`,
+      );
     for (const o of r.segments.filter((s) => s.kind !== "year" && s.kind !== "stressYear")) {
-      const s = o.profitNotWorse && o.riskNotWorse && o.score >= 1;
-      a.push(`   ${o.label}: прибыль ${CB(o)}, просадка ${wB(o)} ${s ? "✅" : "✗ хуже"}`);
+      const s = r.absolute ? o.profit > 0 : o.profitNotWorse && o.riskNotWorse && o.score >= 1;
+      a.push(`   ${o.label}: прибыль ${CB(o)}, просадка ${wB(o)} ${s ? "✅" : r.absolute ? "✗ убыток" : "✗ хуже"}`);
     }
     const i = r.segments.filter((o) => o.kind === "stressYear");
     if (i.length > 0) {
@@ -137651,7 +137686,7 @@ class Nf {
       ),
       r.plateau &&
         a.push(
-          `   плато: ${r.plateau.beatBase} из ${r.plateau.tested} соседних настроек лучше исходной (в среднем ${(r.plateau.medianRetention * 100).toFixed(0)}% от результата варианта)`,
+          `   плато: ${r.plateau.beatBase} из ${r.plateau.tested} соседних настроек лучше ${r.absolute ? "шаблона" : "исходной"} (в среднем ${(r.plateau.medianRetention * 100).toFixed(0)}% от результата варианта)`,
         ),
       this.log(
         r.verdict === "robust" ? "success" : r.verdict === "partial" ? "info" : "warning",
@@ -138145,6 +138180,12 @@ const U1 =
       simpleSearchMonths: typeof t.simpleSearchMonths == "number" ? t.simpleSearchMonths : 0,
       goal: VTMODES.VM_GOAL_IDS.includes(t.goal) ? t.goal : "improve",
       template: t.template ?? null,
+      vtCoinSource: ["bot", "wide", "custom"].includes(t.vtCoinSource)
+        ? t.vtCoinSource
+        : t.goal === "coins"
+          ? "wide"
+          : "bot",
+      vtMinCoins: typeof t.vtMinCoins == "number" && t.vtMinCoins > 0 ? Math.round(t.vtMinCoins) : null,
     };
   },
   Fft = (e, t) => {
@@ -138230,6 +138271,10 @@ const U1 =
       },
       goal: e.goal ?? "improve",
       template: VTMODES.vmNormalizeTemplate(e.goal, e.template),
+      coinSelection:
+        e.goal === "coins"
+          ? { minCoins: e.vtMinCoins ?? null, maxRemoveShare: e.vtCoinSource === "bot" ? 0.6 : 0.9 }
+          : null,
     };
   },
   // Base strategy and search ranges of a run: improve/coins use the bot as is; template modes build the
@@ -138387,23 +138432,23 @@ const U1 =
     const n = Tu(t, e.scope, e.ranges, e.precision);
     return { config: e, baseStrategy: t, quoteCurrency: r, space: n, baseGenome: KC(n) };
   },
-  iy = ({ value: e, base: t, suffix: r = "", invert: n = !1 }) => {
+  iy = ({ value: e, base: t, suffix: r = "", invert: n = !1, vtRef: vtRef = "исходной" }) => {
     if (t == null) return null;
     const a = e - t;
-    if (Math.abs(a) < 1e-9) return E.jsx(Ft, { type: "secondary", children: " (= исходной)" });
+    if (Math.abs(a) < 1e-9) return E.jsx(Ft, { type: "secondary", children: ` (= ${vtRef})` });
     const i = n ? a < 0 : a > 0;
     return E.jsxs(Ft, {
       type: i ? "success" : "danger",
       style: { fontSize: 12 },
-      children: [" ", "(", a > 0 ? "+" : "", a.toFixed(2), r, " к исходной)"],
+      children: [" ", "(", a > 0 ? "+" : "", a.toFixed(2), r, ` к ${vtRef})`],
     });
   },
-  Zft = ({ extensionReady: e }) => {
+  Zft = ({ extensionReady: e, kind: vtKind = "improve", embedded: vtEmbedded = !1 }) => {
     var Jn, zn, ea, Pi, Qt, yr, On, mn, xn;
     const t = sS(),
       { createGroup: r } = fS(),
       [n, a] = eo.useMessage(),
-      i = p.useMemo(() => Bft(Eft()), []),
+      i = p.useMemo(() => Bft({ ...VTMODES.vmFormDefaults(vtKind), ...(Eft(vtKind) ?? {}), goal: vtKind }), []),
       [o, s] = p.useState(i),
       l = p.useCallback((ce, Ne) => {
         s((nt) => ({ ...nt, [ce]: Ne }));
@@ -138431,20 +138476,41 @@ const U1 =
       [le, ae] = p.useState(null),
       [re, J] = p.useState(null),
       te = p.useRef(null),
-      de = R === "running" || R === "paused";
+      vtAttached = p.useRef(null),
+      de = R === "running" || R === "paused",
+      vtIsTpl = VTMODES.vmIsTemplateGoal(vtKind),
+      vtUi = vtKind === "coins" ? "simple" : o.uiMode,
+      // One run at a time across the optimizer tabs (each tab is its own page instance).
+      vtGuard = () =>
+        vtRunSession.engine && vtRunSession.engine !== te.current
+          ? (n.warning(`Идёт прогон во вкладке «${vtRunSession.label}» — дождитесь окончания или остановите его`), !0)
+          : !1;
     p.useEffect(() => {
-      K(GX()),
-        ie(Cft()),
+      ie(Cft()),
         VX()
           .then(Y)
           .catch(() => {});
+      const vtLive = vtRunSession.engine && vtRunSession.kind === vtKind ? vtRunSession.engine : null;
+      if (vtLive) {
+        // The page was re-opened while its run goes on: attach to the running engine.
+        (te.current = vtLive),
+          (vtAttached.current = vtLive),
+          (vtLive.callbacks = He()),
+          P(vtLive.status === "paused" ? "paused" : "running"),
+          A(vtLive.getProgress()),
+          z(vtLive.getLeaderboard()),
+          B(ay(vtLive.getConfig(), vtLive.getBaseStrategy(), vtLive.getQuoteCurrency())),
+          Jt("info", "↩️ Прогон продолжается — страница подключена к нему заново");
+        return;
+      }
+      K(GX(vtKind));
       const ce = () => {},
-        Ne = Nf.fromSavedState({ onLog: ce, onProgress: ce, onCandidate: ce, onLeaderboard: ce });
+        Ne = Nf.fromSavedState({ onLog: ce, onProgress: ce, onCandidate: ce, onLeaderboard: ce }, {}, vtKind);
       if (Ne) {
         z(Ne.getLeaderboard()), B(ay(Ne.getConfig(), Ne.getBaseStrategy(), Ne.getQuoteCurrency()));
         return;
       }
-      const nt = qC();
+      const nt = qC(vtKind);
       nt &&
         (z(nt.leaderboard),
         B(ay(nt.config, nt.baseStrategy, nt.quoteCurrency)),
@@ -138454,7 +138520,23 @@ const U1 =
           cacheHits: nt.cacheHits,
           elapsedMs: nt.elapsedMs,
         }));
-    }, []);
+    }, []),
+      p.useEffect(() => {
+        // An attached run (see above) is driven by the instance that started it: finish here when it ends.
+        const ce = () => {
+          const Ne = vtAttached.current;
+          if (!Ne || vtRunSession.engine === Ne) return;
+          (vtAttached.current = null), te.current === Ne && (te.current = null);
+          const nt = Ne.getProgress().status === "completed";
+          P(nt ? "completed" : "idle"), it(Ne, nt);
+        };
+        return (
+          vtRunSession.listeners.add(ce),
+          () => {
+            vtRunSession.listeners.delete(ce);
+          }
+        );
+      }, []);
     const me = p.useCallback(async () => {
       const ce = await aft();
       return v(ce), ce;
@@ -138520,7 +138602,15 @@ const U1 =
     const be = p.useMemo(() => c.find((ce) => ce.id === o.botId) ?? null, [c, o.botId]),
       oe = (be == null ? void 0 : be.name) ?? (g == null ? void 0 : g.name) ?? null,
       ve = g ? DL(g) : "USDT",
-      he = p.useMemo(() => (g ? Fut(g) : ""), [g]),
+      vtTemplate = p.useMemo(() => VTMODES.vmNormalizeTemplate(vtKind, o.template), [o.template]),
+      // Template modes: the base of the run is generated on the selected bot (its exchange, deposit,
+      // take-profit and stop-loss types); ranges overrides are keyed by the template, not the bot.
+      vtBase = p.useMemo(
+        () =>
+          g && vtIsTpl ? VTMODES.vmPrepareBase({ goal: vtKind, template: vtTemplate, symbols: [] }, g).strategy : g,
+        [g, vtTemplate],
+      ),
+      he = p.useMemo(() => (vtBase ? Fut(vtBase) : ""), [vtBase]),
       ge = ((Jn = g == null ? void 0 : g.deposit) == null ? void 0 : Jn.amount) ?? null,
       Ce = p.useMemo(() => {
         if (!g) return [];
@@ -138544,16 +138634,18 @@ const U1 =
         w(Ift(o.botId, he) ?? {});
       }, [o.botId, he]),
       p.useEffect(() => {
-        const ce = setTimeout(() => $ft(o), 400);
+        const ce = setTimeout(() => $ft(o, vtKind), 400);
         return () => clearTimeout(ce);
       }, [o]);
     const Be = p.useMemo(() => Go(o.symbolsText), [o.symbolsText]),
       ye = p.useMemo(() => Be.map((ce) => Zi(ce, ve)), [ve, Be]),
       we = p.useMemo(() => Go(o.stressText).map((ce) => Zi(ce, ve)), [o.stressText, ve]),
       Pe = p.useMemo(() => {
-        const ce = o.uiMode === "simple" && !o.stressText.trim() ? Go(U1) : [];
-        return [...new Set([...ye, ...we, ...Ce.map((Ne) => Zi(Ne, ve)), ...ce.map((Ne) => Zi(Ne, ve))])];
-      }, [o.stressText, o.uiMode, ye, ve, Ce, we]),
+        const ce = (vtUi === "simple" && !o.stressText.trim()) || (vtKind !== "improve" && o.vtCoinSource === "wide") ? Go(U1) : [];
+        return [
+          ...new Set([...ye, ...we, ...Ce.map((Ne) => Zi(Ne, ve)), ...Ee.map((Ne) => Zi(Ne, ve)), ...ce.map((Ne) => Zi(Ne, ve))]),
+        ];
+      }, [o.stressText, vtUi, o.vtCoinSource, ye, ve, Ce, Ee, we]),
       ue = p.useMemo(() => {
         const ce = new Set(ye);
         return we.filter((Ne) => !ce.has(Ne)).length;
@@ -138582,8 +138674,15 @@ const U1 =
         (Ne = !1), clearTimeout(nt);
       };
     }, [e, Pe, g]);
-    const se = p.useMemo(() => (g ? che(g, o.scope, o.precision) : []), [o.precision, o.scope, g]),
-      Se = p.useMemo(() => (g ? Tu(g, o.scope, C, o.precision) : null), [o.precision, o.scope, C, g]),
+    const se = p.useMemo(() => (vtBase ? che(vtBase, o.scope, o.precision) : []), [o.precision, o.scope, vtBase]),
+      vtRanges = p.useMemo(
+        () => (vtBase && vtIsTpl ? { ...VTMODES.vmModeRanges(vtKind, se, vtBase), ...C } : C),
+        [vtBase, se, C],
+      ),
+      Se = p.useMemo(
+        () => (vtBase ? Tu(vtBase, o.scope, vtRanges, o.precision) : null),
+        [o.precision, o.scope, vtRanges, vtBase],
+      ),
       _e = Se ? Qut(Se) : null,
       Te = p.useMemo(
         () => ({ from: `${o.periodFrom}T00:00:00.000Z`, to: `${o.periodTo}T23:59:59.999Z` }),
@@ -138624,7 +138723,8 @@ const U1 =
           S && ce.push(`Не удалось загрузить бота: ${S}`),
           Be.length === 0 && ce.push("Укажите хотя бы одну монету"),
           $e < 7 && ce.push("Период должен быть не короче 7 дней"),
-          Se &&
+          vtKind !== "coins" &&
+            Se &&
             Se.dimensions.length === 0 &&
             ce.push("Нечего оптимизировать: включите параметры или расширьте диапазоны"),
           o.mode === "portfolio" &&
@@ -138661,13 +138761,13 @@ const U1 =
         if (
           (B(ay(ce.getConfig(), ce.getBaseStrategy(), ce.getQuoteCurrency())),
           z(ce.getLeaderboard()),
-          K(GX()),
+          K(GX(vtKind)),
           VX()
             .then(Y)
             .catch(() => {}),
           Ne)
         ) {
-          const nt = qC();
+          const nt = qC(vtKind);
           nt &&
             F({
               finishedAt: nt.finishedAt,
@@ -138679,34 +138779,39 @@ const U1 =
       }, []),
       dt = p.useCallback(
         async (ce, Ne) => {
-          (te.current = ce), P("running");
+          (te.current = ce), vtSetRunSession(ce, vtKind), P("running");
           try {
             const nt = Ne === "start" ? await ce.start() : await ce.resume(),
               lr = ce.getProgress().status === "completed";
             if ((P(lr ? "completed" : "idle"), it(ce, lr), lr)) {
-              const tn = nt.top[0];
+              const tn = nt.top[0],
+                vtSel = nt.coinSelection;
               n.success(
-                tn
-                  ? `Готово! Лучший вариант: оценка ${(tn.validatedScore ?? tn.fitness.score).toFixed(3)}`
-                  : "Оптимизация завершена",
+                vtSel
+                  ? `Готово! Подобрано монет: ${vtSel.selected.length} из ${vtSel.all ? vtSel.all.coins : vtSel.selected.length}`
+                  : tn
+                    ? `Готово! Лучший вариант: оценка ${(tn.validatedScore ?? tn.fitness.score).toFixed(3)}`
+                    : "Оптимизация завершена",
               );
             }
           } catch (nt) {
             P("error"), it(ce, !1), n.error(`Оптимизация прервана: ${nt instanceof Error ? nt.message : String(nt)}`);
           } finally {
-            te.current = null;
+            (te.current = null), vtRunSession.engine === ce && vtSetRunSession(null, null);
           }
         },
         [n, it],
       ),
       rt = p.useCallback(
         async (ce, Ne) => {
+          if (vtGuard()) return;
           if (Ne.length > 0 || ce.botId === null) {
             n.error(Ne[0] ?? "Проверьте настройки");
             return;
           }
-          U && (FL(), K(null));
-          const nt = Vft(ce, { botId: ce.botId, botName: oe, ranges: C, botDeposit: ge });
+          U && (FL(vtKind), K(null));
+          const nt = Vft({ ...ce, goal: vtKind }, { botId: ce.botId, botName: oe, ranges: C, botDeposit: ge }),
+            vtPrep = vtPrepareRun(nt, g);
           ce.periodPreset !== "custom" && Sft(ce.periodTo),
             L([]),
             A(null),
@@ -138717,15 +138822,30 @@ const U1 =
               history: [],
               periods: { search: { from: nt.periodFrom, to: nt.periodTo }, holdout: null },
               mode: nt.mode,
+              goal: vtKind,
             }),
-            B(ay(nt, g, ve)),
+            B(ay(vtPrep.config, vtPrep.baseStrategy, ve)),
             await dt(new Nf(nt, He()), "start");
         },
-        [ge, oe, He, n, ve, C, dt, U, g],
+        [ge, oe, He, n, ve, C, dt, U, g, vtGuard],
       ),
       gt = p.useCallback(() => rt(o, Wt), [o, rt, Wt]),
       [Kt, Lt] = p.useState(!1),
-      Ve = p.useMemo(() => Fft(o, Ce.length > 1 ? Ce : []), [o, Ce]),
+      vtBotCoins = Ce.length > 1 ? Ce : Ee,
+      vtWideCoins = p.useMemo(() => [...new Set([...vtBotCoins, ...Go(U1)])], [vtBotCoins]),
+      vtCoins =
+        o.vtCoinSource === "custom" ? Be : o.vtCoinSource === "wide" ? vtWideCoins : vtBotCoins,
+      Ve = p.useMemo(
+        () =>
+          vtKind === "improve"
+            ? Fft(o, Ce.length > 1 ? Ce : [])
+            : VTMODES.vmSimpleForm(
+                vtKind,
+                { ...o, symbolsText: vtCoins.join(", ") },
+                { presets: z$.portfolio, periodOf: a2 },
+              ),
+        [o, Ce, vtCoins],
+      ),
       vt = o.stressText.trim() ? o.stressText : U1,
       ct = p.useMemo(() => Go(Ve.symbolsText).map((ce) => Zi(ce, ve)), [ve, Ve.symbolsText]),
       We = p.useMemo(() => Go(vt).map((ce) => Zi(ce, ve)), [ve, vt]),
@@ -138764,23 +138884,26 @@ const U1 =
           S && ce.push(`Не удалось загрузить бота: ${S}`),
           g || ce.push("Бот ещё загружается"),
           ct.length === 0 && ce.push("Не найдены монеты стратегии"),
-          g &&
+          vtKind === "coins" && ct.length > 0 && ct.length < 3 && ce.push("Для подбора нужно хотя бы 3 монеты"),
+          vtKind === "improve" &&
+            g &&
             Tu(g, Ve.scope, C, Ve.precision).dimensions.length === 0 &&
             ce.push("Нечего оптимизировать: в «Ручной настройке» выключены все параметры"),
           ce
         );
       }, [o.botId, C, Ve, ct.length, g, S]),
       wt = p.useCallback(() => {
+        if (vtGuard()) return;
         const ce = Ye();
         if (ce.length > 0) {
           n.error(ce[0]);
           return;
         }
         Lt(!0);
-      }, [n, Ye]),
+      }, [n, Ye, vtGuard]),
       bt = p.useCallback(() => {
         Lt(!1), s(Ve);
-        const ce = { ...Ve, stressText: o.stressEnabled ? vt : "" };
+        const ce = { ...Ve, stressText: o.stressEnabled && vtKind !== "coins" ? vt : "" };
         rt(ce, Ye());
       }, [o.stressEnabled, Ye, Ve, vt, rt]),
       De = p.useCallback(
@@ -138789,6 +138912,7 @@ const U1 =
             n.warning("Дождитесь окончания текущего прогона");
             return;
           }
+          if (vtGuard()) return;
           const Ne = Go(vt);
           if (!(k != null && k.config && k.baseStrategy && j)) {
             n.error("Нет данных завершённого прогона");
@@ -138800,6 +138924,7 @@ const U1 =
             onLeaderboard: () => {},
           });
           (te.current = nt),
+            vtSetRunSession(nt, vtKind),
             V(ce.key),
             P("running"),
             Jt(
@@ -138811,20 +138936,21 @@ const U1 =
             const lr = await nt.runStressTest(ce, j.base, Ne),
               tn = (Za) => Za.map((Gc) => (Gc.key === lr.key ? lr : Gc)).sort(e2);
             z((Za) => Za && { ...Za, top: tn(Za.top) }), ae((Za) => (Za && Za.key === lr.key ? lr : Za));
-            const Ya = qC();
+            const Ya = qC(vtKind);
             Ya && Mhe({ ...Ya, leaderboard: { ...Ya.leaderboard, top: tn(Ya.leaderboard.top) } }),
               P("completed"),
               n.success(`Стресс-тест готов: ${lr.robustness ? j$[lr.robustness.verdict] : "отчёт обновлён"}`);
           } catch (lr) {
             P("error"), n.error(`Стресс-тест прерван: ${lr instanceof Error ? lr.message : String(lr)}`);
           } finally {
-            (te.current = null), V(null);
+            (te.current = null), V(null), vtRunSession.engine === nt && vtSetRunSession(null, null);
           }
         },
-        [Jt, He, k, de, j, n, vt],
+        [Jt, He, k, de, j, n, vt, vtGuard],
       ),
       Ae = p.useCallback(async () => {
-        const ce = Nf.fromSavedState(He());
+        if (vtGuard()) return;
+        const ce = Nf.fromSavedState(He(), {}, vtKind);
         if (!ce) {
           n.error("Не удалось восстановить сохранённое состояние"), K(null);
           return;
@@ -138835,9 +138961,9 @@ const U1 =
           z(ce.getLeaderboard()),
           B(ay(ce.getConfig(), ce.getBaseStrategy(), ce.getQuoteCurrency())),
           await dt(ce, "resume");
-      }, [He, n, dt]),
+      }, [He, n, dt, vtGuard]),
       Oe = p.useCallback(() => {
-        FL(), K(null), z(null), B(null), n.info("Незавершённая оптимизация удалена");
+        FL(vtKind), K(null), z(null), B(null), n.info("Незавершённая оптимизация удалена");
       }, [n]),
       Qe = () => {
         var ce;
@@ -138856,7 +138982,7 @@ const U1 =
         (ce = te.current) == null || ce.finishEarly(), P("running");
       },
       Xt = () => {
-        _ft(), z(null), B(null), F(null), A(null), L([]), P("idle");
+        _ft(vtKind), z(null), B(null), F(null), A(null), L([]), P("idle");
       },
       jt = async () => {
         await mft(), Y(0), n.success("Кэш результатов бэктестов очищен");
@@ -138880,7 +139006,7 @@ const U1 =
               vtScale !== 1 && vtBuilt.deposit && typeof vtBuilt.deposit.amount == "number"
                 ? { ...vtBuilt, deposit: { ...vtBuilt.deposit, amount: _t(vtBuilt.deposit.amount * vtScale, 2) } }
                 : vtBuilt,
-            Ya = Ne.config.mode === "portfolio" ? Qft(nt) : Ne.config.symbols;
+            Ya = Ne.config.mode === "portfolio" && vtKind === "improve" ? Qft(nt) : Ne.config.symbols;
           return { strategy: tn, symbols: Ya.map((Gc) => Zi(Gc, Ne.quoteCurrency)) };
         },
         [k, n],
@@ -138949,6 +139075,22 @@ const U1 =
             ],
           }),
         );
+      },
+      vtCopyCoins = () => {
+        const ce = j == null ? void 0 : j.coinSelection;
+        ce &&
+          navigator.clipboard
+            .writeText(ce.selected.map(ec).join(", "))
+            .then(() => n.success("Список монет скопирован"))
+            .catch(() => n.error("Не удалось скопировать"));
+      },
+      vtCreateCoinsBot = () => {
+        const ce = j == null ? void 0 : j.coinSelection;
+        if (!(ce && k && k.baseStrategy)) {
+          n.warning("Нет данных прогона");
+          return;
+        }
+        J({ strategy: k.baseStrategy, symbols: ce.selected.map((Ne) => Zi(Ne, k.quoteCurrency)) });
       },
       Tt = () => {
         const ce = j == null ? void 0 : j.top.find((tn) => !tn.isBase),
@@ -139065,7 +139207,7 @@ const U1 =
           h !== null && h === o.botId
             ? E.jsx(un, { color: "blue", style: { marginTop: 6 }, children: "открыт во вкладке veles.finance" })
             : null,
-          g && Se
+          g && Se && !vtIsTpl
             ? E.jsxs(Ft, {
                 type: "secondary",
                 style: { fontSize: 12, display: "block", marginTop: 4 },
@@ -139180,13 +139322,186 @@ const U1 =
           }),
         ],
       }),
-      da = (o.mode === "portfolio" ? sut : out).map((ce) => ({ value: ce, label: lut[ce] })),
-      Rn = o.mode === "portfolio" ? o.portfolioTarget : o.singleTarget;
+      da = (o.mode === "portfolio" ? (vtKind === "improve" ? sut : [VTMODES.VM_STABLE_METRIC, ...sut]) : out).map(
+        (ce) => ({ value: ce, label: lut[ce] }),
+      ),
+      Rn = o.mode === "portfolio" ? o.portfolioTarget : o.singleTarget,
+      vtGoalInfo = VTMODES.vmGoal(vtKind),
+      vtAbs = ((k == null ? void 0 : k.config.target.metric) ?? (vtKind === "improve" ? null : VTMODES.VM_STABLE_METRIC)) === VTMODES.VM_STABLE_METRIC,
+      vtBaseInfo = vtIsTpl && vtBase ? vtDescribeBase(vtBase) : null,
+      vtStartSteps =
+        vtKind === "improve"
+          ? void 0
+          : vtKind === "coins"
+            ? [
+                {
+                  title: "Бот на каждой монете",
+                  description: `${ct.length} монет, ${FX(Ve.periodFrom)} — ${FX(Ve.periodTo)} (каждая с даты листинга), настройки бота без изменений`,
+                },
+                {
+                  title: "Подбор набора",
+                  description: `по сделкам этих бэктестов, без новых: из портфеля по одной убираются монеты, без которых прибыль / суммарная просадка выше (с блокировкой, как в «Группах бэктестов»)${o.vtMinCoins ? `; в наборе не меньше ${o.vtMinCoins} монет` : ""}`,
+                },
+                {
+                  title: "Проверка",
+                  description: "набор, выбранный по первым двум третям периода, сравнивается со всеми монетами на последней трети",
+                },
+              ]
+            : [
+                {
+                  title: "Шаблон — точка отсчёта",
+                  description: `${vtBaseInfo ?? "шаблон"}; ${ct.length} монет, ${FX(Ve.periodFrom)} — ${FX(Ve.periodTo)} (каждая с даты листинга)`,
+                },
+                {
+                  title: "Пошаговый поиск",
+                  description: `до ${Ve.genetic.searchBudget} вариантов на ${Math.min(Ve.portfolio.screeningCount, ct.length)} ключевых монетах: сетка и объёмы, тейк${vtTemplate && vtTemplate.stopLoss ? ", стоп" : ""}, пороги входа${vtKind === "scalper" ? ", таймфреймы" : ""}, замена и добавление фильтров. Цель — прибыль / суммарная просадка, стабильно по полугодиям и группам монет; просадка не больше ${Ve.constraints.maxPortfolioDrawdownPercent}%${vtKind === "scalper" && Ve.constraints.vtMaxAvgHoldHours ? `, сделка в среднем не дольше ${Ve.constraints.vtMaxAvgHoldHours} ч` : ""}${vtKind === "scalper" && Ve.constraints.vtMinDealsPerCoinMonth ? `, не реже ${Ve.constraints.vtMinDealsPerCoinMonth} сделок на монету в месяц` : ""}`,
+                },
+                { title: "Финал", description: `${Ve.portfolio.finalists} лучших — на всех монетах за весь период` },
+                {
+                  title: "Проверка устойчивости",
+                  description: `прибыль в каждом году отдельно, на монетах, которых поиск не видел, плато (${Ve.robustness.neighbors} сдвинутых настроек)`,
+                },
+                ...(o.stressEnabled
+                  ? [{ title: "Стресс-тест", description: `лучший вариант на ${Fe} новых монетах` }]
+                  : []),
+              ],
+      vtSetTemplate = (ce) => l("template", { ...(vtTemplate ?? {}), ...ce }),
+      vtModeCard =
+        vtKind === "improve"
+          ? null
+          : E.jsx(Wr, {
+              size: "small",
+              title: vtGoalInfo.title,
+              children: E.jsxs(or, {
+                vertical: !0,
+                gap: 12,
+                children: [
+                  E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: vtModeIntro[vtKind] }),
+                  Ur,
+                  vtIsTpl && vtTemplate
+                    ? E.jsx(vtTemplateControls, {
+                        kind: vtKind,
+                        template: vtTemplate,
+                        disabled: mt,
+                        onChange: vtSetTemplate,
+                      })
+                    : null,
+                  vtBaseInfo
+                    ? E.jsxs(Ft, { type: "secondary", style: { fontSize: 12 }, children: ["🧩 Шаблон: ", vtBaseInfo] })
+                    : null,
+                  E.jsxs(or, {
+                    vertical: !0,
+                    gap: 6,
+                    children: [
+                      E.jsxs(or, {
+                        align: "center",
+                        gap: 8,
+                        wrap: !0,
+                        children: [
+                          E.jsx(Ft, { children: "Монеты" }),
+                          E.jsx(pl, {
+                            size: "small",
+                            disabled: mt,
+                            value: o.vtCoinSource,
+                            onChange: (ce) => l("vtCoinSource", ce),
+                            options: [
+                              { value: "bot", label: `ботов (${vtBotCoins.length})` },
+                              { value: "wide", label: `широкий список (${vtWideCoins.length})` },
+                              { value: "custom", label: "свой список" },
+                            ],
+                          }),
+                          E.jsx(wn, {
+                            text: "«ботов» — монеты выбранного бота и всех ваших ботов с такими же настройками; «широкий список» — они же и ~150 ликвидных монет Bybit; «свой список» — монеты через пробел или запятую.",
+                          }),
+                        ],
+                      }),
+                      o.vtCoinSource === "custom"
+                        ? E.jsx(Nn.TextArea, {
+                            rows: 3,
+                            disabled: mt,
+                            value: o.symbolsText,
+                            placeholder: "BTC ETH SOL …",
+                            onChange: (ce) => l("symbolsText", ce.target.value),
+                          })
+                        : null,
+                      E.jsxs(Ft, {
+                        type: "secondary",
+                        style: { fontSize: 12 },
+                        children: ["Монет в прогоне: ", E.jsx(Ft, { strong: !0, children: ct.length })],
+                      }),
+                      vtKind === "coins"
+                        ? E.jsxs(ut, {
+                            wrap: !0,
+                            children: [
+                              E.jsx(bn, {
+                                size: "small",
+                                addonBefore: "Минимум монет",
+                                min: 1,
+                                max: 500,
+                                placeholder: "авто",
+                                value: o.vtMinCoins,
+                                disabled: mt,
+                                onChange: (ce) => l("vtMinCoins", typeof ce == "number" && ce > 0 ? ce : null),
+                                style: { width: 220 },
+                              }),
+                              E.jsx(wn, {
+                                text: "Пусто — авто: 30% монет (от 3 до 10). Подбор убирает монету, только если без неё прибыль / суммарная просадка портфеля выше.",
+                              }),
+                            ],
+                          })
+                        : null,
+                    ],
+                  }),
+                  E.jsxs(or, {
+                    align: "center",
+                    gap: 8,
+                    wrap: !0,
+                    children: [
+                      E.jsx(Ft, { children: "Период" }),
+                      E.jsx(pl, {
+                        size: "small",
+                        disabled: mt,
+                        value: Ve.periodPreset,
+                        onChange: (ce) => l("periodPreset", ce),
+                        options: [
+                          { value: "since2020", label: "с 2020" },
+                          { value: "3y", label: "3 года" },
+                          { value: "1y", label: "1 год" },
+                          { value: "6m", label: "6 мес" },
+                        ],
+                      }),
+                      E.jsx(wn, {
+                        text:
+                          vtKind === "scalper"
+                            ? "Скальпер на 1–15-минутных свечах: бэктесты долгие, поэтому по умолчанию — последний год. Длиннее период — надёжнее вывод, но дороже."
+                            : "С 2020 года поиск видит все обвалы рынка — так надёжнее. Короче период — дешевле, но вывод слабее.",
+                      }),
+                    ],
+                  }),
+                  E.jsx("div", {
+                    style: { borderTop: "1px solid rgba(128,128,128,0.2)", paddingTop: 10 },
+                    children: an,
+                  }),
+                  E.jsx(Ge, {
+                    type: "primary",
+                    size: "large",
+                    block: !0,
+                    icon: E.jsx(vtKind === "scalper" ? w4 : JH, {}),
+                    onClick: wt,
+                    disabled: mt || y || o.botId === null,
+                    children: vtGoalInfo.button,
+                  }),
+                  E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: vtModeFooter[vtKind] }),
+                ],
+              }),
+            });
     return E.jsxs("section", {
       className: "page",
       children: [
         a,
-        E.jsx(ag, {
+        vtEmbedded
+          ? null
+          : E.jsx(ag, {
           title: "🧬 Оптимизатор стратегий",
           description:
             "Подбирает настройки ботов по бэктестам Veles. Режим «Стратегия на список монет» ищет одни настройки для всех монет и считает итог так же, как «Группы бэктестов»: все сделки на общей шкале времени, с блокировкой и суммарной просадкой.",
@@ -139255,7 +139570,9 @@ const U1 =
                 vertical: !0,
                 gap: 16,
                 children: [
-                  E.jsx(pl, {
+                  vtKind === "coins"
+                    ? null
+                    : E.jsx(pl, {
                     block: !0,
                     size: "large",
                     disabled: mt,
@@ -139266,7 +139583,10 @@ const U1 =
                       { value: "manual", label: "⚙️ Ручная настройка" },
                     ],
                   }),
-                  o.uiMode === "simple"
+                  vtUi === "simple" && vtKind !== "improve"
+                    ? vtModeCard
+                    : null,
+                  vtUi === "simple" && vtKind === "improve"
                     ? E.jsx(Wr, {
                         size: "small",
                         title: "🎯 Найти устойчивые настройки стратегии",
@@ -139331,7 +139651,7 @@ const U1 =
                         }),
                       })
                     : null,
-                  o.uiMode === "manual"
+                  vtUi === "manual"
                     ? E.jsxs(E.Fragment, {
                         children: [
                           E.jsx(Wr, {
@@ -140793,7 +141113,11 @@ const U1 =
                         ],
                       })
                     : null,
-                  pt && Pr
+                  vtKind === "coins"
+                    ? j && j.coinSelection
+                      ? E.jsx(vtCoinsCard, { selection: j.coinSelection, onCopy: vtCopyCoins, onCreate: vtCreateCoinsBot })
+                      : null
+                    : pt && Pr
                     ? E.jsxs(Wr, {
                         size: "small",
                         title: E.jsxs(ut, {
@@ -140806,7 +141130,7 @@ const U1 =
                                   children: zt ? "проверен на всех монетах" : "проверка пройдена",
                                 })
                               : null,
-                            pt.isBase ? E.jsx(un, { children: "исходные настройки" }) : null,
+                            pt.isBase ? E.jsx(un, { children: vtIsTpl ? "шаблон без изменений" : "исходные настройки" }) : null,
                             E.jsx(_B, { candidate: pt }),
                             pt.isBase ? null : E.jsx(vtScaleTag, { candidate: pt }),
                             Pr.valid ? null : E.jsx(un, { color: "red", children: "не проходит ограничения" }),
@@ -140844,7 +141168,7 @@ const U1 =
                                         valueStyle: { color: Pr.portfolio.monthlyPercent >= 0 ? "#3f8600" : "#cf1322" },
                                       }),
                                       !pt.isBase && pt.validation && _r != null && _r.portfolio
-                                        ? E.jsx(iy, {
+                                        ? E.jsx(iy, { vtRef: vtIsTpl ? "шаблону" : void 0,
                                             value: Pr.portfolio.monthlyPercent,
                                             base: _r.portfolio.monthlyPercent,
                                             suffix: "%",
@@ -140863,7 +141187,7 @@ const U1 =
                                         valueStyle: { color: "#cf1322" },
                                       }),
                                       !pt.isBase && pt.validation && _r != null && _r.portfolio
-                                        ? E.jsx(iy, {
+                                        ? E.jsx(iy, { vtRef: vtIsTpl ? "шаблону" : void 0,
                                             value: Pr.portfolio.drawdownPercent,
                                             base: _r.portfolio.drawdownPercent,
                                             suffix: "%",
@@ -140878,7 +141202,7 @@ const U1 =
                                     children: [
                                       E.jsx(ra, { title: "Прибыль / просадка", value: Pr.pnlToRisk.toFixed(2) }),
                                       !pt.isBase && pt.validation && _r
-                                        ? E.jsx(iy, { value: Pr.pnlToRisk, base: _r.pnlToRisk })
+                                        ? E.jsx(iy, { vtRef: vtIsTpl ? "шаблону" : void 0, value: Pr.pnlToRisk, base: _r.pnlToRisk })
                                         : null,
                                     ],
                                   }),
@@ -140887,8 +141211,9 @@ const U1 =
                                     md: 6,
                                     children: [
                                       E.jsx(ar, {
-                                        title:
-                                          "min(прибыль / прибыль исходной, просадка исходной / просадка) — на всех монетах, при рекомендуемом депозите бота; 1.00 = исходная, 1.10 — оба показателя лучше на 10%",
+                                        title: vtAbs
+                                          ? cut.vtStablePnlToRisk
+                                          : "min(прибыль / прибыль исходной, просадка исходной / просадка) — на всех монетах, при рекомендуемом депозите бота; 1.00 = исходная, 1.10 — оба показателя лучше на 10%",
                                         children: E.jsx("div", {
                                           children: E.jsx(ra, {
                                             title: "Оценка",
@@ -140925,7 +141250,7 @@ const U1 =
                                         },
                                       }),
                                       Xe && !pt.isBase
-                                        ? E.jsx(iy, {
+                                        ? E.jsx(iy, { vtRef: vtIsTpl ? "шаблону" : void 0,
                                             value: pt.fitness.roiMonthlyPercent,
                                             base: Xe.fitness.roiMonthlyPercent,
                                             suffix: "%",
@@ -140942,7 +141267,7 @@ const U1 =
                                         value: pt.validation ? pt.validation.roiMonthlyPercent.toFixed(2) : "—",
                                       }),
                                       pt.validation && Xe != null && Xe.validation && !pt.isBase
-                                        ? E.jsx(iy, {
+                                        ? E.jsx(iy, { vtRef: vtIsTpl ? "шаблону" : void 0,
                                             value: pt.validation.roiMonthlyPercent,
                                             base: Xe.validation.roiMonthlyPercent,
                                             suffix: "%",
@@ -140988,7 +141313,7 @@ const U1 =
                                 type: "secondary",
                                 style: { fontSize: 12, display: "block", marginTop: 8 },
                                 children: [
-                                  "Исходная на всех монетах: ",
+                                  vtIsTpl ? "Шаблон на всех монетах: " : "Исходная на всех монетах: ",
                                   _r.portfolio.monthlyPercent.toFixed(2),
                                   "%/мес, суммарная просадка",
                                   " ",
@@ -141010,8 +141335,9 @@ const U1 =
                                 style: { marginTop: 12 },
                                 type: "info",
                                 showIcon: !0,
-                                message:
-                                  "Исходные настройки оказались лучшими из найденных. Посмотрите «Влияние параметров» — что почти помогло; попробуйте шире диапазоны, другие параметры или больший бюджет поиска.",
+                                message: vtIsTpl
+                                  ? "Шаблон без изменений оказался лучшим из найденных. Попробуйте другой профиль, таймфрейм или монеты, либо больший бюджет поиска в «Ручной настройке»."
+                                  : "Исходные настройки оказались лучшими из найденных. Посмотрите «Влияние параметров» — что почти помогло; попробуйте шире диапазоны, другие параметры или больший бюджет поиска.",
                               })
                             : null,
                           W
@@ -141034,7 +141360,7 @@ const U1 =
                         ],
                       })
                     : null,
-                  j != null && j.screeningSymbols && j.screeningSymbols.length > 0
+                  vtKind !== "coins" && j != null && j.screeningSymbols && j.screeningSymbols.length > 0
                     ? E.jsxs(Ft, {
                         type: "secondary",
                         style: { fontSize: 12 },
@@ -141051,7 +141377,7 @@ const U1 =
                   j && j.sensitivity && j.sensitivity.length > 0
                     ? E.jsx(vtSensitivityCard, { rows: j.sensitivity, running: de })
                     : null,
-                  j && (j.top.length > 0 || de)
+                  vtKind !== "coins" && j && (j.top.length > 0 || de)
                     ? E.jsxs(Wr, {
                         size: "small",
                         title: `📋 Лучшие варианты (${j.top.length})`,
@@ -141087,7 +141413,7 @@ const U1 =
                                 type: "secondary",
                                 style: { fontSize: 12, display: "block", marginBottom: 8 },
                                 children: [
-                                  "Исходная: оценка ",
+                                  vtIsTpl ? "Шаблон: оценка " : "Исходная: оценка ",
                                   (Xe.validatedScore ?? Xe.fitness.score).toFixed(3),
                                   " ",
                                   E.jsx(Ge, {
@@ -141111,7 +141437,9 @@ const U1 =
                       })
                     : null,
                   !D && (!j || j.top.length === 0)
-                    ? E.jsx(Wr, {
+                    ? vtKind !== "improve"
+                      ? E.jsx(vtHowCard, { kind: vtKind })
+                      : E.jsx(Wr, {
                         size: "small",
                         title: "Как это работает",
                         children: E.jsxs(or, {
@@ -141205,7 +141533,10 @@ const U1 =
               onCancel: () => Lt(!1),
               onStart: bt,
               searchMonths: Ve.portfolio.screeningMonths,
-              onSearchMonthsChange: (ce) => l("simpleSearchMonths", ce),
+              onSearchMonthsChange: vtKind === "improve" ? (ce) => l("simpleSearchMonths", ce) : void 0,
+              vtTitle: vtKind === "improve" ? void 0 : vtGoalInfo.title,
+              vtSteps: vtStartSteps,
+              vtNoStress: vtKind === "coins",
             })
           : null,
         E.jsx(jdt, {
@@ -141238,7 +141569,306 @@ const U1 =
           strategy: (re == null ? void 0 : re.strategy) ?? null,
           symbols: (re == null ? void 0 : re.symbols) ?? [],
           quoteCurrency: (k == null ? void 0 : k.quoteCurrency) ?? "USDT",
-          defaultName: `${(k == null ? void 0 : k.config.botName) ?? "Бот"} · opt ${new Date().toLocaleDateString()}`,
+          defaultName: `${vtKind === "improve" ? "" : `${vtBotPrefix[vtKind]} · `}${(k == null ? void 0 : k.config.botName) ?? "Бот"} · opt ${new Date().toLocaleDateString()}`,
+        }),
+      ],
+    });
+  },
+  // ── Optimizer tabs (2.16): improve / scalper / short / long from scratch / coins ──────────────
+  // Single running engine across the tabs; a page re-opened during its run attaches to it.
+  vtRunSession = { engine: null, kind: null, label: null, listeners: new Set() },
+  vtSetRunSession = (e, t) => {
+    (vtRunSession.engine = e), (vtRunSession.kind = e ? t : null), (vtRunSession.label = e ? VTMODES.vmGoal(t).tab : null);
+    for (const r of [...vtRunSession.listeners])
+      try {
+        r();
+      } catch {}
+  },
+  vtUseRunSession = () => {
+    const [, e] = p.useState(0);
+    return (
+      p.useEffect(() => {
+        const t = () => e((r) => r + 1);
+        return (
+          vtRunSession.listeners.add(t),
+          () => {
+            vtRunSession.listeners.delete(t);
+          }
+        );
+      }, []),
+      vtRunSession
+    );
+  },
+  vtTabStoreKey = "veles_optimizer_tab_v1",
+  vtBotPrefix = { scalper: "Скальпер", short: "SHORT", long: "LONG DCA", coins: "Монеты" },
+  vtModeIntro = {
+    scalper:
+      "Скальпер собирается с нуля на основе выбранного бота: из бота берутся биржа, депозит, плечо, тип тейка и стопа, а сетка, вход и выход — из шаблона. Ваш бот не меняется.",
+    short:
+      "SHORT-бот: зеркало вашего LONG-бота (условия и сетка отражаются для шорта) или SHORT DCA-шаблон. Из бота берутся биржа, депозит, плечо и типы тейка/стопа. Ваш бот не меняется.",
+    long:
+      "LONG DCA-бот с нуля: сетка, вход и тейк — из шаблона, биржа, депозит, плечо и типы тейка/стопа — из выбранного бота. Ваш бот не меняется.",
+    coins:
+      "Бот прогоняется без изменений на каждой монете списка, и по сделкам этих бэктестов подбирается набор монет с лучшим соотношением прибыль / суммарная просадка портфеля.",
+  },
+  vtModeFooter = {
+    scalper:
+      "Оценка — прибыль / суммарная просадка портфеля (как P/R в «Группах бэктестов»), стабильно по полугодиям и группам монет; сделка в среднем не дольше суток и не реже 2 раз в месяц на монету. Перед запуском покажет стоимость.",
+    short:
+      "Оценка — прибыль / суммарная просадка портфеля, стабильно по полугодиям и группам монет. Шорт на бычьем рынке опасен: смотрите проверку по годам (2020–2021, 2024) и не отключайте стоп без нужды. Перед запуском покажет стоимость.",
+    long:
+      "Оценка — прибыль / суммарная просадка портфеля, стабильно по полугодиям и группам монет, проверка по годам и на монетах вне поиска. Перед запуском покажет стоимость.",
+    coins:
+      "Новых бэктестов для подбора не нужно — только по одному на монету. Набор проверяется на последней трети периода: если там он не лучше всех монет, подбор, скорее всего, подгонка.",
+  },
+  vtDescribeBase = (e) => {
+    const t = e.settings ? 1 + (e.settings.orders ?? []).length : 1,
+      r = e.profit && typeof e.profit.checkPnl == "number" ? e.profit.checkPnl : null,
+      n = e.stopLoss && typeof e.stopLoss.indent == "number" ? e.stopLoss.indent : null,
+      a = (e.conditions ?? [])
+        .filter((i) => i && i.indicator)
+        .map((i) => `${i.indicator}${typeof i.value == "number" ? ` ${Xfe(i.operation)} ${i.value}` : ""}`)
+        .join(" и ");
+    return `${e.algorithm ?? "LONG"} · ордеров ${t}${r !== null ? ` · тейк ${r}%` : ""}${n !== null ? ` · стоп ${n}%` : " · без стопа"}${a ? ` · вход: ${a}` : ""}`;
+  },
+  vtTemplateControls = ({ kind: e, template: t, disabled: r, onChange: n }) => {
+    const a = VTMODES.VM_PROFILES[e] ?? [],
+      i = a.find((o) => o.id === t.profile) ?? a[0] ?? null;
+    return E.jsxs(or, {
+      vertical: !0,
+      gap: 8,
+      children: [
+        e === "scalper"
+          ? E.jsxs(or, {
+              align: "center",
+              gap: 8,
+              wrap: !0,
+              children: [
+                E.jsx(pl, {
+                  size: "small",
+                  disabled: r,
+                  value: t.direction,
+                  onChange: (o) => n({ direction: o }),
+                  options: [
+                    { value: "LONG", label: "📈 LONG" },
+                    { value: "SHORT", label: "📉 SHORT" },
+                  ],
+                }),
+                E.jsx(pl, {
+                  size: "small",
+                  disabled: r,
+                  value: t.timeframe,
+                  onChange: (o) => n({ timeframe: o }),
+                  options: VTMODES.VM_TIMEFRAMES.map((o) => ({ value: o.id, label: o.label })),
+                }),
+                E.jsx(wn, {
+                  text: "Таймфрейм фильтров входа. Поиск может сменить таймфрейм отдельного фильтра. 1-минутные бэктесты самые долгие.",
+                }),
+              ],
+            })
+          : null,
+        E.jsxs(or, {
+          align: "center",
+          gap: 8,
+          wrap: !0,
+          children: [
+            E.jsx(Ft, { children: "Шаблон" }),
+            E.jsx(Yr, {
+              size: "small",
+              style: { minWidth: 220 },
+              disabled: r,
+              value: t.profile,
+              onChange: (o) => n({ profile: o }),
+              options: a.map((o) => ({ value: o.id, label: o.label })),
+            }),
+            e === "short" && t.profile === "mirror"
+              ? null
+              : E.jsx(_n, {
+                  checked: !!t.stopLoss,
+                  disabled: r,
+                  onChange: (o) => n({ stopLoss: o.target.checked }),
+                  children: "стоп-лосс",
+                }),
+          ],
+        }),
+        i ? E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: i.hint }) : null,
+      ],
+    });
+  },
+  vtHowCard = ({ kind: e }) => {
+    const t =
+      e === "coins"
+        ? [
+            "1. Выберите бота и список монет: монеты ваших ботов с такими же настройками, широкий список (~150 ликвидных монет Bybit) или свой.",
+            "2. Бот прогоняется без изменений на каждой монете за весь период (каждая — с даты листинга).",
+            "3. По сделкам этих бэктестов, без новых, подбирается набор: монеты по одной убираются, пока прибыль / суммарная просадка портфеля растёт (с блокировкой и динамической блокировкой, как в «Группах бэктестов»).",
+            "4. Проверка: набор, выбранный по первым двум третям периода, сравнивается со всеми монетами на последней трети. Готовый список можно скопировать или сразу создать бота с этими монетами.",
+          ]
+        : [
+            `1. Выберите бота-основу — из него берутся биржа, депозит, плечо, типы тейка и стопа. ${e === "short" ? "Профиль «Зеркало» отражает условия и сетку бота для SHORT (RSI < 30 → RSI > 70, усреднения — вверх от цены)." : "Сетка, вход и тейк берутся из выбранного шаблона."}`,
+            `2. Шаблон прогоняется на всех монетах — это точка отсчёта. Затем на ключевых монетах пошагово подбираются сетка, объёмы, тейк, стоп, пороги входа${e === "scalper" ? ", таймфреймы" : ""}, фильтры заменяются и добавляются.`,
+            "3. Оценка — прибыль / суммарная просадка портфеля, стабильно по полугодиям и группам монет (вариант, который зарабатывает только в одном периоде, получает до 2× меньше). Ограничение — суммарная просадка не больше 35%" +
+              (e === "scalper" ? ", сделка в среднем не дольше суток, не реже 2 сделок на монету в месяц." : "."),
+            "4. Финалисты — на всех монетах за весь период, затем проверка: прибыль в каждом году, на монетах вне поиска и при небольшом сдвиге настроек. Итог — «✅ устойчиво», «🟡 частично» или «⚠️ похоже на подгонку». Из варианта можно создать бота.",
+          ];
+    return E.jsx(Wr, {
+      size: "small",
+      title: "Как это работает",
+      children: E.jsxs(or, {
+        vertical: !0,
+        gap: 6,
+        children: [
+          ...t.map((r, n) => E.jsx(Ft, { children: r }, n)),
+          E.jsx(Ft, {
+            type: "secondary",
+            style: { fontSize: 12 },
+            children:
+              "Вкладку veles.finance держите открытой и авторизованной. Одновременно идёт один прогон — во вкладке, где он запущен. Прогресс сохраняется: «Продолжить» при следующем открытии.",
+          }),
+        ],
+      }),
+    });
+  },
+  vtCoinsCard = ({ selection: e, onCopy: t, onCreate: r }) => {
+    const n = (s) =>
+        s
+          ? `${s.monthlyPercent.toFixed(2)}%/мес · просадка ${s.drawdownPercent.toFixed(1)}% · P/R ${(s.score ?? 0).toFixed(2)}`
+          : "—",
+      a = e.check,
+      i = a && a.selected && a.all ? a.selected.score >= a.all.score - 1e-9 : null,
+      o = [...(e.perCoin ?? [])].sort((s, l) => s.contribution - l.contribution),
+      c = new Set(e.selected);
+    return E.jsxs(Wr, {
+      size: "small",
+      title: E.jsxs(ut, {
+        wrap: !0,
+        children: [
+          "🪙 Подобранные монеты",
+          E.jsx(un, { color: "blue", children: `${e.selected.length} из ${e.all ? e.all.coins : e.selected.length}` }),
+          i === null
+            ? null
+            : E.jsx(un, {
+                color: i ? "green" : "orange",
+                children: i ? "проверка пройдена" : "на проверке не лучше всех монет",
+              }),
+        ],
+      }),
+      extra: E.jsxs(ut, {
+        wrap: !0,
+        children: [
+          E.jsx(Ge, { size: "small", icon: E.jsx(Z0, {}), onClick: t, children: "Скопировать список" }),
+          E.jsx(Ge, {
+            size: "small",
+            type: "primary",
+            icon: E.jsx(x4, {}),
+            onClick: r,
+            children: "Создать бота с этими монетами",
+          }),
+        ],
+      }),
+      children: E.jsxs(or, {
+        vertical: !0,
+        gap: 8,
+        children: [
+          E.jsxs(Ft, { children: [E.jsx(Ft, { strong: !0, children: "Набор: " }), n(e.best)] }),
+          E.jsxs(Ft, { type: "secondary", children: ["Все монеты: ", n(e.all)] }),
+          a
+            ? E.jsxs(Ft, {
+                type: "secondary",
+                style: { fontSize: 12 },
+                children: [
+                  "🔎 Последняя треть периода (с ",
+                  FX(a.splitAt),
+                  "): набор, выбранный по первым двум третям, — ",
+                  n(a.selected),
+                  "; все монеты — ",
+                  n(a.all),
+                  i ? "" : ". Набор там не лучше — подбор, скорее всего, подгонка: оставьте все монеты или уберите только явно убыточные.",
+                ],
+              })
+            : null,
+          E.jsx(Nn.TextArea, {
+            readOnly: !0,
+            autoSize: { minRows: 2, maxRows: 6 },
+            value: e.selected.map(ec).join(", "),
+          }),
+          e.removed.length > 0
+            ? E.jsxs(Ft, {
+                type: "secondary",
+                style: { fontSize: 12 },
+                children: ["➖ Убраны (", e.removed.length, "): ", e.removed.map((s) => ec(s.symbol)).join(", ")],
+              })
+            : E.jsx(Ft, {
+                type: "secondary",
+                style: { fontSize: 12 },
+                children: "Убирать нечего: без любой из монет прибыль / суммарная просадка портфеля не выше.",
+              }),
+          e.noDeals.length > 0
+            ? E.jsxs(Ft, {
+                type: "secondary",
+                style: { fontSize: 12 },
+                children: ["💤 Без сделок за период (", e.noDeals.length, "): ", e.noDeals.map(ec).join(", ")],
+              })
+            : null,
+          o.length > 0
+            ? E.jsx(sa, {
+                size: "small",
+                rowKey: "symbol",
+                dataSource: o,
+                pagination: o.length > 10 ? { pageSize: 10, size: "small" } : !1,
+                columns: [
+                  {
+                    title: "Монета",
+                    dataIndex: "symbol",
+                    render: (s) => E.jsx(Ft, { delete: !c.has(s), children: ec(s) }),
+                  },
+                  { title: "Сделок", dataIndex: "deals" },
+                  { title: "Прибыль", dataIndex: "net", render: (s) => ao(s) },
+                  {
+                    title: E.jsxs("span", {
+                      children: [
+                        "Вклад в P/R ",
+                        E.jsx(wn, {
+                          text: "На сколько упадёт P/R портфеля без этой монеты (на всех монетах). Отрицательный — без монеты портфель лучше.",
+                        }),
+                      ],
+                    }),
+                    dataIndex: "contribution",
+                    render: (s) => E.jsx(Ft, { type: s < 0 ? "danger" : void 0, children: s.toFixed(2) }),
+                  },
+                ],
+              })
+            : null,
+        ],
+      }),
+    });
+  },
+  vtOptimizerPage = ({ extensionReady: e }) => {
+    const t = pd(),
+      r = sS(),
+      n = vtUseRunSession(),
+      a = t.pathname.split("/")[2],
+      i = VTMODES.VM_GOAL_IDS.includes(a)
+        ? a
+        : (VTMODES.VM_GOAL_IDS.find((o) => o === ba(vtTabStoreKey)) ?? "improve");
+    return E.jsxs("section", {
+      className: "page",
+      children: [
+        E.jsx(ag, {
+          title: "🧬 Оптимизатор стратегий",
+          description:
+            "Подбирает настройки ботов по бэктестам Veles: улучшает вашу стратегию, ищет с нуля скальпер, SHORT- или LONG DCA-бота и подбирает монеты. Итог считается так же, как «Группы бэктестов»: все сделки на общей шкале времени, с блокировкой и суммарной просадкой.",
+        }),
+        E.jsx(Jb, {
+          activeKey: i,
+          onChange: (o) => {
+            qa(vtTabStoreKey, o), r(o === "improve" ? "/optimizer" : `/optimizer/${o}`);
+          },
+          items: VTMODES.VM_GOALS.map((o) => ({
+            key: o.id,
+            label: n.engine && n.kind === o.id ? `${o.tab} ⏳` : o.tab,
+            children: E.jsx(Zft, { extensionReady: e, kind: o.id, embedded: !0 }),
+          })),
         }),
       ],
     });
@@ -141652,7 +142282,7 @@ const U1 =
                                 element: E.jsx(Tlt, { extensionReady: e }),
                               }),
                               E.jsx(xs, { path: "/import", element: E.jsx(Jct, { extensionReady: e }) }),
-                              E.jsx(xs, { path: "/optimizer", element: E.jsx(Zft, { extensionReady: e }) }),
+                              E.jsx(xs, { path: "/optimizer/*", element: E.jsx(vtOptimizerPage, { extensionReady: e }) }),
                               E.jsx(xs, { path: "/settings", element: E.jsx(tht, {}) }),
                               E.jsx(xs, { path: "/dynamic-blocks", element: E.jsx(Bct, { extensionReady: e }) }),
                             ],

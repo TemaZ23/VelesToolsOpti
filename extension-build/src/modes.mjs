@@ -15,7 +15,6 @@ const HOUR_MS = 3600 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 const MONTH_DAYS = 30.4375;
 
-/** @param {number} value @param {number} min @param {number} max */
 
 /** @param {number} value @param {number} digits */
 const roundTo = (value, digits) => {
@@ -651,11 +650,21 @@ export const vmModeRanges = (goal, drafts, strategy) => {
 /** Default period preset of a mode: scalpers on minute timeframes are checked on the last year. */
 export const vmPeriodPreset = (goal) => (goal === 'scalper' ? '1y' : 'since2020');
 
-/** Form fields a fresh tab of a mode starts with (merged under the saved form). */
+/**
+ * Form fields a fresh tab of a mode starts with (merged under the saved form). The absolute target
+ * and the drawdown cap also apply to the mode's «Ручная настройка» (there is no original to beat).
+ */
 export const vmFormDefaults = (goal) =>
   goal === 'improve' || !VM_GOAL_IDS.includes(goal)
     ? { goal: 'improve' }
-    : { goal, template: vmDefaultTemplate(goal), periodPreset: vmPeriodPreset(goal) };
+    : {
+        goal,
+        template: vmDefaultTemplate(goal),
+        periodPreset: vmPeriodPreset(goal),
+        portfolioTarget: VM_STABLE_METRIC,
+        constraints: { minDealsSharePercent: 0, maxPortfolioDrawdownPercent: 35 },
+        portfolio: { maxDepositChangePercent: 0 },
+      };
 
 /**
  * Form of a mode's one-click run (the template modes' counterpart of 2.15 `Fft`). `presets` are the
