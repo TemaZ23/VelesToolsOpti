@@ -53,6 +53,8 @@ export const FORM_LIMITS = {
   screenSize: { min: 1, max: 500 },
   commission: { min: 0, max: 5 },
   block: { min: 1, max: 1000 },
+  /** Депозит бота в бэктестах (в валюте котировки). */
+  backtestDeposit: { min: 0.01, max: 1_000_000_000 },
   folds: { min: 2, max: 6 },
   maxMaeCap: { min: 0, max: 1_000_000_000 },
   minDeals: { min: 0, max: 1_000_000 },
@@ -120,6 +122,8 @@ export interface PortfolioOptimizerFormState {
   takerCommission: number;
   includeWicks: boolean;
   block: number;
+  /** Депозит бота в бэктестах; null — как в боте. */
+  backtestDeposit: number | null;
   objective: ObjectiveConfig;
   search: SearchConfig;
   scheduler: SchedulerConfig;
@@ -265,6 +269,7 @@ export const createDefaultFormState = (now: Date = new Date()): PortfolioOptimiz
     takerCommission: DEFAULT_TAKER_COMMISSION,
     includeWicks: true,
     block: DEFAULT_BLOCK,
+    backtestDeposit: null,
     objective: { ...DEFAULT_OBJECTIVE },
     search: { ...DEFAULT_SEARCH_CONFIG },
     scheduler: { ...DEFAULT_SCHEDULER_CONFIG },
@@ -379,6 +384,10 @@ export const sanitizeFormState = (value: unknown, now: Date = new Date()): Portf
     takerCommission: readNumber(value.takerCommission, defaults.takerCommission, FORM_LIMITS.commission),
     includeWicks: readBoolean(value.includeWicks, defaults.includeWicks),
     block: readInteger(value.block, defaults.block, FORM_LIMITS.block),
+    backtestDeposit:
+      isFiniteNumber(value.backtestDeposit) && value.backtestDeposit > 0
+        ? readNumber(value.backtestDeposit, FORM_LIMITS.backtestDeposit.min, FORM_LIMITS.backtestDeposit)
+        : null,
     objective: sanitizeObjective(value.objective),
     search: sanitizeSearch(value.search),
     scheduler: sanitizeScheduler(value.scheduler),
@@ -555,6 +564,7 @@ export const buildPortfolioConfig = ({ form, botId, botName, params }: RunDraftI
     scheduler: { ...form.scheduler },
     params: params.map((param) => ({ ...param })),
     baseGroupId: form.baseGroupId,
+    backtestDeposit: form.backtestDeposit,
   };
 };
 

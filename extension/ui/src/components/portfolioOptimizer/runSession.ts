@@ -24,6 +24,7 @@ import {
 } from '../../services/portfolioOptimizer';
 import type {
   Candidate,
+  ExcludedSymbol,
   PortfolioLogEntry,
   PortfolioOptimizerCallbacks,
   PortfolioOptimizerConfig,
@@ -61,6 +62,8 @@ export interface PortfolioRunMeta {
   baseStrategy: BotStrategy;
   quoteCurrency: string;
   startedAt: number;
+  /** Монеты, исключённые из корзины (Veles не принимает для них настройки бота). */
+  excludedSymbols: ExcludedSymbol[];
 }
 
 export interface PortfolioRunSnapshot {
@@ -115,6 +118,7 @@ const toMeta = (state: PortfolioOptimizerState): PortfolioRunMeta => ({
   baseStrategy: state.baseStrategy,
   quoteCurrency: state.quoteCurrency,
   startedAt: state.startedAt,
+  excludedSymbols: state.excludedSymbols ?? [],
 });
 
 export class PortfolioRunSession {
@@ -279,6 +283,11 @@ export class PortfolioRunSession {
       onCandidatesChanged: (candidates, bestCandidateId) => {
         if (isCurrent()) {
           this.update((snapshot) => ({ ...snapshot, candidates, bestCandidateId }));
+        }
+      },
+      onBasketChanged: (config, excludedSymbols) => {
+        if (isCurrent()) {
+          this.update((snapshot) => ({ ...snapshot, meta: { ...snapshot.meta, config, excludedSymbols } }));
         }
       },
       // Ответ на POST остановленного экземпляра пришёл позже — передаём его живому оптимизатору того же запуска.

@@ -85,6 +85,7 @@ import {
   loadGroupBacktestsFromStore,
   loadSavedPortfolioState,
   matchGroupBacktestsToBasket,
+  withBacktestDeposit,
 } from '../services/portfolioOptimizer';
 import { readAggregationConfig, writeAggregationConfig } from '../storage/backtestAggregationConfigStore';
 import type { TradingBot } from '../types/bots';
@@ -354,10 +355,13 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       quoteCurrency,
       run: runSettings,
       algorithm: loaded?.strategy.algorithm ?? null,
-      baseStrategy: loaded?.strategy ?? null,
+      // Депозит в бэктестах группы сравнивается с тем, что уйдёт в бэктесты запуска.
+      baseStrategy: loaded ? withBacktestDeposit(loaded.strategy, form.backtestDeposit) : null,
       params: loaded ? params : undefined,
     });
-  }, [baseGroup, basket, loaded, loadedGroup, params, quoteCurrency, runSettings]);
+  }, [baseGroup, basket, form.backtestDeposit, loaded, loadedGroup, params, quoteCurrency, runSettings]);
+
+  const botDepositAmount = loaded?.strategy.deposit?.amount ?? null;
 
   /** Блокировка по ботам, с которой страница группы базы показывает её метрики (как BacktestGroupDetailsPage). */
   const baseGroupBlock = useMemo(() => {
@@ -670,6 +674,17 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
     },
     [messageApi, meta, strategyFor],
   );
+
+  // Исключённые из корзины запуска монеты, которые ещё есть в корзине формы (для следующего запуска).
+  const excludedInForm = useMemo(() => {
+    const excluded = new Set((meta?.excludedSymbols ?? []).map((item) => item.symbol));
+    return basket.filter((ticker) => excluded.has(ticker));
+  }, [basket, meta]);
+
+  const removeExcludedFromForm = useCallback(() => {
+    const excluded = new Set(excludedInForm);
+    updateForm({ basketText: basket.filter((ticker) => !excluded.has(ticker)).join(', ') });
+  }, [basket, excludedInForm, updateForm]);
 
   // ─── Рендер ──────────────────────────────────────────────────────
 
@@ -1020,6 +1035,36 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
                       disabled={formLocked}
                       onChange={whenNumber((value) => updateForm({ block: value }))}
                       aria-label="Блокировка по ботам"
+                    />
+                  </FormField>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <FormField
+                    label="Депозит бота в бэктестах"
+                    hint={
+                      'Пусто — как в боте. Если для части монет Veles отвечает «Объём ордера не соответствует ' +
+                      'требованиям по паре», задайте депозит побольше (в Veles Tools 2.15 по умолчанию 37.5). ' +
+                      'Сам бот и «Создать бота» депозит не меняют.'
+                    }
+                    extra={
+                      botDepositAmount !== null ? `В боте: ${botDepositAmount} ${quoteCurrency}` : 'Пусто — как в боте'
+                    }
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      min={FORM_LIMITS.backtestDeposit.min}
+                      max={FORM_LIMITS.backtestDeposit.max}
+                      step={1}
+                      value={form.backtestDeposit}
+                      placeholder={botDepositAmount !== null ? `как в боте (${botDepositAmount})` : 'как в боте'}
+                      disabled={formLocked}
+                      onChange={(value) =>
+                        updateForm({
+                          backtestDeposit:
+                            typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null,
+                        })
+                      }
+                      aria-label="Депозит бота в бэктестах"
                     />
                   </FormField>
                 </Col>
@@ -1399,6 +1444,33 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
               Можно переходить на другие страницы расширения — запуск продолжится. Пауза не создаёт новых бэктестов, но
               досчитывает уже запущенные; после остановки или перезагрузки запуск можно продолжить.
             </Text>
+          ) : null}
+          {meta && meta.excludedSymbols.length > 0 ? (
+            <Alert
+              type="warning"
+              showIcon
+              message={`Исключены из корзины: ${meta.excludedSymbols.map((item) => item.symbol).join(', ')}`}
+              description={
+                <Flex vertical gap={4}>
+                  <Text>
+                    Veles не принимает для этих монет настройки бота (обычно объём ордера меньше минимального для пары)
+                    — оптимизация идёт без них. Чтобы их учитывать, увеличьте депозит или объём первых ордеров бота.
+                  </Text>
+                  {meta.excludedSymbols.map((item) => (
+                    <Text key={item.symbol} type="secondary">
+                      {item.symbol}: {item.reason}
+                    </Text>
+                  ))}
+                </Flex>
+              }
+              action={
+                excludedInForm.length > 0 ? (
+                  <Button size="small" disabled={formLocked} onClick={removeExcludedFromForm}>
+                    Убрать из корзины формы
+                  </Button>
+                ) : null
+              }
+            />
           ) : null}
           {snapshot ? (
             <RunProgressPanel progress={snapshot.progress} expectedBacktests={runExpectedBacktests} now={now} />

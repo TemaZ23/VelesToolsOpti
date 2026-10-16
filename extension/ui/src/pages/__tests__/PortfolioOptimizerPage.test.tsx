@@ -379,9 +379,13 @@ describe('PortfolioOptimizerPage', () => {
         periodFrom: '2022-01-01',
         periodTo: '2024-01-01',
         block: 5,
+        backtestDeposit: 37.5,
       }),
     );
     await render(true);
+    expect(container.querySelector<HTMLInputElement>('input[aria-label="Депозит бота в бэктестах"]')?.value).toBe(
+      '37.5',
+    );
 
     await act(async () => {
       findButton('Старт').click();
@@ -397,6 +401,7 @@ describe('PortfolioOptimizerPage', () => {
       basket: ['ADA', 'XRP', 'SOL'],
       block: 5,
       baseGroupId: null,
+      backtestDeposit: 37.5,
       run: { periodFrom: '2022-01-01T00:00:00.000Z', periodTo: '2024-01-01T23:59:59.999Z' },
     });
     expect(input.config.screenBasket).toHaveLength(2);
@@ -431,6 +436,33 @@ describe('PortfolioOptimizerPage', () => {
     expect(text).toContain('321.50');
     expect(text).toContain('Запуск остановлен.');
     expect(text).toContain('Остановлен');
+  });
+
+  it('показывает монеты, исключённые из корзины запуска, и убирает их из корзины формы', async () => {
+    window.localStorage.setItem(
+      PORTFOLIO_OPTIMIZER_STATE_KEY,
+      JSON.stringify({
+        ...createSavedState(),
+        excludedSymbols: [
+          { symbol: 'AAVE', reason: 'HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT' },
+        ],
+      }),
+    );
+    window.localStorage.setItem(
+      PORTFOLIO_FORM_STORAGE_KEY,
+      JSON.stringify({ version: 1, botId: 77, basketText: 'ADA, AAVE, XRP' }),
+    );
+    await render(true);
+
+    const text = container.textContent ?? '';
+    expect(text).toContain('Исключены из корзины: AAVE');
+    expect(text).toContain('AAVE: HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT');
+    await act(async () => {
+      findButton('Убрать из корзины формы').click();
+    });
+    const textarea = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="Монеты корзины"]');
+    expect(textarea?.value).toBe('ADA, XRP');
+    expect(container.textContent).not.toContain('Убрать из корзины формы');
   });
 
   it('группа бэктестов кандидата открывается с блокировкой по ботам, с которой его считал оптимизатор', async () => {

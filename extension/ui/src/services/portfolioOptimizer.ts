@@ -52,6 +52,7 @@ import type {
   Candidate,
   CandidateEvaluation,
   EvaluationStage,
+  ExcludedSymbol,
   ObjectiveConfig,
   ObjectiveKind,
   ParamSpec,
@@ -70,6 +71,7 @@ import {
   abortableSleep,
   BacktestScheduler,
   isAbortError,
+  isPairRejectedError,
   isAuthError as isSchedulerAuthError,
   isTransientBacktestError,
   mergeSchedulerConfig,
@@ -78,6 +80,7 @@ import {
   type SchedulerJobRequest,
 } from './backtestScheduler';
 import { backtestsService } from './backtests';
+import { loadListingDates, pairCodeFor } from './pairListing';
 import { type BasketEvaluation, type BasketPeriod, evaluateBasket } from './portfolioScore';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -133,6 +136,12 @@ const EVALUATION_RETRY_DELAYS_MS = [5_000, 30_000, 120_000];
  * (в первый раз запуск останавливается с возможностью продолжить — обычно это сбой сети или Veles).
  */
 const METRICS_MAX_FAILED_SESSIONS = 2;
+
+/**
+ * Наибольшая доля корзины, которую можно исключить из-за отказа Veles принять настройки бота для пары
+ * (HTTP 412). Если отказов больше, дело не в отдельных монетах (депозит, объёмы ордеров) — запуск останавливается.
+ */
+const MAX_EXCLUDED_BASKET_SHARE = 0.5;
 
 /** Ожидание ответа на POST, отправленный до остановки (чтобы не потерять id созданного бэктеста). */
 const DRAIN_POLL_INTERVAL_MS = 250;
@@ -243,6 +252,8 @@ export interface PortfolioOptimizerDeps {
   loadSavedState: () => PortfolioOptimizerState | null;
   /** Удаление сохранённого состояния: устаревшую копию нельзя предлагать к продолжению. */
   clearSavedState: () => void;
+  /** Даты листинга пар биржи: код пары («AAVEUSDT») → мс epoch. */
+  loadListingDates: (exchange: string) => Promise<Record<string, number>>;
   sleep: (ms: number, signal?: AbortSignal) => Promise<void>;
   now: () => number;
 }
@@ -275,6 +286,8 @@ export interface GroupBaseMatchInput {
   baseStrategy?: Pick<BotStrategy, 'exchange' | 'pair' | 'deposit'> | null;
   /** Параметры базового бота: их значения в бэктестах группы должны совпадать с базовыми. */
   params?: ParamSpec[];
+  /** Даты листинга (код пары → мс): бэктест монеты, листинг которой позже начала периода, начинается с листинга. */
+  listingDates?: Record<string, number>;
   toleranceMs?: number;
 }
 
@@ -411,6 +424,32 @@ const infrastructureErrorMessage = (detail: string): string =>
   `Veles или сеть недоступны: ${detail}. Запуск остановлен, чтобы не списывать кандидатов из-за сбоя: ` +
   'созданные бэктесты сохранены, незавершённые этапы будут пересчитаны — продолжите запуск, когда Veles снова доступен.';
 
+/**
+ * Стратегия с депозитом для бэктестов: amount заменяется на backtestDeposit (null — как в боте).
+ * Вход не изменяется.
+ */
+export const withBacktestDeposit = <T extends Pick<BotStrategy, 'deposit'>>(
+  strategy: T,
+  backtestDeposit: number | null | undefined,
+): T =>
+  strategy.deposit && isFiniteNumber(backtestDeposit) && backtestDeposit > 0
+    ? { ...strategy, deposit: { ...strategy.deposit, amount: backtestDeposit } }
+    : strategy;
+
+/**
+ * Payload бэктеста без API-ключа бота: бэктест — симуляция, ключ биржи ему не нужен (Veles Tools 2.15 тоже
+ * убирает его из бэктестов оптимизатора). С ключом Veles может проверять объём ордера по требованиям биржи
+ * к паре и отказывать (HTTP 412 «Объём ордера не соответствует требованиям по паре»).
+ */
+export const withoutApiKey = (payload: BotStrategy): BotStrategy => {
+  if ('apiKey' in payload) {
+    const copy: BotStrategy = { ...payload };
+    Reflect.deleteProperty(copy, 'apiKey');
+    return copy;
+  }
+  return payload;
+};
+
 /** Метрики посчитанного этапа (null — этап не посчитан). */
 const doneMetrics = (evaluation: CandidateEvaluation | null): PortfolioMetrics | null =>
   evaluation?.status === 'done' ? evaluation.metrics : null;
@@ -510,6 +549,8 @@ export const normalizePortfolioConfig = (config: PortfolioOptimizerConfig): Port
     scheduler: mergeSchedulerConfig(DEFAULT_SCHEDULER_CONFIG, config.scheduler),
     params: cloneDeep(config.params),
     baseGroupId: baseGroupId.length > 0 ? baseGroupId : null,
+    backtestDeposit:
+      isFiniteNumber(config.backtestDeposit) && config.backtestDeposit > 0 ? roundTo(config.backtestDeposit, 2) : null,
   };
 };
 
@@ -722,12 +763,14 @@ export const matchGroupBacktestsToBasket = (input: GroupBaseMatchInput): GroupBa
     backtestIds[ticker] = summary.backtestId;
     const from = toTimestamp(summary.from);
     const to = toTimestamp(summary.to);
+    const listedAt = input.listingDates?.[pairCodeFor(ticker, quote)];
+    const expectedFrom = runFrom !== null && isFiniteNumber(listedAt) && listedAt > runFrom ? listedAt : runFrom;
     if (
-      runFrom !== null &&
+      expectedFrom !== null &&
       runTo !== null &&
       from !== null &&
       to !== null &&
-      (Math.abs(from - runFrom) > tolerance || Math.abs(to - runTo) > tolerance)
+      (Math.abs(from - expectedFrom) > tolerance || Math.abs(to - runTo) > tolerance)
     ) {
       periodMismatch.push(`${ticker} (${formatDate(from)} – ${formatDate(to)})`);
     }
@@ -996,6 +1039,7 @@ export const createDefaultPortfolioOptimizerDeps = (): PortfolioOptimizerDeps =>
   saveState: savePortfolioState,
   loadSavedState: () => loadSavedPortfolioState(),
   clearSavedState: () => clearSavedPortfolioState(),
+  loadListingDates,
   sleep: abortableSleep,
   now: () => Date.now(),
 });
@@ -1012,6 +1056,7 @@ export const resolvePortfolioOptimizerDeps = (
     saveState: overrides.saveState ?? defaults.saveState,
     loadSavedState: overrides.loadSavedState ?? defaults.loadSavedState,
     clearSavedState: overrides.clearSavedState ?? defaults.clearSavedState,
+    loadListingDates: overrides.loadListingDates ?? defaults.loadListingDates,
     sleep: overrides.sleep ?? defaults.sleep,
     now: overrides.now ?? defaults.now,
   };
@@ -1393,6 +1438,10 @@ export class PortfolioOptimizer {
   // ─── Основной цикл ───────────────────────────────────────────────
 
   private async runLoop(): Promise<LoopOutcome> {
+    await this.ensureListingDates();
+    if (this.isHalted()) {
+      return 'halted';
+    }
     const baseReady = await this.evaluateBaseCandidate();
     if (!baseReady) {
       return 'halted';
@@ -1414,17 +1463,19 @@ export class PortfolioOptimizer {
   /** Полная и отборочная оценка базового бота. false — запуск продолжать нельзя. */
   private async evaluateBaseCandidate(): Promise<boolean> {
     const base = this.baseCandidate();
-    const { basket, screenBasket } = this.state.config;
     this.phase = 'base';
     this.activeGeneration = 0;
 
     let full = base.full;
     if (full === null) {
+      if (!this.excludeUnlistedSymbols()) {
+        return false;
+      }
       await this.applyBaseGroup(base);
       if (this.isHalted()) {
         return false;
       }
-      full = createEvaluation('full', basket);
+      full = createEvaluation('full', this.state.config.basket);
       base.full = full;
       this.persist();
     }
@@ -1454,7 +1505,8 @@ export class PortfolioOptimizer {
 
     if (!isStageDone(base.screen)) {
       // Отборочная корзина — подмножество полной: все бэктесты уже в кеше, новых запусков нет.
-      const screen = createEvaluation('screen', screenBasket);
+      // Конфигурация читается заново: при оценке полной корзины из неё могли исключить монеты.
+      const screen = createEvaluation('screen', this.state.config.screenBasket);
       base.screen = screen;
       await this.evaluateStage(base, screen);
       if (this.isHalted()) {
@@ -1515,8 +1567,9 @@ export class PortfolioOptimizer {
       quoteCurrency: this.state.quoteCurrency,
       run,
       algorithm: this.state.baseStrategy.algorithm ?? null,
-      baseStrategy: this.state.baseStrategy,
+      baseStrategy: withBacktestDeposit(this.state.baseStrategy, this.state.config.backtestDeposit),
       params: this.state.config.params,
+      listingDates: this.state.listingDates,
     });
     for (const warning of match.warnings) {
       this.log('warning', warning);
@@ -1853,6 +1906,10 @@ export class PortfolioOptimizer {
 
     const scope: StageScope = { cancelled: false, handles: [] };
     const failures: StageFailure[] = [];
+    // На полной корзине базы монеты, для которых Veles не принимает настройки бота (HTTP 412), исключаются
+    // из корзины запуска; у кандидатов такой отказ — неудача этапа (их настройки на этой паре неисполнимы).
+    const canExclude = candidate.id === this.state.baseCandidateId && evaluation.stage === 'full';
+    const rejected: ExcludedSymbol[] = [];
     await Promise.all(
       evaluation.symbols.map(async (symbol) => {
         try {
@@ -1871,6 +1928,10 @@ export class PortfolioOptimizer {
             this.haltForInfrastructure(describeError(error));
             return;
           }
+          if (canExclude && isPairRejectedError(error)) {
+            rejected.push({ symbol, reason: describeError(error) });
+            return;
+          }
           failures.push({ symbol, error: describeError(error) });
           // Частичная корзина не оценивается: ещё не созданные бэктесты этапа больше не нужны.
           this.cancelStage(scope);
@@ -1878,6 +1939,9 @@ export class PortfolioOptimizer {
       }),
     );
     if (this.isHalted()) {
+      return;
+    }
+    if (rejected.length > 0 && !this.excludeRejectedSymbols(evaluation, rejected)) {
       return;
     }
     if (failures.length > 0) {
@@ -1979,6 +2043,168 @@ export class PortfolioOptimizer {
     const deals = doneMetrics(stage === 'full' ? candidate.full : candidate.screen)?.totalDeals;
     const baseDeals = doneMetrics(stage === 'full' ? base.full : base.screen)?.totalDeals;
     return `${deals ?? '—'} сделок при ${baseDeals ?? '—'} у базы`;
+  }
+
+  /**
+   * Исключает из корзины запуска монеты, для которых Veles не принимает настройки базового бота (HTTP 412,
+   * например объём ордера меньше минимального для пары): ни база, ни кандидаты на них не считаются.
+   * false — отказов слишком много (больше MAX_EXCLUDED_BASKET_SHARE корзины): запуск остановлен.
+   */
+  private excludeRejectedSymbols(evaluation: CandidateEvaluation, rejected: ExcludedSymbol[]): boolean {
+    return this.excludeFromBasket(rejected, evaluation, {
+      warning: (described) => `Исключены из корзины — Veles не принимает для них настройки бота: ${described}.`,
+      advice: 'Чтобы учитывать эти монеты, увеличьте депозит в бэктестах (или депозит бота) либо объём первых ордеров.',
+      failure: (excludedTotal, originalSize, described) =>
+        `Veles не принимает настройки бота для ${excludedTotal} из ${originalSize} монет корзины: ${described}. ` +
+        'Дело, скорее всего, не в отдельных монетах — проверьте депозит, плечо и объёмы ордеров бота ' +
+        '(или задайте депозит в бэктестах).',
+    });
+  }
+
+  /**
+   * Монеты, которые в выбранный период ещё не торговались (листинг не раньше конца периода), исключаются
+   * из корзины до первых бэктестов — как в Veles Tools 2.15. false — исключать пришлось бы слишком много.
+   */
+  private excludeUnlistedSymbols(): boolean {
+    const periodTo = toTimestamp(this.state.config.run.periodTo);
+    if (periodTo === null) {
+      return true;
+    }
+    const unlisted = this.state.config.basket.flatMap((symbol): ExcludedSymbol[] => {
+      const listedAt = this.listingFor(symbol);
+      return listedAt !== null && listedAt >= periodTo
+        ? [{ symbol, reason: `листинг ${formatDate(listedAt)} — после окончания периода` }]
+        : [];
+    });
+    if (unlisted.length === 0) {
+      return true;
+    }
+    return this.excludeFromBasket(unlisted, null, {
+      warning: (described) => `Исключены из корзины — не торговались в выбранный период: ${described}.`,
+      advice: 'Чтобы учитывать эти монеты, сдвиньте окончание периода позже их листинга.',
+      failure: (excludedTotal, originalSize, described) =>
+        `В выбранный период не торговались ${excludedTotal} из ${originalSize} монет корзины: ${described}. ` +
+        'Выберите период позже листинга монет или другую корзину.',
+    });
+  }
+
+  /**
+   * Исключение монет из корзины запуска: config.basket и config.screenBasket обновляются (отборочная
+   * дополняется другими монетами полной корзины до прежнего размера), монеты записываются в
+   * state.excludedSymbols, этап evaluation (если передан) их больше не ждёт.
+   * false — исключать пришлось бы больше MAX_EXCLUDED_BASKET_SHARE корзины: запуск остановлен.
+   */
+  private excludeFromBasket(
+    items: ExcludedSymbol[],
+    evaluation: CandidateEvaluation | null,
+    messages: {
+      warning: (described: string) => string;
+      advice: string;
+      failure: (excludedTotal: number, originalSize: number, described: string) => string;
+    },
+  ): boolean {
+    const { config } = this.state;
+    const previous = this.state.excludedSymbols ?? [];
+    const removed = new Set(items.map((item) => item.symbol));
+    const remaining = config.basket.filter((symbol) => !removed.has(symbol));
+    const originalSize = config.basket.length + previous.length;
+    const excludedTotal = previous.length + removed.size;
+    const described = formatList(items.map((item) => `${item.symbol} (${item.reason})`));
+    if (remaining.length === 0 || excludedTotal > originalSize * MAX_EXCLUDED_BASKET_SHARE) {
+      this.fail(messages.failure(excludedTotal, originalSize, described));
+      return false;
+    }
+
+    const keptScreen = config.screenBasket.filter((symbol) => !removed.has(symbol));
+    const kept = new Set(keptScreen);
+    const refill = pickScreenBasket(
+      remaining.filter((symbol) => !kept.has(symbol)),
+      config.screenBasket.length - keptScreen.length,
+      config.search.seed,
+    );
+    const updated: PortfolioOptimizerConfig = {
+      ...config,
+      basket: remaining,
+      screenBasket: [...keptScreen, ...refill],
+    };
+    const excluded = [...previous, ...items];
+    this.state.config = updated;
+    this.state.excludedSymbols = excluded;
+    if (evaluation) {
+      evaluation.symbols = evaluation.symbols.filter((symbol) => !removed.has(symbol));
+      evaluation.backtestIds = Object.fromEntries(
+        Object.entries(evaluation.backtestIds).filter(([symbol]) => !removed.has(symbol)),
+      );
+    }
+    const refillNote = refill.length > 0 ? `, в отборочную добавлены ${formatList(refill)}` : '';
+    this.log(
+      'warning',
+      `${messages.warning(described)} Корзина: ${remaining.length} монет, отборочная: ` +
+        `${updated.screenBasket.length}${refillNote}. ${messages.advice}`,
+    );
+    this.persist();
+    this.invokeCallback(() => this.callbacks.onBasketChanged?.(updated, excluded));
+    return true;
+  }
+
+  /**
+   * Даты листинга пар биржи бота — один раз за запуск (сохраняются в состоянии, чтобы периоды бэктестов
+   * не менялись между сеансами). Не загрузились — период для всех монет как в форме.
+   */
+  private async ensureListingDates(): Promise<void> {
+    if (this.state.listingDates) {
+      return;
+    }
+    const exchange =
+      nonEmptyString(this.state.baseStrategy.pair?.exchange) ?? nonEmptyString(this.state.baseStrategy.exchange);
+    let listingDates: Record<string, number> = {};
+    if (exchange) {
+      try {
+        listingDates = await this.deps.loadListingDates(exchange);
+      } catch (error) {
+        if (this.isHalted()) {
+          return;
+        }
+        if (isAuthError(error)) {
+          this.fail(authErrorMessage(error));
+          return;
+        }
+        this.log(
+          'warning',
+          `Не удалось загрузить даты листинга монет (${describeError(error)}): период бэктестов для всех монет — как в форме.`,
+        );
+      }
+    }
+    this.state.listingDates = listingDates;
+    const runFrom = toTimestamp(this.state.config.run.periodFrom);
+    const runTo = toTimestamp(this.state.config.run.periodTo);
+    const late = this.state.config.basket.flatMap((symbol) => {
+      const listedAt = this.listingFor(symbol);
+      return runFrom !== null && runTo !== null && listedAt !== null && listedAt > runFrom && listedAt < runTo
+        ? [`${symbol} (с ${formatDate(listedAt)})`]
+        : [];
+    });
+    if (late.length > 0) {
+      this.log(
+        'info',
+        `Листинг позже начала периода — бэктесты этих монет начинаются с даты листинга: ${formatList(late)}.`,
+      );
+    }
+    this.persist();
+  }
+
+  /** Дата листинга монеты корзины (мс) или null — неизвестна. */
+  private listingFor(symbol: string): number | null {
+    const listedAt = this.state.listingDates?.[pairCodeFor(symbol, this.state.quoteCurrency)];
+    return isFiniteNumber(listedAt) ? listedAt : null;
+  }
+
+  /** Начало периода бэктеста монеты: не раньше её листинга (иначе Veles не посчитает бэктест). */
+  private symbolPeriodStart(symbol: string): string {
+    const { periodFrom } = this.state.config.run;
+    const runFrom = toTimestamp(periodFrom);
+    const listedAt = this.listingFor(symbol);
+    return runFrom !== null && listedAt !== null && listedAt > runFrom ? new Date(listedAt).toISOString() : periodFrom;
   }
 
   private markStageFailed(
@@ -2299,16 +2525,17 @@ export class PortfolioOptimizer {
       this.patchedStrategies.set(candidate.id, patched);
     }
     const label = candidate.id === this.state.baseCandidateId ? BASE_BACKTEST_LABEL : this.label(candidate);
-    return buildBacktestPayload(patched, {
+    const payload = buildBacktestPayload(withBacktestDeposit(patched, this.state.config.backtestDeposit), {
       name: buildCandidateBacktestName(botName, label, symbol),
       makerCommission: run.makerCommission,
       takerCommission: run.takerCommission,
       includeWicks: run.includeWicks,
       isPublic: false,
-      periodStartISO: run.periodFrom,
+      periodStartISO: this.symbolPeriodStart(symbol),
       periodEndISO: run.periodTo,
       overrideSymbol: composeSymbol(symbol, this.state.quoteCurrency),
     });
+    return withoutApiKey(payload);
   }
 
   // ─── Пауза, остановка ────────────────────────────────────────────

@@ -131,6 +131,8 @@ const RUNNING_STATUSES = new Set([
 
 const RATE_LIMIT_PATTERNS = [/\b429\b/, /too many/, /слишком много/, /временно заблокировано/];
 const AUTH_ERROR_PATTERNS = [/\bunauthori[sz]ed\b/i, /\bforbidden\b/i, /не\s+авторизован/i, /требуется\s+авторизац/i];
+/** Текст отказа Veles создать бэктест для пары, например «Объём ордера не соответствует требованиям по паре». */
+const PAIR_REJECTED_PATTERNS = [/не\s+соответству\S*\s+требованиям\s+по\s+пар/i];
 
 // ═══════════════════════════════════════════════════════════════════
 // ОШИБКИ
@@ -278,6 +280,14 @@ export const isAuthError = (error: unknown): boolean => {
   const message = readMessage(error);
   return AUTH_ERROR_PATTERNS.some((pattern) => pattern.test(message));
 };
+
+/**
+ * Veles не принимает настройки бота для этой пары (HTTP 412 Precondition Failed, например «Объём ордера не
+ * соответствует требованиям по паре AAVE/USDT» — объём ордера меньше минимального для пары): бэктест монеты
+ * с этими настройками создать нельзя, повтор бессмыслен.
+ */
+export const isPairRejectedError = (error: unknown): boolean =>
+  extractHttpStatus(error) === 412 || PAIR_REJECTED_PATTERNS.some((pattern) => pattern.test(readMessage(error)));
 
 /** Retry-After из текста ошибки: «Retry-After: 30», «retry after 30», «через 30 сек», «через 2 мин». */
 export const parseRetryAfterFromMessage = (message: string): number | null => {

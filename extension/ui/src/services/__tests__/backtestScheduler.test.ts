@@ -30,6 +30,7 @@ import {
   extractRetryAfterSeconds,
   isAbortError,
   isAuthError,
+  isPairRejectedError,
   isTransientBacktestError,
   mergeSchedulerConfig,
   parseBacktestId,
@@ -387,6 +388,21 @@ describe('isAuthError', () => {
     expect(isAuthError(new Error('Forbidden'))).toBe(true);
     expect(isAuthError(new Error('Бэктест 401 (ADA) завершился с ошибкой: статус FAILED'))).toBe(false);
     expect(isAuthError(new Error('HTTP 500 Internal Server Error'))).toBe(false);
+  });
+});
+
+describe('isPairRejectedError', () => {
+  it('recognises Veles refusing the bot settings for a pair (HTTP 412)', () => {
+    const veles = new BacktestSubmitError(
+      'HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT (Precondition Failed)',
+      412,
+      null,
+    );
+    expect(isPairRejectedError(veles)).toBe(true);
+    expect(isPairRejectedError(new Error('Объём ордера не соответствует требованиям по паре BTC/USDT'))).toBe(true);
+    expect(isPairRejectedError(new BacktestSubmitError('Precondition Failed', 412, null))).toBe(true);
+    expect(isPairRejectedError(new BacktestSubmitError('HTTP 400 Bad Request', 400, null))).toBe(false);
+    expect(isPairRejectedError(new Error('Бэктест 412 (ADA) завершился с ошибкой: статус FAILED'))).toBe(false);
   });
 });
 

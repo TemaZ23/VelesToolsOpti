@@ -184,6 +184,15 @@ describe('formState: значения по умолчанию и сохране�
     expect(form.scheduler).toEqual(DEFAULT_SCHEDULER_CONFIG);
     expect(form.periodFrom).toBe('2021-10-12');
     expect(form.periodTo).toBe('2026-10-12');
+    expect(form.backtestDeposit).toBeNull();
+  });
+
+  it('депозит в бэктестах: положительное число сохраняется, остальное — «как в боте»', () => {
+    expect(sanitizeFormState({ backtestDeposit: 37.5 }, NOW).backtestDeposit).toBe(37.5);
+    expect(sanitizeFormState({ backtestDeposit: 0 }, NOW).backtestDeposit).toBeNull();
+    expect(sanitizeFormState({ backtestDeposit: -5 }, NOW).backtestDeposit).toBeNull();
+    expect(sanitizeFormState({ backtestDeposit: '37.5' }, NOW).backtestDeposit).toBeNull();
+    expect(sanitizeFormState({}, NOW).backtestDeposit).toBeNull();
   });
 
   it('сохраняет и читает форму под ключом veles_portfolio_optimizer_form', () => {
@@ -394,9 +403,20 @@ describe('formState: конфигурация запуска', () => {
     expect(config.params[0]).not.toBe(params[0]);
     expect(config.search).not.toBe(form.search);
 
+    expect(config.backtestDeposit).toBeNull();
+
     const normalized = normalizePortfolioConfig(config);
     expect(normalized.basket).toEqual(config.basket);
     expect(normalized.screenBasket).toEqual(config.screenBasket);
+    expect(normalized.backtestDeposit).toBeNull();
+
+    const withDeposit = buildPortfolioConfig({
+      form: { ...form, backtestDeposit: 37.456 },
+      botId: 77,
+      botName: 'LONG 22',
+      params,
+    });
+    expect(normalizePortfolioConfig(withDeposit).backtestDeposit).toBe(37.46);
   });
 
   it('validateRunDraft перечисляет причины, по которым запуск невозможен', () => {

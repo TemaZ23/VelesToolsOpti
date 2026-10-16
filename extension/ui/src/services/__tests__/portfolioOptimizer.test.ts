@@ -511,6 +511,7 @@ interface Harness {
   sleep: Mock<(ms: number, signal?: AbortSignal) => Promise<void>>;
   loadGroupBacktests: Mock<(groupId: string) => Promise<GroupBacktestsLoadResult>>;
   clearSavedState: Mock<() => void>;
+  loadListingDates: Mock<(exchange: string) => Promise<Record<string, number>>>;
   callbacks: PortfolioOptimizerCallbacks;
   deps: Partial<PortfolioOptimizerDeps>;
   scheduler: () => FakeScheduler;
@@ -541,6 +542,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
     failed: [],
   }));
   const clearSavedState = vi.fn<() => void>();
+  const loadListingDates = vi.fn<(exchange: string) => Promise<Record<string, number>>>(async () => ({}));
   const readSaved = (): PortfolioOptimizerState | null => {
     const raw = saves.at(-1);
     if (!raw) {
@@ -562,6 +564,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
     sleep,
     loadGroupBacktests,
     clearSavedState,
+    loadListingDates,
     callbacks: {
       onLog: (entry) => logs.push(entry),
       onProgress: (snapshot) => progress.push(snapshot),
@@ -581,6 +584,7 @@ const createHarness = (options: HarnessOptions = {}): Harness => {
       },
       loadSavedState: readSaved,
       clearSavedState,
+      loadListingDates,
       sleep,
       now: () => {
         time += 1000;
@@ -837,6 +841,20 @@ describe('matchGroupBacktestsToBasket', () => {
     expect(match.missing).toEqual(['XRP', 'DOGE', 'LINK', 'AVAX']);
     expect(match.outsideBasket).toBe(1);
     expect(match.warnings).toEqual([]);
+  });
+
+  it('бэктест группы с началом от даты листинга не считается бэктестом за другой период', () => {
+    const listedAt = '2023-01-01T00:00:00.000Z';
+    const input = {
+      backtests: [summary(1, 'ADA'), summary(2, 'DOGE', { from: listedAt })],
+      basket: BASKET,
+      quoteCurrency: 'USDT',
+      run: RUN,
+    };
+    expect(matchGroupBacktestsToBasket(input).warnings.some((warning) => warning.includes('DOGE'))).toBe(true);
+    const withListing = matchGroupBacktestsToBasket({ ...input, listingDates: { DOGEUSDT: Date.parse(listedAt) } });
+    expect(withListing.backtestIds).toEqual({ ADA: 1, DOGE: 2 });
+    expect(withListing.warnings).toEqual([]);
   });
 
   it('пропускает бэктесты с другой котировкой и берёт самый новый из повторов', () => {
@@ -1634,6 +1652,176 @@ describe('PortfolioOptimizer: ошибки и неполные корзины', 
     expect(nonBase(state)).toHaveLength(0);
     expect(hasLog(harness, 'error', 'Базовый бот не оценён на полной корзине')).toBe(true);
     expect(harness.lastSaved().status).toBe('error');
+  });
+
+  it('исключает из корзины монеты, для которых Veles не принимает настройки базового бота (HTTP 412)', async () => {
+    const pairRejected = (symbol: string) =>
+      new BacktestSubmitError(
+        `HTTP 412: Объём ордера не соответствует требованиям по паре ${symbol}/USDT (Precondition Failed)`,
+        412,
+        null,
+      );
+    const harness = createHarness({
+      behavior: {
+        submitError: (job) => (job.symbol === 'SOL' ? pairRejected('SOL') : null),
+      },
+    });
+    const basketChanges: Array<{ basket: string[]; screenBasket: string[]; excluded: string[] }> = [];
+    const callbacks: PortfolioOptimizerCallbacks = {
+      ...harness.callbacks,
+      onBasketChanged: (config, excluded) =>
+        basketChanges.push({
+          basket: config.basket,
+          screenBasket: config.screenBasket,
+          excluded: excluded.map((item) => item.symbol),
+        }),
+    };
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 2 }), callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).toEqual(['ADA', 'XRP', 'DOGE', 'LINK', 'AVAX']);
+    // SOL был в отборочной корзине — её размер сохранён за счёт другой монеты полной корзины.
+    expect(state.config.screenBasket).toHaveLength(SCREEN.length);
+    expect(state.config.screenBasket).not.toContain('SOL');
+    expect(state.config.screenBasket.slice(0, 2)).toEqual(['ADA', 'LINK']);
+    expect(state.config.basket).toEqual(expect.arrayContaining(state.config.screenBasket));
+    expect(state.excludedSymbols?.map((item) => item.symbol)).toEqual(['SOL']);
+    expect(state.excludedSymbols?.[0].reason).toContain('HTTP 412');
+
+    const base = findBase(state);
+    expect(base.full?.status).toBe('done');
+    expect(base.full?.symbols).not.toContain('SOL');
+    expect(Object.keys(base.full?.backtestIds ?? {})).not.toContain('SOL');
+    expect(base.screen?.symbols).toEqual(state.config.screenBasket);
+    for (const candidate of nonBase(state)) {
+      expect(candidate.screen?.symbols ?? []).not.toContain('SOL');
+      expect(candidate.full?.symbols ?? []).not.toContain('SOL');
+    }
+    expect(nonBase(state).some((candidate) => candidate.full?.status === 'done')).toBe(true);
+    expect(hasLog(harness, 'warning', 'Исключены из корзины')).toBe(true);
+    expect(basketChanges).toEqual([
+      { basket: state.config.basket, screenBasket: state.config.screenBasket, excluded: ['SOL'] },
+    ]);
+    expect(harness.lastSaved().excludedSymbols?.map((item) => item.symbol)).toEqual(['SOL']);
+  });
+
+  it('останавливает запуск, если Veles отказал в настройках бота для большей части корзины', async () => {
+    const rejectedSymbols = new Set(['ADA', 'XRP', 'SOL', 'DOGE']);
+    const harness = createHarness({
+      behavior: {
+        submitError: (job) =>
+          rejectedSymbols.has(job.symbol)
+            ? new BacktestSubmitError('HTTP 412: Объём ордера не соответствует требованиям по паре', 412, null)
+            : null,
+      },
+    });
+    const optimizer = new PortfolioOptimizer(createInput(), harness.callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(state.status).toBe('error');
+    expect(hasLog(harness, 'error', 'Veles не принимает настройки бота для 4 из 6 монет')).toBe(true);
+    expect(state.config.basket).toEqual(BASKET);
+    expect(state.excludedSymbols ?? []).toEqual([]);
+    expect(nonBase(state)).toHaveLength(0);
+  });
+
+  it('отказ Veles (HTTP 412) для кандидата — неудача его этапа, корзина не меняется', async () => {
+    let rejected = false;
+    const harness = createHarness({
+      behavior: {
+        submitError: (job) => {
+          if (!(rejected || job.key.startsWith(BASE_HASH))) {
+            rejected = true;
+            return new BacktestSubmitError('HTTP 412: Объём ордера не соответствует требованиям по паре', 412, null);
+          }
+          return null;
+        },
+      },
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).toEqual(BASKET);
+    expect(state.excludedSymbols ?? []).toEqual([]);
+    expect(nonBase(state).filter((candidate) => candidate.screen?.status === 'failed')).toHaveLength(1);
+  });
+
+  it('отправляет бэктесты без API-ключа бота и с депозитом для бэктестов, не меняя сам бот', async () => {
+    const harness = createHarness();
+    const baseStrategy = Object.assign(createStrategy(), { apiKey: 5 });
+    const optimizer = new PortfolioOptimizer(
+      { ...createInput({ backtestDeposit: 37.5 }, { generations: 1 }), baseStrategy },
+      harness.callbacks,
+      harness.deps,
+    );
+    await optimizer.start();
+    const payloads = submittedJobs(harness).map((job) => job.payload);
+
+    expect(payloads.length).toBeGreaterThan(0);
+    for (const payload of payloads) {
+      expect(payload && 'apiKey' in payload).toBe(false);
+      expect(payload?.deposit?.amount).toBe(37.5);
+      expect(payload?.deposit?.leverage).toBe(10);
+    }
+    const state = optimizer.getState();
+    expect(state.config.backtestDeposit).toBe(37.5);
+    expect(state.baseStrategy.deposit?.amount).toBe(100);
+    expect('apiKey' in state.baseStrategy).toBe(true);
+  });
+
+  it('без депозита для бэктестов отправляет депозит бота', async () => {
+    const harness = createHarness();
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    expect(optimizer.getState().config.backtestDeposit).toBeNull();
+    expect(submittedJobs(harness).every((job) => job.payload?.deposit?.amount === 100)).toBe(true);
+  });
+
+  it('начинает бэктест монеты с даты листинга и исключает монеты, не торговавшиеся в период', async () => {
+    const harness = createHarness();
+    const dogeListing = Date.parse('2023-01-01T00:00:00.000Z');
+    harness.loadListingDates.mockResolvedValue({
+      DOGEUSDT: dogeListing,
+      AVAXUSDT: Date.parse('2025-01-01T00:00:00.000Z'),
+      ADAUSDT: Date.parse('2018-01-01T00:00:00.000Z'),
+    });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(harness.loadListingDates).toHaveBeenCalledTimes(1);
+    expect(harness.loadListingDates).toHaveBeenCalledWith('BYBIT_FUTURES');
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).toEqual(['ADA', 'XRP', 'SOL', 'DOGE', 'LINK']);
+    expect(state.excludedSymbols?.map((item) => item.symbol)).toEqual(['AVAX']);
+    expect(state.excludedSymbols?.[0].reason).toContain('2025-01-01');
+    expect(state.listingDates?.DOGEUSDT).toBe(dogeListing);
+    const jobs = submittedJobs(harness);
+    expect(jobs.some((job) => job.symbol === 'AVAX')).toBe(false);
+    for (const job of jobs) {
+      expect(job.payload?.from).toBe(job.symbol === 'DOGE' ? '2023-01-01T00:00:00.000Z' : RUN.periodFrom);
+    }
+    expect(hasLog(harness, 'info', 'DOGE (с 2023-01-01)')).toBe(true);
+    expect(hasLog(harness, 'warning', 'не торговались в выбранный период')).toBe(true);
+  });
+
+  it('если даты листинга не загрузились, считает все монеты за период формы', async () => {
+    const harness = createHarness();
+    harness.loadListingDates.mockRejectedValue(new Error('HTTP 500 Internal Server Error'));
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).toEqual(BASKET);
+    expect(state.listingDates).toEqual({});
+    expect(submittedJobs(harness).every((job) => job.payload?.from === RUN.periodFrom)).toBe(true);
+    expect(hasLog(harness, 'warning', 'Не удалось загрузить даты листинга')).toBe(true);
   });
 
   it('ошибка авторизации переводит запуск в error, этап остаётся незавершённым и досчитывается после продолжения', async () => {

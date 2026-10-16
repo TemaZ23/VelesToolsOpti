@@ -207,6 +207,12 @@ export interface PortfolioOptimizerConfig {
   params: ParamSpec[];
   /** Группа бэктестов с готовыми результатами базового бота (экономит бэктесты базы). */
   baseGroupId: string | null;
+  /**
+   * Депозит бота в бэктестах (в валюте котировки); null — как в боте. Нужен, если с депозитом бота
+   * Veles не принимает объём ордера для части монет. Сам бот и «Создать бота» его не меняют.
+   * Необязательно для совместимости с сохранёнными запусками.
+   */
+  backtestDeposit?: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -249,6 +255,13 @@ export interface PortfolioOptimizerProgress {
   estimatedEndAt: number | null;
 }
 
+/** Монета, исключённая из корзины: Veles не принимает для неё настройки базового бота. */
+export interface ExcludedSymbol {
+  symbol: string;
+  /** Ответ Veles, например «HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT». */
+  reason: string;
+}
+
 export interface PortfolioOptimizerState {
   version: 1;
   runId: string;
@@ -270,6 +283,16 @@ export interface PortfolioOptimizerState {
   startedAt: number;
   updatedAt: number;
   logs: PortfolioLogEntry[];
+  /**
+   * Монеты, исключённые из корзины при оценке базы (HTTP 412 от Veles): config.basket и config.screenBasket
+   * их уже не содержат. Необязательно для совместимости с сохранёнными запусками.
+   */
+  excludedSymbols?: ExcludedSymbol[];
+  /**
+   * Даты листинга пар биржи бота (код пары «AAVEUSDT» → мс epoch), загружаются один раз за запуск:
+   * бэктест монеты начинается не раньше её листинга. Пустой объект — даты недоступны.
+   */
+  listingDates?: Record<string, number>;
 }
 
 export interface PortfolioOptimizerCallbacks {
@@ -282,4 +305,6 @@ export interface PortfolioOptimizerCallbacks {
    * true — его принял живой оптимизатор того же запуска; иначе id дописывается в сохранённое состояние.
    */
   onLateSubmission?: (runId: string, job: ScheduledJob) => boolean;
+  /** Корзина запуска изменилась: из неё исключены монеты, для которых Veles не принимает настройки бота. */
+  onBasketChanged?: (config: PortfolioOptimizerConfig, excludedSymbols: ExcludedSymbol[]) => void;
 }

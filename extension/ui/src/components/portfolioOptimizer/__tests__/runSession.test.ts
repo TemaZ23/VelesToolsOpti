@@ -204,6 +204,7 @@ const createDeps = (control: FakeControl): Partial<PortfolioOptimizerDeps> => {
     },
     loadSavedState: () => (control.saved ? JSON.parse(JSON.stringify(control.saved)) : null),
     clearSavedState: () => undefined,
+    loadListingDates: async () => ({}),
     sleep: async () => undefined,
     now: () => {
       clock += control.clockStep;
