@@ -136673,8 +136673,8 @@ class Nf {
       r.alreadyShort
         ? this.log("info", "🪞 Бот уже SHORT — оптимизируем его как есть, оценка по собственной прибыли и просадке")
         : this.log(
-            "info",
-            `🪞 SHORT-зеркало бота: отражено условий — ${r.changed}${r.signals ? `; сигнальных индикаторов оставлено как есть — ${r.signals} (проверьте их направление в Veles)` : ""}`,
+            r.signals || r.kept ? "warning" : "info",
+            `🪞 SHORT-зеркало бота: отражено условий — ${r.changed}${r.signals ? `; сигнальных индикаторов оставлено как есть — ${r.signals}` : ""}${r.kept ? `; сравнений индикатора с индикатором оставлено как есть — ${r.kept} (например «цена выше EMA»: для SHORT обычно нужно наоборот)` : ""}${r.signals || r.kept ? " — проверьте их направление в Veles" : ""}`,
           );
       return;
     }
@@ -136720,7 +136720,12 @@ class Nf {
       vtProgress = (d, f) => {
         (this.vtCoinProgress = { done: d, total: f }), this.emitProgress();
       },
-      l = await VTMODES.vmSelectCoins(t, n, { ...s, maxEvaluations: 200, shouldStop: vtStop, onProgress: vtProgress });
+      l = await VTMODES.vmSelectCoins(t, n, {
+        ...s,
+        maxEvaluations: Math.min(400, Math.max(200, 2 * t.length)),
+        shouldStop: vtStop,
+        onProgress: vtProgress,
+      });
     if (!l) return;
     const c = Date.parse(a.from),
       u = Date.parse(a.to),
@@ -136728,7 +136733,7 @@ class Nf {
       v = await VTMODES.vmSelectCoins(VTPS.psSliceEntries(t, c, h), n, {
         ...s,
         folds: null,
-        maxEvaluations: 120,
+        maxEvaluations: Math.min(240, Math.max(120, t.length)),
         shouldStop: vtStop,
         onProgress: vtProgress,
       });
@@ -137539,7 +137544,11 @@ class Nf {
         plateau: n,
         stress: a,
       });
-    return VTMODES.vmIsTemplateGoal(this.config.goal) ? VTMODES.vmAbsoluteVerdict(vtReport) : vtReport;
+    if (!VTMODES.vmIsTemplateGoal(this.config.goal)) return vtReport;
+    const vtFinal = t.validation ?? t.fitness;
+    return VTMODES.vmAbsoluteVerdict(vtReport, {
+      finalProfit: vtFinal && vtFinal.portfolio ? vtFinal.portfolio.adjustedProfit : null,
+    });
   }
   stressSymbols() {
     var r;
@@ -138668,11 +138677,15 @@ const U1 =
       vtTemplate = p.useMemo(() => VTMODES.vmNormalizeTemplate(vtKind, o.template), [o.template]),
       // Template modes: the base of the run is generated on the selected bot (its exchange, deposit,
       // take-profit and stop-loss types); ranges overrides are keyed by the template, not the bot.
-      vtBase = p.useMemo(
+      vtPrepared = p.useMemo(
         () =>
-          g && vtIsTpl ? VTMODES.vmPrepareBase({ goal: vtKind, template: vtTemplate, symbols: [] }, g).strategy : g,
+          g && vtIsTpl
+            ? VTMODES.vmPrepareBase({ goal: vtKind, template: vtTemplate, symbols: [] }, g)
+            : { strategy: g, notes: null },
         [g, vtTemplate],
       ),
+      vtBase = vtPrepared.strategy,
+      vtMirror = vtPrepared.notes && vtPrepared.notes.kind === "mirror" ? vtPrepared.notes : null,
       he = p.useMemo(() => (vtBase ? Fut(vtBase) : ""), [vtBase]),
       ge = ((Jn = g == null ? void 0 : g.deposit) == null ? void 0 : Jn.amount) ?? null,
       Ce = p.useMemo(() => {
@@ -139464,6 +139477,15 @@ const U1 =
                     : null,
                   vtBaseInfo
                     ? E.jsxs(Ft, { type: "secondary", style: { fontSize: 12 }, children: ["🧩 Шаблон: ", vtBaseInfo] })
+                    : null,
+                  vtMirror
+                    ? E.jsx(Ft, {
+                        type: vtMirror.signals || vtMirror.kept ? "warning" : "secondary",
+                        style: { fontSize: 12 },
+                        children: vtMirror.alreadyShort
+                          ? "🪞 Бот уже SHORT — оптимизируется как есть"
+                          : `🪞 Отражено условий: ${vtMirror.changed}${vtMirror.signals ? `; сигнальных индикаторов оставлено как есть: ${vtMirror.signals}` : ""}${vtMirror.kept ? `; «индикатор против индикатора» (например цена выше EMA) оставлено как есть: ${vtMirror.kept}` : ""}${vtMirror.signals || vtMirror.kept ? " — проверьте их направление в Veles" : ""}`,
+                      })
                     : null,
                   E.jsxs(or, {
                     vertical: !0,

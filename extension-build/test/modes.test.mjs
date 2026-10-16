@@ -153,11 +153,20 @@ describe('SHORT mirror', () => {
             operator: 'LESS',
             right: { type: 'CONSTANT', value: 25 },
           },
+          {
+            type: 'OPERATION',
+            left: { type: 'INDICATOR', indicator: 'PRICE', timeFrame: 60 },
+            operator: 'GREATER',
+            right: { type: 'INDICATOR', indicator: 'EMA', timeFrame: 60, period: 200 },
+          },
         ],
       ],
     });
-    const mirrored = vmMirrorToShort(tree).strategy;
+    const { strategy: mirrored, notes: treeNotes } = vmMirrorToShort(tree);
     expect(mirrored.conditionGroups[0][0]).toMatchObject({ operator: 'GREATER', right: { value: 75 } });
+    // Indicator vs indicator is kept as is and reported for a manual check.
+    expect(mirrored.conditionGroups[0][1].operator).toBe('GREATER');
+    expect(treeNotes.kept).toBe(1);
     const short = makeShell({ algorithm: 'SHORT' });
     const again = vmMirrorToShort(short);
     expect(again.notes.alreadyShort).toBe(true);
@@ -402,6 +411,16 @@ describe('absolute robustness verdict', () => {
     });
     expect(overfit.verdict).toBe('overfit');
     expect(overfit.reasons).toContain('Монеты вне поиска (5): убыток');
+    // Profitable segments but a loss on all coins over the full period: never robust.
+    const losing = vmAbsoluteVerdict(
+      { segments: [segment('year', '2021', 10), segment('year', '2022', -200), segment('year', '2023', 5), segment('year', '2024', 5), segment('year', '2025', 5), segment('coins', 'Монеты вне поиска (5)', 3)], plateau: { tested: 4, medianRetention: 0.9 } },
+      { finalProfit: -177 },
+    );
+    expect(losing.verdict).toBe('overfit');
+    expect(losing.reasons[0]).toBe('на всех монетах за весь период — убыток');
+    // Shorter than a year: cannot be robust.
+    const short = vmAbsoluteVerdict({ segments: [segment('coins', 'Монеты вне поиска (5)', 3)], plateau: null }, { finalProfit: 10 });
+    expect(short.verdict).toBe('partial');
   });
 });
 
@@ -466,9 +485,9 @@ describe('coin selection', () => {
     // Unmeasured coins have no contribution and are listed after the measured ones.
     expect(bounded.perCoin.some((item) => item.contribution === null)).toBe(true);
     expect(bounded.perCoin[0].contribution).not.toBeNull();
-    // Losing coins (net -3) are measured first and removed.
-    expect(bounded.removed.length).toBeGreaterThan(0);
-    expect(bounded.removed.every((item) => item.symbol.match(/^C(\d+)$/) && Number(item.symbol.slice(1)) % 7 === 0)).toBe(true);
+    // Losing coins (net -3) are measured first and removed; the set improves.
+    expect(bounded.removed.some((item) => Number(item.symbol.slice(1)) % 7 === 0)).toBe(true);
+    expect(bounded.best.score).toBeGreaterThan(bounded.all.score);
     // Deterministic: the same inputs pick the same set.
     const again = await vmSelectCoins(entries, evaluate, { minCoins: 3, maxEvaluations: 30, yieldNow: async () => {} });
     expect(again.selected).toEqual(bounded.selected);
@@ -483,5 +502,33 @@ describe('coin selection', () => {
       yieldNow: async () => {},
     });
     expect(stoppedEarly).toBeNull();
+  });
+
+  it('keeps searching past helpful coins and removes many losers in batches', async () => {
+    // Coins whose removal helps but whose own net / drawdown look middling (review case).
+    const ratio = (subset) => {
+      const profit = subset.reduce((sum, entry) => sum + entry.deals[0].n, 0);
+      const risk = subset.reduce((sum, entry) => sum + entry.deals[0].m, 0);
+      return { profit, risk, monthlyPercent: profit, drawdownPercent: risk, deals: subset.length };
+    };
+    const mixed = [
+      ...Array.from({ length: 12 }, (_, i) => coin(`HI${i}`, 30, 5)),
+      ...Array.from({ length: 12 }, (_, i) => coin(`LO${i}`, 1, 0.1)),
+      ...Array.from({ length: 20 }, (_, i) => coin(`BAD${i}`, 3, 2)),
+      ...Array.from({ length: 16 }, (_, i) => coin(`MID${i}`, 20, 4)),
+    ];
+    const picked = await vmSelectCoins(mixed, ratio, { minCoins: 5, maxRemoveShare: 0.9, yieldNow: async () => {} });
+    expect(picked.removed.filter((item) => item.symbol.startsWith('BAD')).length).toBe(20);
+    expect(picked.selected.some((symbol) => symbol.startsWith('BAD'))).toBe(false);
+
+    // 150 coins with 110 losers: the batch removal clears them within the default budget.
+    const many = [
+      ...Array.from({ length: 110 }, (_, i) => coin(`L${i}`, -5, 4)),
+      ...Array.from({ length: 40 }, (_, i) => coin(`W${i}`, 10, 2)),
+    ];
+    const cleaned = await vmSelectCoins(many, ratio, { minCoins: 5, maxRemoveShare: 0.9, yieldNow: async () => {} });
+    expect(cleaned.selected.every((symbol) => symbol.startsWith('W'))).toBe(true);
+    expect(cleaned.best.profit).toBeGreaterThan(0);
+    expect(cleaned.evaluations).toBeLessThanOrEqual(200);
   });
 });
