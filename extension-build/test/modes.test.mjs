@@ -219,6 +219,9 @@ describe('templates', () => {
     const long = vmBuildTemplate('long', percent, { profile: 'tight' });
     expect(long.profit).toEqual({ type: 'PERCENT', currency: 'USDT', checkPnl: 0.7, conditions: [] });
     expect(long.stopLoss).toBeNull();
+    // A ticked «стоп-лосс» gives DCA templates a stop beyond the grid.
+    expect(vmBuildTemplate('long', percent, { profile: 'classic', stopLoss: true }).stopLoss.indent).toBe(25);
+    expect(vmBuildTemplate('short', percent, { profile: 'tight', stopLoss: true }).stopLoss.indent).toBe(15);
     const scalper = vmBuildTemplate('scalper', percent, { profile: 'grid2', stopLoss: true });
     expect(scalper.stopLoss).toEqual({ indent: 3, termination: false, conditionalIndent: null, conditionalIndentType: null, conditions: null });
   });
@@ -411,7 +414,7 @@ describe('coin selection', () => {
   };
   const coin = (symbol, net, mae) => ({ symbol, deals: [{ s: 0, e: 1, n: net, m: mae, st: 'F', o: [] }] });
 
-  it('drops coins that hurt profit-to-drawdown and keeps a minimum basket', () => {
+  it('drops coins that hurt profit-to-drawdown and keeps a minimum basket', async () => {
     const entries = [
       coin('A', 10, 2),
       coin('B', 8, 2),
@@ -422,7 +425,7 @@ describe('coin selection', () => {
       coin('G', 1, 8),
       { symbol: 'H', deals: [] },
     ];
-    const result = vmSelectCoins(entries, evaluate, { minCoins: 3, maxRemoveShare: 0.6 });
+    const result = await vmSelectCoins(entries, evaluate, { minCoins: 3, maxRemoveShare: 0.6 });
     expect(result.selected).toEqual(['A', 'B', 'C']);
     // G (small profit, deep drawdown) hurts profit-to-drawdown more than the losing F.
     expect(result.removed.map((item) => item.symbol)).toEqual(['G', 'F', 'E', 'D']);
@@ -432,10 +435,53 @@ describe('coin selection', () => {
     expect(result.perCoin[0].contribution).toBeLessThan(0);
   });
 
-  it('keeps everything when no removal helps', () => {
+  it('keeps everything when no removal helps', async () => {
     const entries = [coin('A', 5, 1), coin('B', 5, 1), coin('C', 5, 1)];
-    const result = vmSelectCoins(entries, evaluate, { minCoins: 1 });
+    const result = await vmSelectCoins(entries, evaluate, { minCoins: 1 });
     expect(result.selected).toEqual(['A', 'B', 'C']);
     expect(result.removed).toEqual([]);
+  });
+
+  it('is bounded, reports progress, yields and stops', async () => {
+    const entries = Array.from({ length: 40 }, (_, index) => coin(`C${index}`, index % 7 === 0 ? -3 : 5, 1 + (index % 5)));
+    let calls = 0;
+    const counting = (subset) => {
+      calls += 1;
+      return evaluate(subset);
+    };
+    const progress = [];
+    let yields = 0;
+    const bounded = await vmSelectCoins(entries, counting, {
+      minCoins: 3,
+      maxEvaluations: 30,
+      onProgress: (done, total) => progress.push([done, total]),
+      yieldNow: async () => {
+        yields += 1;
+      },
+    });
+    expect(calls).toBeLessThanOrEqual(30);
+    expect(bounded.evaluations).toBe(calls);
+    expect(bounded.truncated).toBe(true);
+    expect(progress.at(-1)).toEqual([30, 30]);
+    // Unmeasured coins have no contribution and are listed after the measured ones.
+    expect(bounded.perCoin.some((item) => item.contribution === null)).toBe(true);
+    expect(bounded.perCoin[0].contribution).not.toBeNull();
+    // Losing coins (net -3) are measured first and removed.
+    expect(bounded.removed.length).toBeGreaterThan(0);
+    expect(bounded.removed.every((item) => item.symbol.match(/^C(\d+)$/) && Number(item.symbol.slice(1)) % 7 === 0)).toBe(true);
+    // Deterministic: the same inputs pick the same set.
+    const again = await vmSelectCoins(entries, evaluate, { minCoins: 3, maxEvaluations: 30, yieldNow: async () => {} });
+    expect(again.selected).toEqual(bounded.selected);
+
+    let checks = 0;
+    const stoppedEarly = await vmSelectCoins(entries, evaluate, {
+      minCoins: 3,
+      shouldStop: () => {
+        checks += 1;
+        return checks > 5;
+      },
+      yieldNow: async () => {},
+    });
+    expect(stoppedEarly).toBeNull();
   });
 });

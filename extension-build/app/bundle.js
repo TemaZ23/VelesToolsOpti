@@ -132237,7 +132237,7 @@ ${y}/q1w2e`,
           u = Dut(
             { place: c.scope, indicator: c.indicator, basic: c.value === null, reverse: c.reverse },
             t,
-            e && e.algorithm === "SHORT" ? "SHORT" : "LONG",
+            t.vtDirectionPresets && e && e.algorithm === "SHORT" ? "SHORT" : "LONG",
           );
         if (u.length < 2) continue;
         const d =
@@ -132274,7 +132274,7 @@ ${y}/q1w2e`,
         const c = s.filter((g) => g.place === l);
         if (c.length === 0) continue;
         const u = new Set(c.flatMap((g) => g.indicators)),
-          d = Aut(l, t, u, e && e.algorithm === "SHORT" ? "SHORT" : "LONG");
+          d = Aut(l, t, u, t.vtDirectionPresets && e && e.algorithm === "SHORT" ? "SHORT" : "LONG");
         if (d.length < 2) continue;
         const f = Nut(c),
           h = Math.max(0, np.indexOf(f)),
@@ -136515,6 +136515,11 @@ class Nf {
         : n === "robustness" &&
           ((f = this.robustnessTotal), (h = Math.max(0, this.robustnessTotal - this.generationDone)));
     h = Math.round(h * (1 - o * 0.8));
+    // Coin selection runs only the baseline; after it the work is offline aggregation.
+    const vtCoins = r.goal === "coins",
+      vtPick = vtCoins && n !== "baseline" && n !== "preparing" ? (this.vtCoinProgress ?? null) : null;
+    vtCoins && (h = n === "baseline" || n === "preparing" ? Math.max(0, l - this.phaseSymbolsDone) : 0),
+      vtCoins && n !== "baseline" && n !== "preparing" && (f = vtPick ? vtPick.total : 0);
     const v =
         this.durationSamples.length > 0
           ? this.durationSamples.reduce((b, S) => b + S, 0) / this.durationSamples.length
@@ -136529,8 +136534,14 @@ class Nf {
       searchMethod: vtPattern ? "pattern" : "genetic",
       patternStep: this.patternStep,
       evaluatedGenomes: this.archive.size,
-      generationDone:
-        n === "baseline" ? this.phaseSymbolsDone : vtPattern && n === "search" ? this.searchEvaluations : this.generationDone,
+      generationDone: vtPick
+        ? vtPick.done
+        : n === "baseline"
+          ? this.phaseSymbolsDone
+          : vtPattern && n === "search"
+            ? this.searchEvaluations
+            : this.generationDone,
+      goal: r.goal ?? "improve",
       generationSize: f,
       totalBacktests: this.backtestsRun + h,
       completedBacktests: this.backtestsRun,
@@ -136629,9 +136640,11 @@ class Nf {
         a.adjustedProfit > 0 ||
           this.log(
             "warning",
-            VTMODES.vmIsAbsoluteGoal(this.config.goal)
-              ? "⚠️ Исходный шаблон убыточен на этом периоде — поиск начнёт с него и будет искать прибыльные настройки"
-              : "⚠️ Исходная стратегия убыточна на этом периоде — оценка «лучше по обоим» заменена на прибыль/просадку",
+            this.config.goal === "coins"
+              ? "⚠️ Бот убыточен на этих монетах за период — подбор попробует найти прибыльный набор, сам бот не меняется"
+              : VTMODES.vmIsTemplateGoal(this.config.goal)
+                ? "⚠️ Исходный шаблон убыточен на этом периоде — поиск начнёт с него и будет искать прибыльные настройки"
+                : "⚠️ Исходная стратегия убыточна на этом периоде — оценка «лучше по обоим» заменена на прибыль/просадку",
           )),
       !this.screeningSymbols)
     ) {
@@ -136701,12 +136714,27 @@ class Nf {
         folds: o,
       };
     this.log("info", `🪙 Подбор монет по сделкам ${t.length} бэктестов — без новых бэктестов`);
-    const l = VTMODES.vmSelectCoins(t, n, s),
-      c = Date.parse(a.from),
+    // Async and bounded: an aggregation over ~150 coins takes most of a second, so the selection yields
+    // to the page, honours «Стоп» and reports progress (main set, then the check on the first 2/3).
+    const vtStop = () => this.stopRequested,
+      vtProgress = (d, f) => {
+        (this.vtCoinProgress = { done: d, total: f }), this.emitProgress();
+      },
+      l = await VTMODES.vmSelectCoins(t, n, { ...s, maxEvaluations: 200, shouldStop: vtStop, onProgress: vtProgress });
+    if (!l) return;
+    const c = Date.parse(a.from),
       u = Date.parse(a.to),
       h = Math.round(c + ((u - c) * 2) / 3),
-      v = VTMODES.vmSelectCoins(VTPS.psSliceEntries(t, c, h), n, { ...s, folds: null }),
-      g = new Set(v.selected),
+      v = await VTMODES.vmSelectCoins(VTPS.psSliceEntries(t, c, h), n, {
+        ...s,
+        folds: null,
+        maxEvaluations: 120,
+        shouldStop: vtStop,
+        onProgress: vtProgress,
+      });
+    if (!v) return;
+    this.vtCoinProgress = null;
+    const g = new Set(v.selected),
       m = VTPS.psSliceEntries(t, h, u + 1).filter((d) => d.deals.length > 0),
       y = m.filter((d) => g.has(d.symbol)),
       b = (d) => (d ? { ...d, score: VTMODES.vmProfitToRisk(d.profit, d.risk) } : null),
@@ -136714,7 +136742,9 @@ class Nf {
         m.length > 0 && y.length > 0
           ? { splitAt: new Date(h).toISOString(), trainSelected: v.selected, all: b(n(m)), selected: b(n(y)) }
           : null;
-    this.coinSelection = { ...l, check: S, period: a };
+    const vtHave = new Set(t.map((d) => d.symbol)),
+      vtFailed = this.universe("final").symbols.filter((d) => !vtHave.has(d));
+    this.coinSelection = { ...l, failed: vtFailed, check: S, period: a };
     const x = (d) => (d ? `${d.monthlyPercent.toFixed(2)}%/мес, просадка ${d.drawdownPercent.toFixed(1)}%, P/R ${d.score.toFixed(2)}` : "—");
     this.log(
       "success",
@@ -136722,6 +136752,10 @@ class Nf {
     ),
       l.removed.length > 0 && this.log("info", `➖ Убрать: ${l.removed.map((d) => ec(d.symbol)).join(", ")}`),
       l.noDeals.length > 0 && this.log("info", `💤 Без сделок за период: ${l.noDeals.map((d) => ec(d)).join(", ")}`),
+      vtFailed.length > 0 &&
+        this.log("warning", `⚠️ Нет результата бэктеста (ошибка Veles или монета не торговалась в периоде): ${vtFailed.map((d) => ec(d)).join(", ")} — в подборе их нет`),
+      l.truncated &&
+        this.log("info", `⏱️ Подбор остановлен на лимите ${l.evaluations} пересчётов портфеля — набор может быть не оптимальным, но лучше исходного`),
       S &&
         this.log(
           S.selected.score >= S.all.score ? "success" : "warning",
@@ -137430,9 +137464,10 @@ class Nf {
       return;
     }
     const a = this.plateauNeighborCount,
+      // Template modes have no original to beat: the plateau is checked for the top finalists anyway.
       i = new Set(
         n
-          .filter((c) => (c.validatedScore ?? 0) > r + Tv)
+          .filter((c) => VTMODES.vmIsTemplateGoal(this.config.goal) || (c.validatedScore ?? 0) > r + Tv)
           .slice(0, KX)
           .map((c) => c.key),
       ),
@@ -137828,7 +137863,9 @@ ${a.join(`
       d = await pft(c);
     if (d) {
       let b = d.deals;
-      const S = !!this.config.portfolio.dynamicBlockOrder && bdt(b);
+      const S =
+        !!this.config.portfolio.dynamicBlockOrder &&
+        (bdt(b) || (i.algorithm === "SHORT" && Array.isArray(b) && b.length > 0 && d.vtDeals !== 2));
       if (a && (!b || S) && this.transport.fetchAllCycles)
         try {
           const x = this.transport.fetchAllCycles;
@@ -137884,7 +137921,8 @@ ${a.join(`
     );
   }
   async storeResult(t) {
-    this.persistEnabled && (await gft(t));
+    // vtDeals: 2 — grid-order times of SHORT deals are compacted from SELL orders (2.15 kept none).
+    this.persistEnabled && (await gft(Array.isArray(t.deals) ? { ...t, vtDeals: 2 } : t));
   }
   createScheduler() {
     return new hdt(this.transport, {
@@ -138282,9 +138320,12 @@ const U1 =
   // the run, so a resumed run rebuilds exactly the same space.
   vtPrepareRun = (e, t) => {
     if (!VTMODES.vmIsTemplateGoal(e.goal) || e.vtPrepared || !t) return { config: e, baseStrategy: t, notes: null };
+    // Filter swaps of template modes follow the direction (SHORT: RSI > 70 instead of RSI < 30); the
+    // Improve tab keeps the 2.15 space, so saved 2.15 runs of SHORT bots decode the same way.
     const { strategy: r, notes: n } = VTMODES.vmPrepareBase(e, t),
-      a = { ...VTMODES.vmModeRanges(e.goal, che(r, e.scope, e.precision), r), ...(e.ranges ?? {}) };
-    return { config: { ...e, ranges: a, vtPrepared: !0 }, baseStrategy: r, notes: n };
+      vtScope = { ...e.scope, vtDirectionPresets: !0 },
+      a = { ...VTMODES.vmModeRanges(e.goal, che(r, vtScope, e.precision), r), ...(e.ranges ?? {}) };
+    return { config: { ...e, scope: vtScope, ranges: a, vtPrepared: !0 }, baseStrategy: r, notes: n };
   },
   Ohe = 24 * 60 * 60 * 1e3,
   fR = (e, t) => {
@@ -138353,6 +138394,8 @@ const U1 =
             days: Math.round(e.holdoutCandidates * n * g),
           });
     }
+    // Coin selection: only the baseline is backtested, the subset is picked offline from its deals.
+    e.vtBaselineOnly && t.splice(1);
     const i = t.reduce((g, m) => g + m.backtests, 0),
       o = t.reduce((g, m) => g + m.days, 0),
       s = ((f = e.budget) == null ? void 0 : f.remainingDays) ?? Number.POSITIVE_INFINITY,
@@ -138492,16 +138535,26 @@ const U1 =
           .catch(() => {});
       const vtLive = vtRunSession.engine && vtRunSession.kind === vtKind ? vtRunSession.engine : null;
       if (vtLive) {
-        // The page was re-opened while its run goes on: attach to the running engine.
-        (te.current = vtLive),
+        // The page was re-opened while its run goes on: attach to the running engine. A stress-test
+        // engine has no leaderboard of its own, so the saved result stays on screen.
+        const vtStress = !!vtLive.stressOnly;
+        if (
+          ((te.current = vtLive),
           (vtAttached.current = vtLive),
-          (vtLive.callbacks = He()),
+          (vtLive.callbacks = vtStress ? { ...He(), onCandidate: () => {}, onLeaderboard: () => {} } : He()),
           P(vtLive.status === "paused" ? "paused" : "running"),
           A(vtLive.getProgress()),
-          z(vtLive.getLeaderboard()),
-          B(ay(vtLive.getConfig(), vtLive.getBaseStrategy(), vtLive.getQuoteCurrency())),
-          Jt("info", "↩️ Прогон продолжается — страница подключена к нему заново");
-        return;
+          Jt(
+            "info",
+            vtStress
+              ? "↩️ Стресс-тест продолжается — страница подключена к нему заново"
+              : "↩️ Прогон продолжается — страница подключена к нему заново",
+          ),
+          !vtStress)
+        ) {
+          z(vtLive.getLeaderboard()), B(ay(vtLive.getConfig(), vtLive.getBaseStrategy(), vtLive.getQuoteCurrency()));
+          return;
+        }
       }
       K(GX(vtKind));
       const ce = () => {},
@@ -138526,9 +138579,19 @@ const U1 =
         const ce = () => {
           const Ne = vtAttached.current;
           if (!Ne || vtRunSession.engine === Ne) return;
-          (vtAttached.current = null), te.current === Ne && (te.current = null);
-          const nt = Ne.getProgress().status === "completed";
-          P(nt ? "completed" : "idle"), it(Ne, nt);
+          if (((vtAttached.current = null), te.current === Ne && (te.current = null), Ne.stressOnly)) {
+            const lr = qC(vtKind);
+            lr && (z(lr.leaderboard), B(ay(lr.config, lr.baseStrategy, lr.quoteCurrency))),
+              P("completed"),
+              n.success("Стресс-тест готов");
+            return;
+          }
+          const nt = Ne.status === "completed";
+          P(nt ? "completed" : Ne.status === "error" ? "error" : "idle"),
+            it(Ne, nt),
+            nt
+              ? n.success(vtDoneText(Ne.getLeaderboard()))
+              : Ne.status === "error" && n.error("Оптимизация прервана — подробности в логе");
         };
         return (
           vtRunSession.listeners.add(ce),
@@ -138631,7 +138694,7 @@ const U1 =
           w({});
           return;
         }
-        w(Ift(o.botId, he) ?? {});
+        w(Ift(vtStoreKey(String(o.botId), vtKind), he) ?? {});
       }, [o.botId, he]),
       p.useEffect(() => {
         const ce = setTimeout(() => $ft(o, vtKind), 400);
@@ -138674,14 +138737,15 @@ const U1 =
         (Ne = !1), clearTimeout(nt);
       };
     }, [e, Pe, g]);
-    const se = p.useMemo(() => (vtBase ? che(vtBase, o.scope, o.precision) : []), [o.precision, o.scope, vtBase]),
+    const vtScope = p.useMemo(() => (vtIsTpl ? { ...o.scope, vtDirectionPresets: !0 } : o.scope), [o.scope]),
+      se = p.useMemo(() => (vtBase ? che(vtBase, vtScope, o.precision) : []), [o.precision, vtScope, vtBase]),
       vtRanges = p.useMemo(
         () => (vtBase && vtIsTpl ? { ...VTMODES.vmModeRanges(vtKind, se, vtBase), ...C } : C),
         [vtBase, se, C],
       ),
       Se = p.useMemo(
-        () => (vtBase ? Tu(vtBase, o.scope, vtRanges, o.precision) : null),
-        [o.precision, o.scope, vtRanges, vtBase],
+        () => (vtBase ? Tu(vtBase, vtScope, vtRanges, o.precision) : null),
+        [o.precision, vtScope, vtRanges, vtBase],
       ),
       _e = Se ? Qut(Se) : null,
       Te = p.useMemo(
@@ -138711,6 +138775,7 @@ const U1 =
             delaySeconds: o.genetic.backtestDelaySeconds,
             plateauNeighbors: o.mode === "portfolio" && o.robustness.enabled ? o.robustness.neighbors : 0,
             stressSymbols: o.mode === "portfolio" && o.robustness.enabled ? we : [],
+            vtBaselineOnly: vtKind === "coins",
           }),
         [$, o.genetic, o.mode, o.portfolio, o.robustness, o.validation, M, ye, Te, we],
       ),
@@ -138784,15 +138849,7 @@ const U1 =
             const nt = Ne === "start" ? await ce.start() : await ce.resume(),
               lr = ce.getProgress().status === "completed";
             if ((P(lr ? "completed" : "idle"), it(ce, lr), lr)) {
-              const tn = nt.top[0],
-                vtSel = nt.coinSelection;
-              n.success(
-                vtSel
-                  ? `Готово! Подобрано монет: ${vtSel.selected.length} из ${vtSel.all ? vtSel.all.coins : vtSel.selected.length}`
-                  : tn
-                    ? `Готово! Лучший вариант: оценка ${(tn.validatedScore ?? tn.fitness.score).toFixed(3)}`
-                    : "Оптимизация завершена",
-              );
+              n.success(vtDoneText(nt));
             }
           } catch (nt) {
             P("error"), it(ce, !1), n.error(`Оптимизация прервана: ${nt instanceof Error ? nt.message : String(nt)}`);
@@ -138874,6 +138931,7 @@ const U1 =
             delaySeconds: Ve.genetic.backtestDelaySeconds,
             plateauNeighbors: Ve.robustness.neighbors,
             stressSymbols: Ne,
+            vtBaselineOnly: vtKind === "coins",
           });
         return { withStress: ce(We), withoutStress: ce([]) };
       }, [$, M, Kt, Ve, We, ct]),
@@ -138985,10 +139043,28 @@ const U1 =
         _ft(vtKind), z(null), B(null), F(null), A(null), L([]), P("idle");
       },
       jt = async () => {
+        if (vtGuard()) return;
         await mft(), Y(0), n.success("Кэш результатов бэктестов очищен");
       },
       nr = (ce) => {
-        w(ce), o.botId !== null && he && Tft(o.botId, he, ce);
+        // Template tabs: the editor shows the mode's absolute windows; only rows changed by the user
+        // are kept as overrides, so an unchanged «Сохранить» does not replace the mode ranges.
+        const vtMode = vtIsTpl && vtBase ? VTMODES.vmModeRanges(vtKind, se, vtBase) : null,
+          vtSame = (Ne, nt) =>
+            !!Ne &&
+            !!nt &&
+            Ne.enabled === nt.enabled &&
+            Math.abs(Ne.min - nt.min) < 1e-9 &&
+            Math.abs(Ne.max - nt.max) < 1e-9,
+          vtOwn = vtMode
+            ? Object.fromEntries(
+                Object.entries(ce).filter(([Ne, nt]) => {
+                  const lr = se.find((tn) => tn.id === Ne);
+                  return !(lr && vtSame(nt, uhe(lr, vtMode[Ne])));
+                }),
+              )
+            : ce;
+        w(vtOwn), o.botId !== null && he && Tft(vtStoreKey(String(o.botId), vtKind), he, vtOwn);
       },
       Je = p.useCallback(
         (ce) => {
@@ -139152,7 +139228,7 @@ const U1 =
       xa = the(o.scope),
       Xa = Rut(o.scope),
       Ca = (zn = o.scope.structurePool) != null && zn.length ? o.scope.structurePool : [...ehe],
-      mr = g,
+      mr = vtBase,
       Mt = typeof ((ea = mr == null ? void 0 : mr.stopLoss) == null ? void 0 : ea.indent) == "number",
       $t =
         Array.isArray((Pi = mr == null ? void 0 : mr.stopLoss) == null ? void 0 : Pi.conditions) &&
@@ -139462,7 +139538,10 @@ const U1 =
                         size: "small",
                         disabled: mt,
                         value: Ve.periodPreset,
-                        onChange: (ce) => l("periodPreset", ce),
+                        onChange: (ce) => {
+                          const Ne = a2(ce);
+                          s((nt) => ({ ...nt, periodPreset: ce, periodFrom: Ne.from, periodTo: Ne.to }));
+                        },
                         options: [
                           { value: "since2020", label: "с 2020" },
                           { value: "3y", label: "3 года" },
@@ -140999,7 +141078,7 @@ const U1 =
                                     : D.phase === "baseline"
                                       ? "gold"
                                       : "blue",
-                              children: Yft[D.phase],
+                              children: D.goal === "coins" && D.phase === "search" ? "подбор монет" : Yft[D.phase],
                             }),
                             R === "paused" ? E.jsx(un, { color: "orange", children: "пауза" }) : null,
                             D.stagnantGenerations >= 2 && D.phase === "search"
@@ -141036,7 +141115,9 @@ const U1 =
                                   E.jsx(ra, {
                                     title:
                                       D.phase === "search"
-                                        ? D.searchMethod === "pattern"
+                                        ? D.goal === "coins"
+                                          ? "Пересчётов набора"
+                                          : D.searchMethod === "pattern"
                                           ? "Вариантов"
                                           : "Поколение"
                                         : D.phase === "baseline"
@@ -141051,7 +141132,7 @@ const U1 =
                                         ? `/ ${D.totalGenerations}`
                                         : `/ ${D.generationSize}`,
                                   }),
-                                  D.phase === "search"
+                                  D.phase === "search" && D.goal !== "coins"
                                     ? E.jsx(Ft, {
                                         type: "secondary",
                                         style: { fontSize: 12 },
@@ -141483,7 +141564,7 @@ const U1 =
                         type: "text",
                         icon: E.jsx(S4, {}),
                         onClick: jt,
-                        disabled: de,
+                        disabled: de || !!vtRunSession.engine,
                         children: ["Очистить кэш (", Z, ")"],
                       }),
                     }),
@@ -141494,7 +141575,7 @@ const U1 =
             }),
           ],
         }),
-        E.jsx(Zdt, { open: _, drafts: se, overrides: C, onClose: () => I(!1), onSave: nr }),
+        E.jsx(Zdt, { open: _, drafts: se, overrides: vtIsTpl ? vtRanges : C, onClose: () => I(!1), onSave: nr }),
         je
           ? E.jsx(rft, {
               open: Kt,
@@ -141600,6 +141681,15 @@ const U1 =
     );
   },
   vtTabStoreKey = "veles_optimizer_tab_v1",
+  vtDoneText = (e) => {
+    const t = e && e.top ? e.top[0] : null,
+      r = e ? e.coinSelection : null;
+    return r
+      ? `Готово! Подобрано монет: ${r.selected.length} из ${r.all ? r.all.coins : r.selected.length}`
+      : t
+        ? `Готово! Лучший вариант: оценка ${(t.validatedScore ?? t.fitness.score).toFixed(3)}`
+        : "Оптимизация завершена";
+  },
   vtBotPrefix = { scalper: "Скальпер", short: "SHORT", long: "LONG DCA", coins: "Монеты" },
   vtModeIntro = {
     scalper:
@@ -141810,6 +141900,26 @@ const U1 =
                 children: ["💤 Без сделок за период (", e.noDeals.length, "): ", e.noDeals.map(ec).join(", ")],
               })
             : null,
+          (e.failed ?? []).length > 0
+            ? E.jsxs(Ft, {
+                type: "warning",
+                style: { fontSize: 12 },
+                children: [
+                  "⚠️ Нет результата бэктеста (",
+                  e.failed.length,
+                  "): ",
+                  e.failed.map(ec).join(", "),
+                  " — в подборе их нет; запустите подбор ещё раз, чтобы досчитать их",
+                ],
+              })
+            : null,
+          e.truncated
+            ? E.jsx(Ft, {
+                type: "secondary",
+                style: { fontSize: 12 },
+                children: `⏱️ Подбор остановлен на лимите ${e.evaluations} пересчётов портфеля — набор может быть не оптимальным.`,
+              })
+            : null,
           o.length > 0
             ? E.jsx(sa, {
                 size: "small",
@@ -141851,6 +141961,11 @@ const U1 =
       i = VTMODES.VM_GOAL_IDS.includes(a)
         ? a
         : (VTMODES.VM_GOAL_IDS.find((o) => o === ba(vtTabStoreKey)) ?? "improve");
+    // Every tab has its own URL (#/optimizer/<tab>), so browser Back moves between tabs; the bare
+    // #/optimizer (menu link) opens the last used tab.
+    p.useEffect(() => {
+      VTMODES.VM_GOAL_IDS.includes(a) ? qa(vtTabStoreKey, a) : r(`/optimizer/${i}`, { replace: !0 });
+    }, [a]);
     return E.jsxs("section", {
       className: "page",
       children: [
@@ -141862,7 +141977,7 @@ const U1 =
         E.jsx(Jb, {
           activeKey: i,
           onChange: (o) => {
-            qa(vtTabStoreKey, o), r(o === "improve" ? "/optimizer" : `/optimizer/${o}`);
+            qa(vtTabStoreKey, o), r(`/optimizer/${o}`);
           },
           items: VTMODES.VM_GOALS.map((o) => ({
             key: o.id,

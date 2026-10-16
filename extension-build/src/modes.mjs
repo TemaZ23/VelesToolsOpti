@@ -353,9 +353,10 @@ const PROFILE_SPECS = Object.freeze({
     grid4: { grid: { count: 5, lastIndent: 4, power: 1.15, ratio: 1.25, firstIndent: 0.6 }, takeProfit: 0.6, stopLoss: 6 },
   },
   long: {
-    classic: { grid: { count: 8, lastIndent: 18, power: 1.25, ratio: 1.3 }, takeProfit: 1, pullUp: 0.3 },
-    tight: { grid: { count: 10, lastIndent: 10, power: 1.15, ratio: 1.2 }, takeProfit: 0.7, pullUp: 0.2 },
-    wide: { grid: { count: 7, lastIndent: 30, power: 1.4, ratio: 1.45 }, takeProfit: 1.5, pullUp: 0.4 },
+    // stopLoss: used only when the «стоп-лосс» box is ticked (DCA templates start without a stop).
+    classic: { grid: { count: 8, lastIndent: 18, power: 1.25, ratio: 1.3 }, takeProfit: 1, pullUp: 0.3, stopLoss: 25 },
+    tight: { grid: { count: 10, lastIndent: 10, power: 1.15, ratio: 1.2 }, takeProfit: 0.7, pullUp: 0.2, stopLoss: 15 },
+    wide: { grid: { count: 7, lastIndent: 30, power: 1.4, ratio: 1.45 }, takeProfit: 1.5, pullUp: 0.4, stopLoss: 35 },
   },
 });
 
@@ -896,88 +897,188 @@ export const vmAbsoluteVerdict = (report) => {
 // COIN SELECTION
 // ═══════════════════════════════════════════════════════════════════
 
+/** Lets the page repaint between heavy evaluations (MessageChannel: not throttled in background tabs). */
+const defaultYield = () =>
+  typeof MessageChannel === 'function'
+    ? new Promise((resolve) => {
+        const channel = new MessageChannel();
+        channel.port1.onmessage = () => {
+          channel.port1.close();
+          resolve();
+        };
+        channel.port2.postMessage(null);
+      })
+    : new Promise((resolve) => setTimeout(resolve, 0));
+
+const YIELD_EVERY_MS = 40;
+
 /**
  * Best subset of coins for a fixed strategy, chosen offline from its deals (no extra backtests).
  * `evaluate(entries)` is the portfolio aggregation (blocking by bots, dynamic limit) returning
- * `{profit, risk, monthlyPercent, drawdownPercent, deals}`. Greedy backward elimination on the
- * stable profit-to-drawdown, then a forward pass that re-adds coins that help.
+ * `{profit, risk, monthlyPercent, drawdownPercent, deals}`; one call over 150 coins can take most
+ * of a second, so the selection is asynchronous, yields to the page, stops on `shouldStop()` (then
+ * resolves to null) and is bounded by `maxEvaluations` aggregations (deterministic, so a resumed run
+ * picks the same set).
+ *
+ * Greedy backward elimination on the stable profit-to-drawdown, then a pass that re-adds removed
+ * coins that help. Removal candidates are the coins with the lowest measured contribution; before a
+ * coin is measured it is ranked by the cheap signals that drive the portfolio's profit-to-drawdown:
+ * its own net profit (lowest first) and its worst deal drawdown (highest first).
  * `folds(entries)` (optional) returns fold metrics `[{profit}]` for the stability factor.
- * Each elimination step tries only the `candidatesPerStep` coins with the lowest contribution
- * (measured once on the full set), so the cost stays linear in the number of coins.
  */
-export const vmSelectCoins = (
+export const vmSelectCoins = async (
   entries,
   evaluate,
-  { minCoins = 5, maxRemoveShare = 0.6, minGain = 0.005, folds = null, candidatesPerStep = 12 } = {},
+  {
+    minCoins = 5,
+    maxRemoveShare = 0.6,
+    minGain = 0.005,
+    folds = null,
+    candidatesPerStep = 12,
+    maxEvaluations = 200,
+    shouldStop = () => false,
+    onProgress = null,
+    yieldNow = defaultYield,
+  } = {},
 ) => {
   const usable = (entries ?? []).filter((entry) => Array.isArray(entry.deals) && entry.deals.length > 0);
-  const score = (subset) => {
+  const step = Math.max(1, candidatesPerStep);
+  let evaluations = 0;
+  let lastYield = Date.now();
+  let stopped = false;
+  const score = async (subset) => {
     if (subset.length === 0) {
       return { score: Number.NEGATIVE_INFINITY, metrics: null };
     }
+    evaluations += 1;
     const metrics = evaluate(subset);
     const raw = { adjustedProfit: metrics.profit, risk: metrics.risk };
-    return { score: vmStableScore(raw, folds ? folds(subset) : null), metrics };
+    const result = { score: vmStableScore(raw, folds ? folds(subset) : null), metrics };
+    if (onProgress) {
+      onProgress(Math.min(evaluations, maxEvaluations), maxEvaluations);
+    }
+    if (Date.now() - lastYield >= YIELD_EVERY_MS) {
+      await yieldNow();
+      lastYield = Date.now();
+    }
+    if (shouldStop()) {
+      stopped = true;
+    }
+    return result;
   };
-  const all = score(usable);
-  const perCoin = usable.map((entry) => {
-    const without = usable.filter((item) => item !== entry);
-    const result = score(without);
-    const net = entry.deals.reduce((sum, deal) => sum + (deal.st === 'F' ? deal.n : 0), 0);
-    return {
-      symbol: entry.symbol,
-      deals: entry.deals.length,
-      net: roundTo(net, 4),
-      maxMae: roundTo(entry.deals.reduce((max, deal) => Math.max(max, deal.m ?? 0), 0), 4),
-      contribution: Number.isFinite(result.score) ? roundTo(all.score - result.score, 4) : 0,
-    };
-  });
-  const floor = Math.max(1, Math.min(usable.length, Math.max(minCoins, Math.ceil(usable.length * (1 - maxRemoveShare)))));
-  let current = [...usable];
-  let currentScore = all.score;
-  const removed = [];
-  const contribution = new Map(perCoin.map((item) => [item.symbol, item.contribution]));
-  while (current.length > floor) {
-    let best = null;
-    const candidates = [...current]
-      .sort((a, b) => (contribution.get(a.symbol) ?? 0) - (contribution.get(b.symbol) ?? 0))
-      .slice(0, Math.max(1, candidatesPerStep));
-    for (const entry of candidates) {
-      const candidate = score(current.filter((item) => item !== entry));
-      if (!best || candidate.score > best.score) {
-        best = { entry, score: candidate.score };
+  const budgetLeft = () => !stopped && evaluations < maxEvaluations;
+
+  const all = await score(usable);
+  if (stopped) {
+    return null;
+  }
+  const signals = new Map(
+    usable.map((entry) => {
+      let net = 0;
+      let mae = 0;
+      for (const deal of entry.deals) {
+        if (deal.st === 'F') {
+          net += deal.n;
+        }
+        mae = Math.max(mae, deal.m ?? 0);
+      }
+      return [entry, { net: roundTo(net, 4), mae: roundTo(mae, 4) }];
+    }),
+  );
+  const byNet = [...usable].sort((a, b) => signals.get(a).net - signals.get(b).net);
+  const byMae = [...usable].sort((a, b) => signals.get(b).mae - signals.get(a).mae);
+  const proxyRank = new Map();
+  for (let index = 0; index < usable.length; index += 1) {
+    for (const entry of [byNet[index], byMae[index]]) {
+      if (!proxyRank.has(entry)) {
+        proxyRank.set(entry, proxyRank.size);
       }
     }
-    if (!best || !(best.score > currentScore + Math.max(minGain * Math.abs(currentScore), EPS))) {
+  }
+  /** Measured contribution: score of the set minus score without the coin (negative = coin hurts). */
+  const contribution = new Map();
+  for (const entry of [...usable].sort((a, b) => proxyRank.get(a) - proxyRank.get(b)).slice(0, 2 * step)) {
+    if (!budgetLeft() || usable.length < 2) {
+      break;
+    }
+    const result = await score(usable.filter((item) => item !== entry));
+    if (Number.isFinite(result.score)) {
+      contribution.set(entry, roundTo(all.score - result.score, 4));
+    }
+  }
+  if (stopped) {
+    return null;
+  }
+  const perCoin = usable.map((entry) => ({
+    symbol: entry.symbol,
+    deals: entry.deals.length,
+    net: signals.get(entry).net,
+    maxMae: signals.get(entry).mae,
+    contribution: contribution.has(entry) ? contribution.get(entry) : null,
+  }));
+
+  const floor = Math.max(1, Math.min(usable.length, Math.max(minCoins, Math.ceil(usable.length * (1 - maxRemoveShare)))));
+  const gainNeeded = (base) => Math.max(minGain * Math.abs(base), EPS);
+  let current = [...usable];
+  let currentScore = all.score;
+  let currentMetrics = all.metrics;
+  const removed = [];
+  const order = (a, b) => {
+    const ca = contribution.has(a) ? contribution.get(a) : Number.POSITIVE_INFINITY;
+    const cb = contribution.has(b) ? contribution.get(b) : Number.POSITIVE_INFINITY;
+    return ca !== cb ? ca - cb : proxyRank.get(a) - proxyRank.get(b);
+  };
+  while (current.length > floor && budgetLeft()) {
+    let best = null;
+    for (const entry of [...current].sort(order).slice(0, step)) {
+      if (!budgetLeft()) {
+        break;
+      }
+      const candidate = await score(current.filter((item) => item !== entry));
+      if (Number.isFinite(candidate.score)) {
+        contribution.set(entry, roundTo(currentScore - candidate.score, 4));
+      }
+      if (!best || candidate.score > best.score) {
+        best = { entry, ...candidate };
+      }
+    }
+    if (!best || !(best.score > currentScore + gainNeeded(currentScore))) {
       break;
     }
     removed.push({ symbol: best.entry.symbol, gain: roundTo(best.score - currentScore, 4) });
     current = current.filter((item) => item !== best.entry);
     currentScore = best.score;
+    currentMetrics = best.metrics;
   }
   // Re-add coins that improve the subset (the greedy order may have removed a useful one).
   for (const entry of usable) {
-    if (current.includes(entry)) {
+    if (current.includes(entry) || !budgetLeft()) {
       continue;
     }
-    const candidate = score([...current, entry]);
-    if (candidate.score > currentScore + Math.max(minGain * Math.abs(currentScore), EPS)) {
+    const candidate = await score([...current, entry]);
+    if (candidate.score > currentScore + gainNeeded(currentScore)) {
       current = [...current, entry];
       currentScore = candidate.score;
+      currentMetrics = candidate.metrics;
       const index = removed.findIndex((item) => item.symbol === entry.symbol);
       if (index >= 0) {
         removed.splice(index, 1);
       }
     }
   }
-  const selected = score(current);
-  const order = new Map(usable.map((entry, index) => [entry.symbol, index]));
+  if (stopped) {
+    return null;
+  }
+  const position = new Map(usable.map((entry, index) => [entry.symbol, index]));
+  const sortKey = (item) => (item.contribution === null ? Number.POSITIVE_INFINITY : item.contribution);
   return {
-    selected: current.map((entry) => entry.symbol).sort((a, b) => order.get(a) - order.get(b)),
+    selected: current.map((entry) => entry.symbol).sort((a, b) => position.get(a) - position.get(b)),
     removed,
     noDeals: (entries ?? []).filter((entry) => !usable.includes(entry)).map((entry) => entry.symbol),
     all: all.metrics ? { ...all.metrics, score: roundTo(all.score, 4) } : null,
-    best: selected.metrics ? { ...selected.metrics, score: roundTo(selected.score, 4) } : null,
-    perCoin: perCoin.sort((a, b) => a.contribution - b.contribution),
+    best: currentMetrics ? { ...currentMetrics, score: roundTo(currentScore, 4) } : null,
+    perCoin: perCoin.sort((a, b) => sortKey(a) - sortKey(b) || a.net - b.net),
+    evaluations,
+    truncated: evaluations >= maxEvaluations,
   };
 };
