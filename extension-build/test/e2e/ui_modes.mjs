@@ -164,6 +164,29 @@ for (const tab of tabs) {
   }
 }
 
+// Template tab ranges editor: «По умолчанию» + «Сохранить» keeps the mode windows (no own overrides).
+if (tabs.includes('scalper')) {
+  await page.getByRole('tab', { name: /Скальпер/ }).click();
+  await page.waitForTimeout(500);
+  const scalperPane = page.locator('.ant-tabs-tabpane-active');
+  await scalperPane.getByText('Ручная настройка').first().click();
+  await page.waitForTimeout(800);
+  await scalperPane.getByRole('button', { name: /Диапазоны поиска/ }).click();
+  const rangesDialog = page.getByRole('dialog');
+  await rangesDialog.waitFor({ timeout: 10000 });
+  await rangesDialog.getByRole('button', { name: 'По умолчанию' }).click();
+  await rangesDialog.getByRole('button', { name: 'Сохранить' }).click();
+  await page.waitForTimeout(800);
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('veles_optimizer_bot_ranges_v3') ?? '{}'));
+  const scalperRanges = Object.entries(stored).find(([key]) => key.endsWith('__scalper'));
+  check(!!scalperRanges, 'scalper ranges are stored under the tab key');
+  check(scalperRanges && Object.keys(scalperRanges[1].overrides).length === 0, `reset + save keeps the mode windows (${scalperRanges ? Object.keys(scalperRanges[1].overrides).length : '—'} own rows)`);
+  check(!Object.keys(stored).some((key) => /^\d+$/.test(key)), 'improve-tab ranges untouched');
+  await shot('90-scalper-manual');
+  await scalperPane.getByText('Устойчивые настр').first().click();
+  await page.waitForTimeout(300);
+}
+
 // Tabs keep their own results: the improve tab is untouched by the mode runs.
 await page.getByRole('tab', { name: /Улучшить стратегию/ }).click();
 await page.waitForTimeout(800);
