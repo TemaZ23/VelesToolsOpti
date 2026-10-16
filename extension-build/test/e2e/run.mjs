@@ -4,6 +4,7 @@
 //
 //   node extension-build/build.mjs --test
 //   node extension-build/test/e2e/run.mjs [--method=pattern|genetic] [--budget=110] [--coins=40]
+//        [--goal=improve|scalper|short|long|coins] [--direction=LONG|SHORT] [--profile=…] [--timeframe=…]
 //
 // Needs playwright-core (PLAYWRIGHT_CORE=/path/to/playwright-core/index.mjs to point at a copy)
 // and a Chromium (CHROMIUM=/path/to/chrome, default /opt/pw-browsers/chromium-*/chrome-linux/chrome).
@@ -69,16 +70,23 @@ await page.goto(`http://127.0.0.1:${port}/index.html`);
 await page.waitForFunction(() => window.__VELES_TEST__ && window.VelesSim, null, { timeout: 30000 });
 
 const summary = await page.evaluate(
-  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode }) => {
+  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate }) => {
     const T = window.__VELES_TEST__;
     const sim = window.VelesSim;
     const strategy = sim.makeStrategy();
     let form =
-      mode === 'single'
-        ? { ...T.Bft({}), mode: 'single', symbolsText: coins.slice(0, 6).join(', ') }
-        : T.Fft(T.Bft({}), coins);
+      goal !== 'improve'
+        ? T.VTMODES.vmSimpleForm(
+            goal,
+            { ...T.Bft(T.VTMODES.vmFormDefaults(goal)), symbolsText: coins.join(', '), template: { ...T.VTMODES.vmDefaultTemplate(goal), ...template } },
+            { presets: T.z$.portfolio, periodOf: (preset) => T.a2(preset), symbols: coins },
+          )
+        : mode === 'single'
+          ? { ...T.Bft({}), mode: 'single', symbolsText: coins.slice(0, 6).join(', ') }
+          : T.Fft(T.Bft({}), coins);
     form = {
       ...form,
+      ...(minDealsRate !== null ? { constraints: { ...form.constraints, vtMinDealsPerCoinMonth: minDealsRate } } : {}),
       stressText: '',
       stressEnabled: false,
       robustness: { ...form.robustness, enabled: robustness },
@@ -154,6 +162,7 @@ const summary = await page.evaluate(
       const final = candidate.validation?.portfolio;
       return {
         key: candidate.key.slice(0, 6),
+        style: candidate.validation?.style ?? candidate.fitness.style ?? null,
         isBase: candidate.isBase,
         searchScore: candidate.fitness.score,
         validatedScore: candidate.validatedScore,
@@ -177,6 +186,17 @@ const summary = await page.evaluate(
       top: leaderboard.top.slice(0, 6).map(describe),
       base: describe(leaderboard.base),
       sensitivity: (leaderboard.sensitivity ?? []).slice(0, 8).map((row) => `${row.label}: ${row.delta}`),
+      goal: leaderboard.goal,
+      algorithm: engine.baseStrategy?.algorithm ?? null,
+      coinSelection: leaderboard.coinSelection
+        ? {
+            selected: leaderboard.coinSelection.selected,
+            removed: leaderboard.coinSelection.removed.map((item) => item.symbol),
+            all: leaderboard.coinSelection.all,
+            best: leaderboard.coinSelection.best,
+            check: leaderboard.coinSelection.check,
+          }
+        : null,
       history: leaderboard.history,
       logs,
       leaderboard,
@@ -194,6 +214,13 @@ const summary = await page.evaluate(
     folds: args.folds !== undefined ? args.folds !== 'false' : null,
     stopAfter: args.stopAfter ? Number(args.stopAfter) : null,
     mode: args.mode ?? 'portfolio',
+    goal: args.goal ?? 'improve',
+    minDealsRate: args.minDealsRate !== undefined ? Number(args.minDealsRate) : null,
+    template: {
+      ...(args.direction ? { direction: args.direction } : {}),
+      ...(args.profile ? { profile: args.profile } : {}),
+      ...(args.timeframe ? { timeframe: args.timeframe } : {}),
+    },
   },
 );
 

@@ -1,4 +1,4 @@
-// Deterministic synthetic market and DCA (long grid) backtester — test only.
+// Deterministic synthetic market and DCA grid backtester (LONG and SHORT, optional stop-loss) — test only.
 // Lets the optimizer run end to end offline: the fake transport in test/e2e answers backtest
 // requests with deals simulated here from the strategy payload the optimizer submits.
 (() => {
@@ -128,8 +128,9 @@
     }
   };
 
-  /** Runs a long DCA grid over the payload's symbol and period. */
+  /** Runs a DCA grid (LONG: buys below, SHORT: sells above) over the payload's symbol and period. */
   const backtest = (payload) => {
+    const short = payload.algorithm === 'SHORT';
     const symbol = payload.symbol ?? payload.symbols?.[0];
     const series = getSeries(symbol);
     const from = Date.parse(payload.from);
@@ -141,6 +142,7 @@
     const orders = [settings.baseOrder, ...(settings.orders ?? [])].filter(Boolean);
     const tp = payload.profit?.checkPnl ?? 1;
     const pullUp = typeof payload.pullUp === 'number' ? payload.pullUp : null;
+    const stop = typeof payload.stopLoss?.indent === 'number' && payload.stopLoss.indent > 0 ? payload.stopLoss.indent : null;
     const entry = (payload.conditions ?? []).find((condition) => condition.indicator === 'RSI');
     const fee = 0.0004;
     const first = Math.max(15, Math.ceil((from - START) / BAR_MS));
@@ -174,12 +176,14 @@
         continue;
       }
       if (pullUp !== null && deal.filled === 1) {
-        deal.anchor = Math.max(deal.anchor, series.close[i] / (1 + pullUp / 100));
+        deal.anchor = short
+          ? Math.min(deal.anchor, series.close[i] * (1 + pullUp / 100))
+          : Math.max(deal.anchor, series.close[i] / (1 + pullUp / 100));
       }
       while (deal.filled < orders.length) {
         const order = orders[deal.filled];
-        const level = deal.anchor * (1 - (order.indent ?? 0) / 100);
-        if (series.low[i] > level) {
+        const level = deal.anchor * (short ? 1 + (order.indent ?? 0) / 100 : 1 - (order.indent ?? 0) / 100);
+        if (short ? series.high[i] < level : series.low[i] > level) {
           break;
         }
         const volume = ((order.volume ?? 0) / 100) * notional;
@@ -190,12 +194,22 @@
         deal.filled += 1;
       }
       const average = deal.cost / deal.qty;
-      const adverse = deal.qty * (average - series.low[i]);
+      const worst = short ? series.high[i] : series.low[i];
+      const adverse = deal.qty * (short ? worst - average : average - worst);
       deal.mae = Math.max(deal.mae, adverse);
-      deal.maePercent = Math.max(deal.maePercent, ((average - series.low[i]) / average) * 100);
-      const target = average * (1 + tp / 100);
-      if (series.high[i] >= target) {
-        const gross = deal.qty * (target - average);
+      deal.maePercent = Math.max(deal.maePercent, ((short ? worst - average : average - worst) / average) * 100);
+      const stopLevel = stop === null ? null : average * (short ? 1 + stop / 100 : 1 - stop / 100);
+      if (stopLevel !== null && (short ? series.high[i] >= stopLevel : series.low[i] <= stopLevel)) {
+        const gross = deal.qty * (short ? average - stopLevel : stopLevel - average);
+        const fees = deal.fees + deal.qty * stopLevel * fee;
+        cycles.push({ ...deal, end: time, status: 'FINISHED', gross, fees, net: gross - fees });
+        deal = null;
+        cooldown = 1;
+        continue;
+      }
+      const target = average * (short ? 1 - tp / 100 : 1 + tp / 100);
+      if (short ? series.low[i] <= target : series.high[i] >= target) {
+        const gross = deal.qty * (short ? average - target : target - average);
         const fees = deal.fees + deal.qty * target * fee;
         cycles.push({ ...deal, end: time, status: 'FINISHED', gross, fees, net: gross - fees });
         deal = null;
@@ -204,7 +218,7 @@
     }
     if (deal) {
       const average = deal.cost / deal.qty;
-      const current = deal.qty * Math.max(0, average - series.close[last]);
+      const current = deal.qty * Math.max(0, short ? series.close[last] - average : average - series.close[last]);
       cycles.push({ ...deal, end: Math.min(to, START + last * BAR_MS), status: 'STARTED', gross: 0, fees: 0, net: 0, active: current });
     }
     const finished = cycles.filter((cycle) => cycle.status === 'FINISHED');
@@ -238,7 +252,7 @@
       maeAbsolute: cycle.mae,
       orders: cycle.executions.map((execution) => ({
         category: 'GRID',
-        side: 'BUY',
+        side: short ? 'SELL' : 'BUY',
         status: 'EXECUTED',
         position: execution.position,
         executedAt: new Date(execution.at).toISOString(),

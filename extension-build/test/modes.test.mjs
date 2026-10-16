@@ -355,6 +355,13 @@ describe('deal style, constraints and score', () => {
     expect(vmStableScore(raw, [{ profit: -1 }, { profit: -2 }])).toBe(1.5);
     expect(vmStableScore({ adjustedProfit: -50, risk: 100 }, [{ profit: 1 }, { profit: 1 }])).toBe(-0.5);
     expect(vmStableScore({ adjustedProfit: 10, risk: 0 }, null)).toBe(100);
+    // Above 50 the ratio is compressed, but stays ordered and below 100.
+    const high = vmStableScore({ adjustedProfit: 120, risk: 1 }, null);
+    const higher = vmStableScore({ adjustedProfit: 200, risk: 1 }, null);
+    expect(high).toBeGreaterThan(50);
+    expect(higher).toBeGreaterThan(high);
+    expect(higher).toBeLessThan(100);
+    expect(vmStableScore({ adjustedProfit: 40, risk: 1 }, null)).toBe(40);
   });
 });
 

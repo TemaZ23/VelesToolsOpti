@@ -1,4 +1,5 @@
 import * as VTPS from "../src/patternSearch.mjs";
+import * as VTMODES from "../src/modes.mjs";
 var Lhe = Object.defineProperty;
 var khe = (e, t, r) => (t in e ? Lhe(e, t, { enumerable: !0, configurable: !0, writable: !0, value: r }) : (e[t] = r));
 var Et = (e, t, r) => khe(e, typeof t != "symbol" ? t + "" : t, r);
@@ -131644,20 +131645,35 @@ ${y}/q1w2e`,
             label: `${e.label}${r ? " (обратный)" : ""}`,
           },
         ],
-  Dut = (e, t) => {
+  // SHORT bots get the LONG presets mirrored (RSI < 30 → RSI > 70); signal indicators keep their flag.
+  vtIhe = (e, t, r, vtDir) =>
+    vtDir === "SHORT" && e.valued
+      ? ihe(e, t, r).map((n) => {
+          const a = VTMODES.vmMirrorCondition({ indicator: n.indicator, basic: !1, value: n.value, operation: n.operation });
+          return a.changed
+            ? {
+                ...n,
+                operation: a.condition.operation,
+                value: a.condition.value,
+                label: `${e.label} ${Xfe(a.condition.operation)} ${Out(a.condition.value)}`,
+              }
+            : n;
+        })
+      : ihe(e, t, r),
+  Dut = (e, t, vtDir = "LONG") => {
     const r = [{ kind: "keep", label: "как есть" }];
     if ((t.structureRemove && r.push({ kind: "off", label: "выключить" }), !t.structureSwap)) return r;
     const n = rhe(e.place),
       a = Mut(e.indicator),
       i = e.basic ? e.reverse : nhe(n);
     for (const o of ahe(t))
-      o.id !== e.indicator && ((t.structureSimilarOnly && a && !Tut(a, o.family)) || r.push(...ihe(o, n, i)));
+      o.id !== e.indicator && ((t.structureSimilarOnly && a && !Tut(a, o.family)) || r.push(...vtIhe(o, n, i, vtDir)));
     return r;
   },
-  Aut = (e, t, r) => {
+  Aut = (e, t, r, vtDir = "LONG") => {
     const n = rhe(e),
       a = [{ kind: "none", label: "нет" }];
-    for (const i of ahe(t)) r.has(i.id) || a.push(...ihe(i, n, nhe(n)));
+    for (const i of ahe(t)) r.has(i.id) || a.push(...vtIhe(i, n, nhe(n), vtDir));
     return a;
   },
   ny = (e, t, r, n) => {
@@ -132215,7 +132231,11 @@ ${y}/q1w2e`,
       const s = r.filter((l) => l.format === "legacy" && Array.isArray(l.conditionPath) && i(l.scope));
       for (const l of ML(s, (c) => Xut(c, t.linkOrderConditions))) {
         const c = l.slots[0],
-          u = Dut({ place: c.scope, indicator: c.indicator, basic: c.value === null, reverse: c.reverse }, t);
+          u = Dut(
+            { place: c.scope, indicator: c.indicator, basic: c.value === null, reverse: c.reverse },
+            t,
+            e && e.algorithm === "SHORT" ? "SHORT" : "LONG",
+          );
         if (u.length < 2) continue;
         const d =
           c.scope === "order" && !t.linkOrderConditions
@@ -132251,7 +132271,7 @@ ${y}/q1w2e`,
         const c = s.filter((g) => g.place === l);
         if (c.length === 0) continue;
         const u = new Set(c.flatMap((g) => g.indicators)),
-          d = Aut(l, t, u);
+          d = Aut(l, t, u, e && e.algorithm === "SHORT" ? "SHORT" : "LONG");
         if (d.length < 2) continue;
         const f = Nut(c),
           h = Math.max(0, np.indexOf(f)),
@@ -133088,9 +133108,12 @@ const Zi = (e, t) => {
   AL = 30.4375,
   uR = 100,
   mdt = (e) => {
-    const t = [];
-    for (const r of e.orders ?? []) {
-      if (r.category !== "GRID" || r.side !== "BUY" || r.status !== "EXECUTED") continue;
+    const t = [],
+      vtOrders = e.orders ?? [],
+      // A SHORT bot averages with SELL grid orders; a cycle with executed BUY grid orders is LONG.
+      vtSide = vtOrders.some((r) => r.category === "GRID" && r.side === "BUY" && r.status === "EXECUTED") ? "BUY" : "SELL";
+    for (const r of vtOrders) {
+      if (r.category !== "GRID" || r.side !== vtSide || r.status !== "EXECUTED") continue;
       const n = Math.round(r.position),
         a = Date.parse(r.executedAt ?? r.createdAt);
       if (n >= 1 && n <= 64 && Number.isFinite(a)) {
@@ -133319,6 +133342,9 @@ const Zi = (e, t) => {
       const g = Math.ceil((vtBaseDeals * vtMinDeals) / 100);
       u < g && (n.push(`Сделок ${u} — меньше ${vtMinDeals}% от исходной (${vtBaseDeals})`), (a += (g - u) / g));
     }
+    // Deal style (holding time, deals per coin-month, grid usage) and the mode's limits on it.
+    const vtStyle = VTMODES.vmDealStats(e);
+    for (const g of VTMODES.vmStyleViolations(vtStyle, r.constraints)) n.push(g.message), (a += g.amount);
     const d = s == null ? void 0 : s.perSymbol,
       f = t.map((g) => {
         const m = d == null ? void 0 : d.get(g.symbol);
@@ -133346,7 +133372,8 @@ const Zi = (e, t) => {
         pnlToRisk: _t(LL(l), 4),
         totalDeals: u,
         cancelledDeals: f.reduce((g, m) => g + m.cancelledDeals, 0),
-        avgDealDuration: 0,
+        avgDealDuration: vtStyle.avgHoldHours,
+        style: vtStyle,
         roiPercent: _t((l.adjustedProfit / Math.max(r.settings.totalDeposit, Er)) * 100, 4),
         roiMonthlyPercent: l.monthlyPercent,
         profitableSymbols: f.filter((g) => g.netQuote - g.openDealLoss > 0).length,
@@ -133367,6 +133394,8 @@ const Zi = (e, t) => {
   // Score of a portfolio variant: "better on both" after the deposit rescale, capped by the median
   // over folds (time slices and coin groups of the search) when fold consistency is on.
   vtPortfolioScore = (v, raw, rescale, r) => {
+    if (VTMODES.vmIsModeMetric(r.target.metric))
+      return { score: VTMODES.vmScore(r.target.metric, { raw, folds: v.folds }), rescale: null };
     if (!rescale) return { score: kL(raw, r.target, r.reference), rescale: null };
     const t = v.folds && r.reference.folds ? VTPS.psFoldScores(v.folds, r.reference.folds, rescale.scale, r.settings.totalDeposit) : [],
       n = t.map((a) => a.score);
@@ -136016,6 +136045,8 @@ const { Text: ru } = cr,
     const t = Date.parse(e);
     return !Number.isFinite(t) || t > Date.now();
   },
+  // Each optimizer tab keeps its own run, result and form; "improve" uses the 2.15 keys.
+  vtStoreKey = (e, t) => (!t || t === "improve" ? e : `${e}__${t}`),
   n2 = "veles_optimizer_state_v3",
   IB = "veles_optimizer_last_result_v3",
   $he = "veles_optimizer_form_v3",
@@ -136054,22 +136085,23 @@ const { Text: ru } = cr,
     const r = Jg(ba(zL));
     (r && r.to === e && t - r.savedAt <= BL) || qa(zL, JSON.stringify({ to: e, savedAt: t }));
   },
-  TB = () => {
-    const e = Jg(ba(n2));
+  TB = (vtKind) => {
+    const e = Jg(ba(vtStoreKey(n2, vtKind)));
     return e && e.version === 3 ? e : null;
   },
   xft = (e) => {
-    if (qa(n2, JSON.stringify(e))) return !0;
+    const vtKey = vtStoreKey(n2, e.config && e.config.goal);
+    if (qa(vtKey, JSON.stringify(e))) return !0;
     const r = [...e.archive]
       .sort((n, a) => u0(n.fitness, a.fitness))
       .filter((n, a) => a < 100 || n.isBase || n.validation);
-    return qa(n2, JSON.stringify({ ...e, archive: r }));
+    return qa(vtKey, JSON.stringify({ ...e, archive: r }));
   },
-  FL = () => {
-    $4(n2);
+  FL = (vtKind) => {
+    $4(vtStoreKey(n2, vtKind));
   },
-  GX = () => {
-    const e = TB();
+  GX = (vtKind) => {
+    const e = TB(vtKind);
     return e
       ? {
           botId: e.config.botId,
@@ -136089,19 +136121,20 @@ const { Text: ru } = cr,
   wft = () => {
     for (const e of The) $4(e);
   },
-  qC = () => {
-    const e = Jg(ba(IB));
+  qC = (vtKind) => {
+    const e = Jg(ba(vtStoreKey(IB, vtKind)));
     return e && e.version === 3 ? e : null;
   },
   Mhe = (e) => {
-    qa(IB, JSON.stringify(e)) || console.warn("[Optimizer] Не удалось сохранить итог оптимизации");
+    qa(vtStoreKey(IB, e.config && e.config.goal), JSON.stringify(e)) ||
+      console.warn("[Optimizer] Не удалось сохранить итог оптимизации");
   },
-  _ft = () => {
-    $4(IB);
+  _ft = (vtKind) => {
+    $4(vtStoreKey(IB, vtKind));
   },
-  Eft = () => Jg(ba($he)),
-  $ft = (e) => {
-    qa($he, JSON.stringify(e));
+  Eft = (vtKind) => Jg(ba(vtStoreKey($he, vtKind))),
+  $ft = (e, vtKind) => {
+    qa(vtStoreKey($he, vtKind), JSON.stringify(e));
   },
   Phe = () => Jg(ba(Ihe)) ?? {},
   Ift = (e, t) => {
@@ -136228,8 +136261,8 @@ class Nf {
       (this.scheduler = this.createScheduler()),
       (this.periods = XX(t));
   }
-  static fromSavedState(t, r = {}) {
-    const n = TB();
+  static fromSavedState(t, r = {}, vtKind) {
+    const n = TB(vtKind);
     if (!n) return null;
     const a = new Nf(n.config, t, r);
     return a.restore(n), a;
@@ -136285,6 +136318,8 @@ class Nf {
         searchPath: this.searchPath,
         searchSummary: this.searchSummary,
         searchFolds: this.searchFolds,
+        goal: this.config.goal ?? "improve",
+        coinSelection: this.coinSelection ?? null,
       }
     );
   }
@@ -136320,12 +136355,16 @@ class Nf {
       this.emitProgress("preparing");
     const { config: t } = this;
     this.log("info", `🚀 Оптимизация ${t.mode === "portfolio" ? "стратегии" : "бота"} ${t.botName ?? `#${t.botId}`}`);
-    const n = await (this.deps.fetchStrategy ?? ((i) => D$(i)))(t.botId);
+    const vtShell = await (this.deps.fetchStrategy ?? ((i) => D$(i)))(t.botId),
+      vtPrepared = vtPrepareRun(t, vtShell),
+      n = vtPrepared.baseStrategy;
     if (
-      ((this.baseStrategy = n),
+      ((this.config = vtPrepared.config),
+      this.logPreparedBase(vtPrepared),
+      (this.baseStrategy = n),
       (this.quoteCurrency = DL(n)),
-      (this.space = Tu(n, t.scope, t.ranges, t.precision)),
-      this.space.dimensions.length === 0)
+      (this.space = Tu(n, this.config.scope, this.config.ranges, this.config.precision)),
+      this.space.dimensions.length === 0 && this.config.goal !== "coins")
     )
       throw new Error(
         "Нечего оптимизировать: все параметры выключены или диапазоны пустые. Включите хотя бы один пункт в «Что подбираем».",
@@ -136481,6 +136520,10 @@ class Nf {
   async runLoop() {
     try {
       if (this.phase === "baseline" && (await this.runBaseline(), this.stopRequested)) return this.getLeaderboard();
+      if (this.config.goal === "coins" && this.phase !== "done") {
+        if ((await this.runCoinSelection(), this.stopRequested)) return this.getLeaderboard();
+        return (this.phase = "done"), this.finish();
+      }
       if (this.phase === "search" && this.usePattern) {
         if ((await this.runPatternSearch(), this.stopRequested)) return this.getLeaderboard();
         this.scheduler.undrain(), this.enterPostSearchPhase();
@@ -136562,7 +136605,9 @@ class Nf {
         a.adjustedProfit > 0 ||
           this.log(
             "warning",
-            "⚠️ Исходная стратегия убыточна на этом периоде — оценка «лучше по обоим» заменена на прибыль/просадку",
+            VTMODES.vmIsAbsoluteGoal(this.config.goal)
+              ? "⚠️ Исходный шаблон убыточен на этом периоде — поиск начнёт с него и будет искать прибыльные настройки"
+              : "⚠️ Исходная стратегия убыточна на этом периоде — оценка «лучше по обоим» заменена на прибыль/просадку",
           )),
       !this.screeningSymbols)
     ) {
@@ -136582,6 +136627,78 @@ class Nf {
       this.saveStateNow();
   }
   // Score of the original against itself: 1 for "better on both", otherwise the target metric.
+  // What the run optimizes when it is not the bot as is (template or SHORT mirror) — for the log.
+  logPreparedBase(t) {
+    const r = t.notes,
+      n = t.baseStrategy;
+    if (!(r && n)) return;
+    if (r.kind === "mirror") {
+      r.alreadyShort
+        ? this.log("info", "🪞 Бот уже SHORT — оптимизируем его как есть, оценка по собственной прибыли и просадке")
+        : this.log(
+            "info",
+            `🪞 SHORT-зеркало бота: отражено условий — ${r.changed}${r.signals ? `; сигнальных индикаторов оставлено как есть — ${r.signals} (проверьте их направление в Veles)` : ""}`,
+          );
+      return;
+    }
+    const a = n.settings ? 1 + (n.settings.orders ?? []).length : 1,
+      i = n.profit && typeof n.profit.checkPnl == "number" ? n.profit.checkPnl : null,
+      o = n.stopLoss && typeof n.stopLoss.indent == "number" ? n.stopLoss.indent : null,
+      s = (n.conditions ?? []).map((l) => `${l.indicator} ${Xfe(l.operation)} ${l.value}`).join(" и ");
+    this.log(
+      "info",
+      `🧩 Шаблон ${n.algorithm}: ордеров ${a}${i !== null ? `, тейк ${i}%` : ""}${o !== null ? `, стоп ${o}%` : ""}${s ? `, вход: ${s}` : ""} — дальше поиск подбирает параметры и фильтры`,
+    );
+  }
+  // Coin selection (tab «Подбор монет»): the bot as is on every coin (baseline), then the best subset
+  // chosen offline from its deals — no extra backtests. Checked on the last third of the period: the
+  // subset picked on the first two thirds against all coins.
+  async runCoinSelection() {
+    const t = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
+      r = this.robustnessSettings(),
+      n = (d) => {
+        const f = xB(d, r).metrics;
+        return {
+          profit: f.adjustedProfit,
+          risk: f.risk,
+          monthlyPercent: f.monthlyPercent,
+          drawdownPercent: f.drawdownPercent,
+          coins: d.length,
+        };
+      },
+      a = this.universe("final").period,
+      i = VTPS.psTimeFolds(a.from, a.to),
+      o = (d) => (i.length >= 2 ? VTPS.psFoldMetrics(d, i, (f) => OX(f, r)) : null),
+      s = { minCoins: Math.max(3, Math.min(10, Math.ceil(t.length * 0.3))), folds: o };
+    this.log("info", `🪙 Подбор монет по сделкам ${t.length} бэктестов — без новых бэктестов`);
+    const l = VTMODES.vmSelectCoins(t, n, s),
+      c = Date.parse(a.from),
+      u = Date.parse(a.to),
+      h = Math.round(c + ((u - c) * 2) / 3),
+      v = VTMODES.vmSelectCoins(VTPS.psSliceEntries(t, c, h), n, { ...s, folds: null }),
+      g = new Set(v.selected),
+      m = VTPS.psSliceEntries(t, h, u + 1).filter((d) => d.deals.length > 0),
+      y = m.filter((d) => g.has(d.symbol)),
+      b = (d) => (d ? { ...d, score: VTMODES.vmProfitToRisk(d.profit, d.risk) } : null),
+      S =
+        m.length > 0 && y.length > 0
+          ? { splitAt: new Date(h).toISOString(), trainSelected: v.selected, all: b(n(m)), selected: b(n(y)) }
+          : null;
+    this.coinSelection = { ...l, check: S, period: a };
+    const x = (d) => (d ? `${d.monthlyPercent.toFixed(2)}%/мес, просадка ${d.drawdownPercent.toFixed(1)}%, P/R ${d.score.toFixed(2)}` : "—");
+    this.log(
+      "success",
+      `🪙 Лучший набор: ${l.selected.length} из ${t.length} монет — ${x(l.best)} (все монеты: ${x(l.all)})`,
+    ),
+      l.removed.length > 0 && this.log("info", `➖ Убрать: ${l.removed.map((d) => ec(d.symbol)).join(", ")}`),
+      l.noDeals.length > 0 && this.log("info", `💤 Без сделок за период: ${l.noDeals.map((d) => ec(d)).join(", ")}`),
+      S &&
+        this.log(
+          S.selected.score >= S.all.score ? "success" : "warning",
+          `🔎 Проверка на последней трети периода (набор выбран по первым двум третям): ${x(S.selected)} против ${x(S.all)} у всех монет`,
+        ),
+      this.saveStateNow();
+  }
   selfScore(t) {
     if (!t.portfolio) return t;
     const r = vtReference(t),
@@ -136644,8 +136761,9 @@ class Nf {
           cacheHits: this.cacheHits,
           elapsedMs: this.elapsedBeforeMs,
         }),
-        FL());
-    const r = t.top[0];
+        FL(this.config.goal));
+    const r = this.config.goal === "coins" ? null : t.top[0],
+      vtAbsolute = VTMODES.vmIsTemplateGoal(this.config.goal);
     if (r) {
       const n = t.base,
         a = [`score ${(r.validatedScore ?? r.fitness.score).toFixed(3)}`],
@@ -136680,7 +136798,12 @@ class Nf {
       } else
         n &&
           n.key === r.key &&
-          this.log("warning", "📊 Исходные настройки оказались лучшими из найденных — менять ботов не нужно");
+          this.log(
+            "warning",
+            vtAbsolute
+              ? "📊 Поиск не улучшил исходный шаблон — попробуйте другой профиль, таймфрейм или более длинный период"
+              : "📊 Исходные настройки оказались лучшими из найденных — менять ботов не нужно",
+          );
     }
     if (this.robustnessEnabled) {
       const n = t.top.filter((o) => o.robustness),
@@ -136695,7 +136818,9 @@ class Nf {
       a.length > 0
         ? this.log(
             "success",
-            `🎯 Устойчивое улучшение найдено: ${a.map((o) => o.key.slice(0, 6)).join(", ")} — лучше исходной почти каждый год, на монетах и периоде, которых поиск не видел. Это не гарантия на будущее: запускайте сначала на части ботов.`,
+            vtAbsolute
+              ? `🎯 Устойчивый вариант найден: ${a.map((o) => o.key.slice(0, 6)).join(", ")} — прибылен почти каждый год и на монетах, которых поиск не видел. Это не гарантия на будущее: запускайте сначала на части монет и с малым депозитом.`
+              : `🎯 Устойчивое улучшение найдено: ${a.map((o) => o.key.slice(0, 6)).join(", ")} — лучше исходной почти каждый год, на монетах и периоде, которых поиск не видел. Это не гарантия на будущее: запускайте сначала на части ботов.`,
           )
         : i.length > 0
           ? this.log(
@@ -136705,7 +136830,9 @@ class Nf {
           : n.length > 0 &&
             this.log(
               "warning",
-              "⚠️ Устойчивого улучшения не найдено: варианты лучше исходной только на части истории — похоже на подгонку. Честнее оставить исходные настройки или повторить поиск с другим набором параметров.",
+              vtAbsolute
+                ? "⚠️ Устойчивого варианта не найдено: прибыль держится только на части истории — похоже на подгонку. Попробуйте другой профиль, таймфрейм или корзину монет."
+                : "⚠️ Устойчивого улучшения не найдено: варианты лучше исходной только на части истории — похоже на подгонку. Честнее оставить исходные настройки или повторить поиск с другим набором параметров.",
             );
     }
     return (
@@ -137101,7 +137228,19 @@ class Nf {
           isBase: d.isBase,
           changed: fhe(this.space, this.baseGenome, d.genome).filter((f) => f.changed).length,
         })),
-        { keys: u, improved: d } = VTPS.psPickFinalists(c, s, l);
+        { keys: vtPicked, improved: d } = VTPS.psPickFinalists(c, s, l),
+        // Absolute modes: when no variant passes the limits on the search coins, the full check gets
+        // the ones closest to passing (the template itself may not pass them).
+        u =
+          vtPicked.length === 0 && VTMODES.vmIsAbsoluteGoal(this.config.goal)
+            ? t.filter((f) => !f.isBase).slice(0, s).map((f) => f.key)
+            : vtPicked;
+      vtPicked.length === 0 &&
+        u.length > 0 &&
+        this.log(
+          "warning",
+          "⚠️ На монетах поиска ни один вариант не прошёл ограничения — проверяем на всех монетах ближайших к ним",
+        );
       return (
         d
           ? this.log(
@@ -137224,7 +137363,12 @@ class Nf {
               "success",
               `🏆 На всех монетах исходную обошли по выбранной оценке: ${h.length} (но не одновременно по прибыли и просадке)`,
             )
-          : this.log("warning", "📊 На всех монетах ни один вариант не оказался лучше исходной");
+          : this.log(
+              "warning",
+              VTMODES.vmIsAbsoluteGoal(this.config.goal)
+                ? "📊 На всех монетах ни один вариант не прошёл ограничения или не обошёл исходный шаблон"
+                : "📊 На всех монетах ни один вариант не оказался лучше исходной",
+            );
     }
     this.callbacks.onLeaderboard(s);
   }
@@ -137318,18 +137462,19 @@ class Nf {
       o = new Set(i.symbols),
       s = (u = this.screeningSymbols) != null && u.some((d) => o.has(d)) ? this.screeningSymbols : null,
       l = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
-      c = VTPS.psScaleEntries(await this.finalEntriesFor(t.key, t.genome), vtDepositScale(t));
-    return Idt({
-      baseEntries: l,
-      entries: c,
-      settings: this.robustnessSettings(),
-      period: i.period,
-      screeningSymbols: s,
-      searchFrom: this.periods.search.from,
-      finalBetter: r,
-      plateau: n,
-      stress: a,
-    });
+      c = VTPS.psScaleEntries(await this.finalEntriesFor(t.key, t.genome), vtDepositScale(t)),
+      vtReport = Idt({
+        baseEntries: l,
+        entries: c,
+        settings: this.robustnessSettings(),
+        period: i.period,
+        screeningSymbols: s,
+        searchFrom: this.periods.search.from,
+        finalBetter: r,
+        plateau: n,
+        stress: a,
+      });
+    return VTMODES.vmIsTemplateGoal(this.config.goal) ? VTMODES.vmAbsoluteVerdict(vtReport) : vtReport;
   }
   stressSymbols() {
     var r;
@@ -137998,6 +138143,8 @@ const U1 =
       stressText: t.stressText ?? "",
       stressEnabled: t.stressEnabled ?? !0,
       simpleSearchMonths: typeof t.simpleSearchMonths == "number" ? t.simpleSearchMonths : 0,
+      goal: VTMODES.VM_GOAL_IDS.includes(t.goal) ? t.goal : "improve",
+      template: t.template ?? null,
     };
   },
   Fft = (e, t) => {
@@ -138081,7 +138228,18 @@ const U1 =
         enabled: e.mode === "portfolio" && e.robustness.enabled,
         stressSymbols: e.mode === "portfolio" && e.robustness.enabled ? Go(e.stressText) : [],
       },
+      goal: e.goal ?? "improve",
+      template: VTMODES.vmNormalizeTemplate(e.goal, e.template),
     };
+  },
+  // Base strategy and search ranges of a run: improve/coins use the bot as is; template modes build the
+  // template on the bot and open absolute ranges for its parameters. The prepared config is stored in
+  // the run, so a resumed run rebuilds exactly the same space.
+  vtPrepareRun = (e, t) => {
+    if (!VTMODES.vmIsTemplateGoal(e.goal) || e.vtPrepared || !t) return { config: e, baseStrategy: t, notes: null };
+    const { strategy: r, notes: n } = VTMODES.vmPrepareBase(e, t),
+      a = { ...VTMODES.vmModeRanges(e.goal, che(r, e.scope, e.precision), r), ...(e.ranges ?? {}) };
+    return { config: { ...e, ranges: a, vtPrepared: !0 }, baseStrategy: r, notes: n };
   },
   Ohe = 24 * 60 * 60 * 1e3,
   fR = (e, t) => {

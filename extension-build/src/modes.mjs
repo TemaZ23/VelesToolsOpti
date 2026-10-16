@@ -16,7 +16,6 @@ const DAY_MS = 24 * HOUR_MS;
 const MONTH_DAYS = 30.4375;
 
 /** @param {number} value @param {number} min @param {number} max */
-const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 /** @param {number} value @param {number} digits */
 const roundTo = (value, digits) => {
@@ -614,6 +613,17 @@ export const vmModeRanges = (goal, drafts, strategy) => {
           set(dim, dim.baseValue * 0.4, dim.baseValue * 2.2);
         }
         break;
+      case 'orderVolume':
+        // The entry order must stay meaningful: a scalper enters with most of its volume, a DCA bot
+        // with a small share (otherwise the search drifts to "enter with 1 % and average").
+        if ((dim.orderIndex ?? 0) === 0) {
+          if (goal === 'scalper') {
+            set(dim, 25, 80);
+          } else {
+            set(dim, 2, 30);
+          }
+        }
+        break;
       case 'conditionValue': {
         const target = Array.isArray(dim.targets) ? dim.targets[0] : null;
         const condition = target ? getAtPath(strategy, target.path) : null;
@@ -640,6 +650,12 @@ export const vmModeRanges = (goal, drafts, strategy) => {
 
 /** Default period preset of a mode: scalpers on minute timeframes are checked on the last year. */
 export const vmPeriodPreset = (goal) => (goal === 'scalper' ? '1y' : 'since2020');
+
+/** Form fields a fresh tab of a mode starts with (merged under the saved form). */
+export const vmFormDefaults = (goal) =>
+  goal === 'improve' || !VM_GOAL_IDS.includes(goal)
+    ? { goal: 'improve' }
+    : { goal, template: vmDefaultTemplate(goal), periodPreset: vmPeriodPreset(goal) };
 
 /**
  * Form of a mode's one-click run (the template modes' counterpart of 2.15 `Fft`). `presets` are the
@@ -768,10 +784,26 @@ export const vmStyleViolations = (stats, constraints) => {
 /** Metric ids handled by this module. */
 export const vmIsModeMetric = (metric) => metric === VM_STABLE_METRIC;
 
-/** Profit-to-drawdown with a floor for the drawdown (same rule as the 2.15 `LL`). */
+const RATIO_SOFT_CAP = 50;
+const RATIO_MAX = 100;
+
+/**
+ * Profit-to-drawdown with a floor for the drawdown. Up to 50 it is the plain ratio; above that it
+ * is compressed smoothly towards 100 (never a flat cap), so very high ratios — a tiny drawdown
+ * on a long period — still order the variants instead of all tying at the limit.
+ */
 export const vmProfitToRisk = (profit, risk, floor = 1e-6) => {
-  const value = risk > floor ? profit / risk : profit > 0 ? 100 : 0;
-  return clamp(value, -100, 100);
+  if (!(risk > floor)) {
+    return profit > 0 ? RATIO_MAX : 0;
+  }
+  const value = profit / risk;
+  const magnitude = Math.abs(value);
+  if (magnitude <= RATIO_SOFT_CAP) {
+    return value;
+  }
+  const span = RATIO_MAX - RATIO_SOFT_CAP;
+  const soft = RATIO_SOFT_CAP + span * (1 - Math.exp(-(magnitude - RATIO_SOFT_CAP) / span));
+  return Math.sign(value) * soft;
 };
 
 /**
@@ -861,8 +893,14 @@ export const vmAbsoluteVerdict = (report) => {
  * `{profit, risk, monthlyPercent, drawdownPercent, deals}`. Greedy backward elimination on the
  * stable profit-to-drawdown, then a forward pass that re-adds coins that help.
  * `folds(entries)` (optional) returns fold metrics `[{profit}]` for the stability factor.
+ * Each elimination step tries only the `candidatesPerStep` coins with the lowest contribution
+ * (measured once on the full set), so the cost stays linear in the number of coins.
  */
-export const vmSelectCoins = (entries, evaluate, { minCoins = 5, maxRemoveShare = 0.6, minGain = 0.005, folds = null } = {}) => {
+export const vmSelectCoins = (
+  entries,
+  evaluate,
+  { minCoins = 5, maxRemoveShare = 0.6, minGain = 0.005, folds = null, candidatesPerStep = 12 } = {},
+) => {
   const usable = (entries ?? []).filter((entry) => Array.isArray(entry.deals) && entry.deals.length > 0);
   const score = (subset) => {
     if (subset.length === 0) {
@@ -889,9 +927,13 @@ export const vmSelectCoins = (entries, evaluate, { minCoins = 5, maxRemoveShare 
   let current = [...usable];
   let currentScore = all.score;
   const removed = [];
+  const contribution = new Map(perCoin.map((item) => [item.symbol, item.contribution]));
   while (current.length > floor) {
     let best = null;
-    for (const entry of current) {
+    const candidates = [...current]
+      .sort((a, b) => (contribution.get(a.symbol) ?? 0) - (contribution.get(b.symbol) ?? 0))
+      .slice(0, Math.max(1, candidatesPerStep));
+    for (const entry of candidates) {
       const candidate = score(current.filter((item) => item !== entry));
       if (!best || candidate.score > best.score) {
         best = { entry, score: candidate.score };
