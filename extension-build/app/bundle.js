@@ -133272,6 +133272,87 @@ const Zi = (e, t) => {
       },
     };
   },
+  // Coin selection: xB(...).metrics (profit / risk / %) for many subsets of one entry list. Same sweep
+  // as CL (concurrency limit, dynamic limit, close order, drawdown of the realised P&L, peak
+  // concurrent MAE), but the deals are sorted once and a subset is a mask: no timeline rows, series or
+  // Date objects, ~15× faster. Subsets must keep the order of the list (ties in start time).
+  vtPortfolioEvaluator = (e, t) => {
+    const r = Math.max(1, Math.round(t.maxConcurrentPositions)),
+      n = t.dynamicBlockOrder && t.dynamicBlockOrder > 0 ? t.dynamicBlockOrder : null,
+      a = new Map(e.map((c, u) => [c, u])),
+      i = [];
+    e.forEach((c, u) => {
+      for (const d of c.deals ?? [])
+        i.push({ k: u, s: d.s, e: d.e, st: ydt[d.st], n: d.n, m: d.m, l: (n && d.o && d.o[n - 1]) || null });
+    }),
+      i.sort((c, u) => c.s - u.s);
+    const o = [...new Set(i.flatMap((c) => [c.s, c.e]))].sort((c, u) => c - u);
+    return (c) => {
+      const u = new Uint8Array(e.length);
+      for (const C of c) {
+        const w = a.get(C);
+        w !== void 0 && (u[w] = 1);
+      }
+      let d = 0,
+        f = 0,
+        h = 0,
+        v = null,
+        g = 0,
+        m = 0;
+      const y = [],
+        b = (C) => {
+          if (v === null) {
+            v = C;
+            return;
+          }
+          C > v ? (v = C) : v - C > g && (g = v - C);
+        };
+      for (let C = 0; C < o.length; C++) {
+        const w = o[C];
+        for (let _ = y.length - 1; _ >= 0; _--) {
+          const I = y[_];
+          if (I.e !== w) continue;
+          if (I.st === "STARTED") {
+            f += I.m;
+            continue;
+          }
+          y.splice(_, 1), (d += I.n), b(d);
+        }
+        for (; m < i.length && i[m].s <= w; m++) {
+          const _ = i[m];
+          if (!u[_.k]) continue;
+          if (_.e <= w) {
+            _.st !== "STARTED" && ((d += _.n), b(d));
+            continue;
+          }
+          let I = r;
+          if (n !== null) {
+            let $ = 0;
+            for (const T of y) typeof T.l == "number" && T.l <= w && ($ += 1);
+            I = Math.max(1, r - $);
+          }
+          y.length >= I || y.push(_);
+        }
+        let _ = 0;
+        for (const I of y) _ += I.m;
+        _ > h && (h = _);
+      }
+      const S = Math.min(...c.map((C) => Date.parse(C.from))),
+        x = Math.max(...c.map((C) => Date.parse(C.to))),
+        C = Number.isFinite(S) && Number.isFinite(x) && x > S ? (x - S) / vhe : 1,
+        w = Math.max(C / AL, 1 / AL),
+        _ = d - (t.penalizeActiveMae ? f : 0),
+        I = Math.max(h, g),
+        $ = Math.max(t.totalDeposit, Er);
+      return {
+        profit: _t(_, 4),
+        risk: _t(I, 4),
+        monthlyPercent: _t((_ / $ / w) * 100, 4),
+        drawdownPercent: _t((I / $) * 100, 4),
+        coins: c.length,
+      };
+    };
+  },
   xdt = (e, t) => {
     if (!(t.profit > Er && t.risk > Er)) return null;
     const r = e.adjustedProfit / t.profit,
@@ -136693,7 +136774,7 @@ class Nf {
   async runCoinSelection() {
     const t = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
       r = this.robustnessSettings(),
-      n = (d) => {
+      vtExact = (d) => {
         const f = xB(d, r).metrics;
         return {
           profit: f.adjustedProfit,
@@ -136703,15 +136784,33 @@ class Nf {
           coins: d.length,
         };
       },
+      // Fast evaluator per entry list, checked against xB on the whole list (falls back to xB if they
+      // ever disagree). this.deps.vtCheckEvaluator (tests) also compares random subsets.
+      vtEvaluatorFor = (d) => {
+        const f = vtPortfolioEvaluator(d, r),
+          h = d.filter((y) => y.deals.length > 0),
+          v = (y, b) => ["profit", "risk", "monthlyPercent", "drawdownPercent"].every((S) => Math.abs(y[S] - b[S]) <= 1e-6 * Math.max(1, Math.abs(b[S]))),
+          g = [h];
+        if (this.deps.vtCheckEvaluator)
+          for (let y = 0; y < 12; y++) g.push(h.filter((b, S) => (S * 7 + y * 3) % 5 !== 0 && (S + y) % 3 !== 1));
+        for (const y of g.filter((b) => b.length > 0))
+          if (!v(f(y), vtExact(y)))
+            return (
+              this.log("warning", "⚠️ Быстрый пересчёт портфеля разошёлся с «Группами бэктестов» — подбор пойдёт медленнее, точным способом"),
+              vtExact
+            );
+        return f;
+      },
+      n = vtEvaluatorFor(t),
       a = this.universe("final").period,
-      i = VTPS.psTimeFolds(a.from, a.to),
-      o = (d) => (i.length >= 2 ? VTPS.psFoldMetrics(d, i, (f) => OX(f, r)) : null),
       vtSel = this.config.coinSelection ?? {},
+      // Plain profit / drawdown (no fold factor: it doubles the cost of every aggregation); stability
+      // over time is checked separately on the last third of the period.
       s = {
         minCoins:
           vtSel.minCoins > 0 ? Math.min(t.length, vtSel.minCoins) : Math.max(3, Math.min(10, Math.ceil(t.length * 0.3))),
         maxRemoveShare: vtSel.maxRemoveShare ?? 0.6,
-        folds: o,
+        folds: null,
       };
     this.log("info", `🪙 Подбор монет по сделкам ${t.length} бэктестов — без новых бэктестов`);
     // Async and bounded: an aggregation over ~150 coins takes most of a second, so the selection yields
@@ -136720,6 +136819,7 @@ class Nf {
       vtProgress = (d, f) => {
         (this.vtCoinProgress = { done: d, total: f }), this.emitProgress();
       },
+      vtStarted = Date.now(),
       l = await VTMODES.vmSelectCoins(t, n, {
         ...s,
         maxEvaluations: Math.min(400, Math.max(200, 2 * t.length)),
@@ -136727,10 +136827,12 @@ class Nf {
         onProgress: vtProgress,
       });
     if (!l) return;
+    this.log("info", `🪙 Пересчётов портфеля: ${l.evaluations} за ${UC(Date.now() - vtStarted)}`);
     const c = Date.parse(a.from),
       u = Date.parse(a.to),
       h = Math.round(c + ((u - c) * 2) / 3),
-      v = await VTMODES.vmSelectCoins(VTPS.psSliceEntries(t, c, h), n, {
+      vtTrain = VTPS.psSliceEntries(t, c, h),
+      v = await VTMODES.vmSelectCoins(vtTrain, vtEvaluatorFor(vtTrain), {
         ...s,
         folds: null,
         maxEvaluations: Math.min(240, Math.max(120, t.length)),
@@ -136745,8 +136847,12 @@ class Nf {
       b = (d) => (d ? { ...d, score: VTMODES.vmProfitToRisk(d.profit, d.risk) } : null),
       S =
         m.length > 0 && y.length > 0
-          ? { splitAt: new Date(h).toISOString(), trainSelected: v.selected, all: b(n(m)), selected: b(n(y)) }
+          ? { splitAt: new Date(h).toISOString(), trainSelected: v.selected, all: b(vtExact(m)), selected: b(vtExact(y)) }
           : null;
+    // The reported numbers of the chosen set come from the exact aggregation.
+    const vtChosen = new Set(l.selected),
+      vtBest = l.best ? vtExact(t.filter((d) => vtChosen.has(d.symbol))) : null;
+    vtBest && (l.best = { ...vtBest, score: _t(VTMODES.vmProfitToRisk(vtBest.profit, vtBest.risk), 4) });
     const vtHave = new Set(t.map((d) => d.symbol)),
       vtFailed = this.universe("final").symbols.filter((d) => !vtHave.has(d));
     this.coinSelection = { ...l, failed: vtFailed, check: S, period: a };
@@ -141848,7 +141954,7 @@ const U1 =
           : "—",
       a = e.check,
       i = a && a.selected && a.all ? a.selected.score >= a.all.score - 1e-9 : null,
-      o = [...(e.perCoin ?? [])].sort((s, l) => s.contribution - l.contribution),
+      o = [...(e.perCoin ?? [])],
       c = new Set(e.selected);
     return E.jsxs(Wr, {
       size: "small",
@@ -141961,12 +142067,15 @@ const U1 =
                       children: [
                         "Вклад в P/R ",
                         E.jsx(wn, {
-                          text: "На сколько упадёт P/R портфеля без этой монеты (на всех монетах). Отрицательный — без монеты портфель лучше.",
+                          text: "На сколько упадёт P/R портфеля без этой монеты (на всех монетах). Отрицательный — без монеты портфель лучше. «—» — монета не пересчитывалась отдельно: по своей прибыли и просадке сделок она не выглядела подозрительной.",
                         }),
                       ],
                     }),
                     dataIndex: "contribution",
-                    render: (s) => E.jsx(Ft, { type: s < 0 ? "danger" : void 0, children: s.toFixed(2) }),
+                    render: (s) =>
+                      typeof s == "number"
+                        ? E.jsx(Ft, { type: s < 0 ? "danger" : void 0, children: s.toFixed(2) })
+                        : E.jsx(Ft, { type: "secondary", children: "—" }),
                   },
                 ],
               })
@@ -141974,6 +142083,41 @@ const U1 =
         ],
       }),
     });
+  },
+  // A render error inside one tab stays in that tab (the run itself goes on and is re-attached).
+  vtTabBoundary = class extends p.Component {
+    constructor(e) {
+      super(e), (this.state = { error: null });
+    }
+    static getDerivedStateFromError(e) {
+      return { error: e };
+    }
+    componentDidCatch(e) {
+      console.error("[Veles Tools] Ошибка вкладки оптимизатора", e);
+    }
+    render() {
+      const e = this.state.error;
+      return e
+        ? E.jsx(dn, {
+            type: "error",
+            showIcon: !0,
+            message: "Ошибка отображения вкладки",
+            description: E.jsxs(or, {
+              vertical: !0,
+              gap: 8,
+              children: [
+                E.jsx(Ft, { children: String((e && e.message) || e) }),
+                E.jsx(Ft, {
+                  type: "secondary",
+                  style: { fontSize: 12 },
+                  children: "Идущий прогон не прерван. Если ошибка повторяется — сообщите о ней.",
+                }),
+                E.jsx(Ge, { onClick: () => this.setState({ error: null }), children: "Показать снова" }),
+              ],
+            }),
+          })
+        : this.props.children;
+    }
   },
   vtOptimizerPage = ({ extensionReady: e }) => {
     const t = pd(),
@@ -142004,7 +142148,7 @@ const U1 =
           items: VTMODES.VM_GOALS.map((o) => ({
             key: o.id,
             label: n.engine && n.kind === o.id ? `${o.tab} ⏳` : o.tab,
-            children: E.jsx(Zft, { extensionReady: e, kind: o.id, embedded: !0 }),
+            children: E.jsx(vtTabBoundary, { children: E.jsx(Zft, { extensionReady: e, kind: o.id, embedded: !0 }) }),
           })),
         }),
       ],

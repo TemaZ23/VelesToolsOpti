@@ -1108,12 +1108,13 @@ export const vmSelectCoins = async (
     if (stopped) {
       break;
     }
-    const result = await score([...current, item.entry]);
+    const withCoin = usable.filter((entry) => entry === item.entry || current.includes(entry));
+    const result = await score(withCoin);
     if (!result) {
       break;
     }
     if (result.score > currentScore + gainNeeded(currentScore)) {
-      current = [...current, item.entry];
+      current = withCoin;
       currentScore = result.score;
       currentMetrics = result.metrics;
       removed.splice(removed.indexOf(item), 1);
@@ -1131,7 +1132,7 @@ export const vmSelectCoins = async (
   }));
   const sortKey = (item) => (item.contribution === null ? Number.POSITIVE_INFINITY : item.contribution);
   return {
-    selected: [...current].sort((a, b) => indexOf.get(a) - indexOf.get(b)).map((entry) => entry.symbol),
+    selected: current.map((entry) => entry.symbol),
     removed: removed.map(({ symbol, gain }) => ({ symbol, gain })),
     noDeals: (entries ?? []).filter((entry) => !usable.includes(entry)).map((entry) => entry.symbol),
     all: all.metrics ? { ...all.metrics, score: roundTo(all.score, 4) } : null,

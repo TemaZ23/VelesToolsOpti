@@ -139,6 +139,7 @@ const summary = await page.evaluate(
       transport,
       listingDate: async () => null,
       persist: Boolean(stopAfter),
+      vtCheckEvaluator: true,
       schedulerOptions: { minIntervalMs: 0, pollIntervalMs: 1, sleep: async () => {}, maxInFlight: 16 },
     };
     engine = new T.Nf(config, callbacks, deps);

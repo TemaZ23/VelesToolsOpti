@@ -171,6 +171,10 @@ const improveText = await visibleText();
 check(improveText.includes('Найти устойчивые настройки'), 'improve tab still shows its own card');
 check(!improveText.includes('🪙 Подобранные монеты'), 'improve tab has no coin results');
 
+// Render errors (a crashed tab blanks the page) fail the run; a missing favicon (404) does not.
+const fatal = errors.filter((error) => !error.includes('status of 404'));
+check(fatal.length === 0, `no page errors (${fatal.slice(0, 3).join(' | ').slice(0, 400)})`);
+
 await browser.close();
 server.close();
 console.log('errors:', errors.length > 0 ? errors.slice(0, 10) : 'none');
