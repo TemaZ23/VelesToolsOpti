@@ -1819,9 +1819,105 @@ describe('PortfolioOptimizer: ошибки и неполные корзины', 
 
     expect(state.status).toBe('completed');
     expect(state.config.basket).toEqual(BASKET);
-    expect(state.listingDates).toEqual({});
+    // Временный сбой (5xx) не сохраняется: при продолжении загрузка повторится, если бэктестов ещё нет.
+    expect(state.listingDates).toBeUndefined();
     expect(submittedJobs(harness).every((job) => job.payload?.from === RUN.periodFrom)).toBe(true);
     expect(hasLog(harness, 'warning', 'Не удалось загрузить даты листинга')).toBe(true);
+  });
+
+  it('окончательный отказ в датах листинга (4xx) сохраняется — повторно не запрашиваются', async () => {
+    const harness = createHarness();
+    harness.loadListingDates.mockRejectedValue(new Error('HTTP 404 Not Found'));
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    expect(optimizer.getState().listingDates).toEqual({});
+  });
+
+  it('после временного сбоя дат листинга без созданных бэктестов продолжение загружает их снова', async () => {
+    const veles = new FakeVeles();
+    const first = createHarness({
+      veles,
+      behavior: { submitError: () => new TransientBacktestError('Нет ответа от вкладки Veles', 'submit') },
+    });
+    first.loadListingDates.mockRejectedValue(new Error('Нет ответа от вкладки Veles'));
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    expect(optimizer.getState().status).toBe('error');
+    expect(first.lastSaved().backtestsSubmitted).toBe(0);
+    expect(first.lastSaved().listingDates).toBeUndefined();
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    second.loadListingDates.mockResolvedValue({ AVAXUSDT: Date.parse('2025-01-01T00:00:00.000Z') });
+    const resumed = PortfolioOptimizer.fromSaved(first.lastSaved(), second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    expect(second.loadListingDates).toHaveBeenCalledTimes(1);
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).not.toContain('AVAX');
+    expect(state.excludedSymbols?.map((item) => [item.symbol, item.kind])).toEqual([['AVAX', 'unlisted']]);
+  });
+
+  it('запуск прошлой версии (без дат листинга, база уже начата) продолжает с прежними периодами', async () => {
+    const veles = new FakeVeles();
+    const first = createHarness({ veles });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), first.callbacks, first.deps);
+    await optimizer.start();
+    const saved = first.lastSaved();
+    // Состояние «из прошлой версии» после оценки базы: дат листинга нет, бэктесты базы уже есть,
+    // кандидатов ещё нет (их бэктесты будут созданы после продолжения).
+    const baseHash = findBase(saved).hash;
+    const legacy: PortfolioOptimizerState = {
+      ...saved,
+      listingDates: undefined,
+      status: 'stopped',
+      generation: 0,
+      candidates: saved.candidates.filter((candidate) => candidate.id === saved.baseCandidateId),
+      bestCandidateId: saved.baseCandidateId,
+      paramStats: {},
+      backtestCache: Object.fromEntries(
+        Object.entries(saved.backtestCache).filter(([key]) => key.startsWith(`${baseHash}|`)),
+      ),
+    };
+
+    const second = createHarness({ veles, startTime: START_TIME + 3_600_000 });
+    second.loadListingDates.mockResolvedValue({
+      AVAXUSDT: Date.parse('2025-01-01T00:00:00.000Z'),
+      DOGEUSDT: Date.parse('2023-01-01T00:00:00.000Z'),
+    });
+    const resumed = PortfolioOptimizer.fromSaved(legacy, second.callbacks, second.deps);
+    await resumed.start();
+    const state = resumed.getState();
+    expect(second.loadListingDates).not.toHaveBeenCalled();
+    expect(state.listingDates).toEqual({});
+    expect(state.config.basket).toEqual(BASKET);
+    const jobs = submittedJobs(second);
+    expect(jobs.length).toBeGreaterThan(0);
+    expect(jobs.every((job) => job.payload?.from === RUN.periodFrom)).toBe(true);
+  });
+
+  it('предел отказов считается без монет, исключённых по листингу', async () => {
+    const harness = createHarness({
+      behavior: {
+        submitError: (job) =>
+          job.symbol === 'SOL'
+            ? new BacktestSubmitError('HTTP 412: Объём ордера не соответствует требованиям по паре', 412, null)
+            : null,
+      },
+    });
+    const late = Date.parse('2025-01-01T00:00:00.000Z');
+    harness.loadListingDates.mockResolvedValue({ XRPUSDT: late, DOGEUSDT: late, AVAXUSDT: late });
+    const optimizer = new PortfolioOptimizer(createInput({}, { generations: 1 }), harness.callbacks, harness.deps);
+    await optimizer.start();
+    const state = optimizer.getState();
+
+    expect(state.status).toBe('completed');
+    expect(state.config.basket).toEqual(['ADA', 'LINK']);
+    expect(state.excludedSymbols?.map((item) => [item.symbol, item.kind])).toEqual([
+      ['XRP', 'unlisted'],
+      ['DOGE', 'unlisted'],
+      ['AVAX', 'unlisted'],
+      ['SOL', 'rejected'],
+    ]);
   });
 
   it('ошибка авторизации переводит запуск в error, этап остаётся незавершённым и досчитывается после продолжения', async () => {

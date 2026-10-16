@@ -189,6 +189,7 @@ describe('formState: значения по умолчанию и сохране�
 
   it('депозит в бэктестах: положительное число сохраняется, остальное — «как в боте»', () => {
     expect(sanitizeFormState({ backtestDeposit: 37.5 }, NOW).backtestDeposit).toBe(37.5);
+    expect(sanitizeFormState({ backtestDeposit: 37.456 }, NOW).backtestDeposit).toBe(37.46);
     expect(sanitizeFormState({ backtestDeposit: 0 }, NOW).backtestDeposit).toBeNull();
     expect(sanitizeFormState({ backtestDeposit: -5 }, NOW).backtestDeposit).toBeNull();
     expect(sanitizeFormState({ backtestDeposit: '37.5' }, NOW).backtestDeposit).toBeNull();

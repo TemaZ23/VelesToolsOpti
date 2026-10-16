@@ -255,11 +255,19 @@ export interface PortfolioOptimizerProgress {
   estimatedEndAt: number | null;
 }
 
-/** Монета, исключённая из корзины: Veles не принимает для неё настройки базового бота. */
+/**
+ * Почему монета исключена из корзины: 'rejected' — Veles не принимает для неё настройки бота (HTTP 412),
+ * 'unlisted' — в выбранный период она ещё не торговалась (листинг после конца периода).
+ */
+export type ExcludedSymbolKind = 'rejected' | 'unlisted';
+
+/** Монета, исключённая из корзины запуска. */
 export interface ExcludedSymbol {
   symbol: string;
-  /** Ответ Veles, например «HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT». */
+  /** Ответ Veles («HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT») или дата листинга. */
   reason: string;
+  /** Необязательно для совместимости с сохранёнными запусками: без него — 'rejected'. */
+  kind?: ExcludedSymbolKind;
 }
 
 export interface PortfolioOptimizerState {
@@ -284,8 +292,8 @@ export interface PortfolioOptimizerState {
   updatedAt: number;
   logs: PortfolioLogEntry[];
   /**
-   * Монеты, исключённые из корзины при оценке базы (HTTP 412 от Veles): config.basket и config.screenBasket
-   * их уже не содержат. Необязательно для совместимости с сохранёнными запусками.
+   * Монеты, исключённые из корзины перед оценкой базы и во время неё (не торговались в период или HTTP 412
+   * от Veles): config.basket и config.screenBasket их уже не содержат. Необязательно для совместимости.
    */
   excludedSymbols?: ExcludedSymbol[];
   /**

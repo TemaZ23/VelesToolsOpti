@@ -384,7 +384,7 @@ describe('PortfolioOptimizerPage', () => {
     );
     await render(true);
     expect(container.querySelector<HTMLInputElement>('input[aria-label="Депозит бота в бэктестах"]')?.value).toBe(
-      '37.5',
+      '37.50',
     );
 
     await act(async () => {
@@ -445,6 +445,7 @@ describe('PortfolioOptimizerPage', () => {
         ...createSavedState(),
         excludedSymbols: [
           { symbol: 'AAVE', reason: 'HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT' },
+          { symbol: 'NEW', reason: 'листинг 2025-01-01 — после окончания периода', kind: 'unlisted' },
         ],
       }),
     );
@@ -455,7 +456,9 @@ describe('PortfolioOptimizerPage', () => {
     await render(true);
 
     const text = container.textContent ?? '';
-    expect(text).toContain('Исключены из корзины: AAVE');
+    expect(text).toContain('Исключены из корзины: AAVE, NEW');
+    expect(text).toContain('Veles не принимает для AAVE настройки бота');
+    expect(text).toContain('NEW не торговались в выбранный период');
     expect(text).toContain('AAVE: HTTP 412: Объём ордера не соответствует требованиям по паре AAVE/USDT');
     await act(async () => {
       findButton('Убрать из корзины формы').click();

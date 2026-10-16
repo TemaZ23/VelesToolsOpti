@@ -386,7 +386,7 @@ export const sanitizeFormState = (value: unknown, now: Date = new Date()): Portf
     block: readInteger(value.block, defaults.block, FORM_LIMITS.block),
     backtestDeposit:
       isFiniteNumber(value.backtestDeposit) && value.backtestDeposit > 0
-        ? readNumber(value.backtestDeposit, FORM_LIMITS.backtestDeposit.min, FORM_LIMITS.backtestDeposit)
+        ? roundTo(readNumber(value.backtestDeposit, FORM_LIMITS.backtestDeposit.min, FORM_LIMITS.backtestDeposit), 2)
         : null,
     objective: sanitizeObjective(value.objective),
     search: sanitizeSearch(value.search),

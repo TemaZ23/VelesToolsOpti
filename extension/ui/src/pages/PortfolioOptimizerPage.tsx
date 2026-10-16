@@ -78,9 +78,11 @@ import PageHeader from '../components/ui/PageHeader';
 import { useBacktestGroups } from '../context/BacktestGroupsContext';
 import { buildBotCreatePayloadFromStrategy, extractParams, patchStrategy, roundTo } from '../lib/botParams';
 import { DEFAULT_AGGREGATION_CONFIG } from '../services/backtestAggregations';
+import { loadListingDates } from '../services/pairListing';
 import {
   clearSavedPortfolioState,
   estimateBacktests,
+  excludedSymbolKind,
   type GroupBacktestsLoadResult,
   loadGroupBacktestsFromStore,
   loadSavedPortfolioState,
@@ -119,6 +121,8 @@ interface LoadedBot {
 interface LoadedGroup {
   groupId: string;
   result: GroupBacktestsLoadResult;
+  /** Даты листинга пар биржи бота (как в запуске); undefined — не загрузились. */
+  listingDates?: Record<string, number>;
 }
 
 const BOTS_PAGE_SIZE = 100;
@@ -336,14 +340,24 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
     setGroupError(null);
     try {
       const result = await loadGroupBacktestsFromStore(baseGroup.id);
-      setLoadedGroup({ groupId: baseGroup.id, result });
+      // Как в запуске: бэктест монеты с листингом позже начала периода начинается с листинга.
+      const exchange = loaded?.strategy.pair?.exchange ?? loaded?.strategy.exchange ?? null;
+      let listingDates: Record<string, number> | undefined;
+      if (exchange) {
+        try {
+          listingDates = await loadListingDates(exchange);
+        } catch (error) {
+          console.warn('[PortfolioOptimizer] Не удалось загрузить даты листинга для проверки группы', error);
+        }
+      }
+      setLoadedGroup({ groupId: baseGroup.id, result, listingDates });
     } catch (error) {
       setLoadedGroup(null);
       setGroupError(describeError(error));
     } finally {
       setGroupLoading(false);
     }
-  }, [baseGroup]);
+  }, [baseGroup, loaded]);
 
   const groupMatch = useMemo(() => {
     if (!(loadedGroup && baseGroup && loadedGroup.groupId === baseGroup.id && runSettings.periodFrom)) {
@@ -358,6 +372,7 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       // Депозит в бэктестах группы сравнивается с тем, что уйдёт в бэктесты запуска.
       baseStrategy: loaded ? withBacktestDeposit(loaded.strategy, form.backtestDeposit) : null,
       params: loaded ? params : undefined,
+      listingDates: loadedGroup.listingDates,
     });
   }, [baseGroup, basket, form.backtestDeposit, loaded, loadedGroup, params, quoteCurrency, runSettings]);
 
@@ -673,6 +688,15 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
       }
     },
     [messageApi, meta, strategyFor],
+  );
+
+  const excludedRejected = useMemo(
+    () => (meta?.excludedSymbols ?? []).filter((item) => excludedSymbolKind(item) === 'rejected'),
+    [meta],
+  );
+  const excludedUnlisted = useMemo(
+    () => (meta?.excludedSymbols ?? []).filter((item) => excludedSymbolKind(item) === 'unlisted'),
+    [meta],
   );
 
   // Исключённые из корзины запуска монеты, которые ещё есть в корзине формы (для следующего запуска).
@@ -1055,13 +1079,16 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
                       min={FORM_LIMITS.backtestDeposit.min}
                       max={FORM_LIMITS.backtestDeposit.max}
                       step={1}
+                      precision={2}
                       value={form.backtestDeposit}
                       placeholder={botDepositAmount !== null ? `как в боте (${botDepositAmount})` : 'как в боте'}
                       disabled={formLocked}
                       onChange={(value) =>
                         updateForm({
                           backtestDeposit:
-                            typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null,
+                            typeof value === 'number' && Number.isFinite(value) && roundTo(value, 2) > 0
+                              ? roundTo(value, 2)
+                              : null,
                         })
                       }
                       aria-label="Депозит бота в бэктестах"
@@ -1452,10 +1479,19 @@ const PortfolioOptimizerPage = ({ extensionReady }: PortfolioOptimizerPageProps)
               message={`Исключены из корзины: ${meta.excludedSymbols.map((item) => item.symbol).join(', ')}`}
               description={
                 <Flex vertical gap={4}>
-                  <Text>
-                    Veles не принимает для этих монет настройки бота (обычно объём ордера меньше минимального для пары)
-                    — оптимизация идёт без них. Чтобы их учитывать, увеличьте депозит или объём первых ордеров бота.
-                  </Text>
+                  {excludedRejected.length > 0 ? (
+                    <Text>
+                      Veles не принимает для {excludedRejected.map((item) => item.symbol).join(', ')} настройки бота
+                      (обычно объём ордера меньше минимального для пары) — оптимизация идёт без них. Чтобы их учитывать,
+                      задайте «Депозит бота в бэктестах» побольше или увеличьте объём первых ордеров бота.
+                    </Text>
+                  ) : null}
+                  {excludedUnlisted.length > 0 ? (
+                    <Text>
+                      {excludedUnlisted.map((item) => item.symbol).join(', ')} не торговались в выбранный период — чтобы
+                      их учитывать, сдвиньте окончание периода позже их листинга.
+                    </Text>
+                  ) : null}
                   {meta.excludedSymbols.map((item) => (
                     <Text key={item.symbol} type="secondary">
                       {item.symbol}: {item.reason}
