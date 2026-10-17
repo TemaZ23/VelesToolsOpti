@@ -1,0 +1,32 @@
+{
+ "0.3": {
+  "n_stops": 182,
+  "n_with_1m": 182,
+  "gap_over_stop_1m_mean_pct": 0.0,
+  "gap_over_stop_1m_median_pct": 0.0,
+  "gap_over_stop_1m_p90_pct": 0.0,
+  "gap_over_stop_1m_max_pct": 0.0,
+  "gap_over_stop_1h_mean_pct": 0.0,
+  "share_1m_gap_gt_0_3pct": 0.0
+ },
+ "0.225": {
+  "n_stops": 232,
+  "n_with_1m": 232,
+  "gap_over_stop_1m_mean_pct": 0.0,
+  "gap_over_stop_1m_median_pct": 0.0,
+  "gap_over_stop_1m_p90_pct": 0.0,
+  "gap_over_stop_1m_max_pct": 0.0,
+  "gap_over_stop_1h_mean_pct": 0.0,
+  "share_1m_gap_gt_0_3pct": 0.0
+ },
+ "0.375": {
+  "n_stops": 145,
+  "n_with_1m": 145,
+  "gap_over_stop_1m_mean_pct": 0.0,
+  "gap_over_stop_1m_median_pct": 0.0,
+  "gap_over_stop_1m_p90_pct": 0.0,
+  "gap_over_stop_1m_max_pct": 0.0,
+  "gap_over_stop_1h_mean_pct": 0.0,
+  "share_1m_gap_gt_0_3pct": 0.0
+ }
+}

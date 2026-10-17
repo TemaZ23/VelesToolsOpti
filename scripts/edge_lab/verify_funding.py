@@ -153,7 +153,7 @@ def load_data() -> dict:
 
 # ----------------------------------------------------------------------------- simulator
 @njit(cache=True, error_model="numpy")
-def _sim(S, F, MK, FR, check, w0, m, lo, hi, c_spot, c_perp, mmr, rebal_to_w, fund_mult):
+def _sim(S, F, MK, FR, check, w0, m, lo, hi, c_spot, c_perp, mmr, rebal_to_w, fund_mult, haircut):
     T = S.shape[0]
     Q = np.zeros(2)
     M = np.zeros(2)
@@ -219,6 +219,8 @@ def _sim(S, F, MK, FR, check, w0, m, lo, hi, c_spot, c_perp, mmr, rebal_to_w, fu
         mm = 0.0
         for i in range(2):
             worst += M[i] - Q[i] * (MK[t, i, 1] - MK[t, i, 0])
+            if haircut > 0:  # Multi-Assets: спот лежит в USDT-M как залог с дисконтом (на том же максимуме)
+                worst += haircut * Q[i] * so[i] * (MK[t, i, 1] / MK[t, i, 0])
             mm += mmr * Q[i] * MK[t, i, 1]
         liq = worst < mm
         if liq:
@@ -250,7 +252,7 @@ def _sim(S, F, MK, FR, check, w0, m, lo, hi, c_spot, c_perp, mmr, rebal_to_w, fu
 
 
 def run_config(d, m=0.5, lo=0.375, hi=1.0, c_spot=0.0012, c_perp=0.0007, mmr=0.02, check_hour=0,
-               every_h=24, w=(0.5, 0.5), rebal_to_w=False, fund_mult=1.0, start=None):
+               every_h=24, w=(0.5, 0.5), rebal_to_w=False, fund_mult=1.0, start=None, haircut=0.0):
     ts = d["ts"]
     hod = (ts // HOUR) % 24
     if every_h == 24:
@@ -264,7 +266,7 @@ def run_config(d, m=0.5, lo=0.375, hi=1.0, c_spot=0.0012, c_perp=0.0007, mmr=0.0
         S, F, MK, FR, check, ts = S[k:], F[k:], MK[k:], FR[k:], check[k:], ts[k:]
     eq, fa, ca, ta, nr, liqf, fby = _sim(np.ascontiguousarray(S), np.ascontiguousarray(F), np.ascontiguousarray(MK),
                                          np.ascontiguousarray(FR), check, w0, m, lo, hi, c_spot, c_perp, mmr,
-                                         rebal_to_w, fund_mult)  # fmt: skip
+                                         rebal_to_w, fund_mult, haircut)  # fmt: skip
     # дневная агрегация: эквити на закрытии последнего часа суток
     day = ts // DAY
     last = np.r_[day[1:] != day[:-1], True]
@@ -339,7 +341,8 @@ def main_run() -> None:
     res["base"]["excess_vs_tbill"] = {"stats": stats(base, d, excess=True), "half_years": half_years(base, rf),
                                       "per_year_rf_pct": per_year(base["ts"], rf)}  # fmt: skip
     print(json.dumps(res["base"], indent=1, ensure_ascii=False), flush=True)
-    np.savez(ODIR / "verified_daily.npz", ts=base["ts"], ret=base["ret"])
+    # ret — независимая симуляция (без вычета ставки, как у всех семейств); rf_daily — T-bill 3m за день
+    np.savez(ODIR / "verified_daily.npz", ts=base["ts"], ret=base["ret"], rf_daily=rf, ret_excess_tbill=base["ret"] - rf)
 
     # их файл best_daily — сверка
     with np.load(ODIR / "best_daily.npz") as z:
@@ -393,7 +396,76 @@ def main_run() -> None:
     rec("funding x0.75 (haircut)", fund_mult=0.75)
     rec("start 2020-07-01", start="2020-07-01")
     rec("start 2024-01-01 (fresh OOS entry)", start="2024-01-01")
+    # Multi-Assets Mode: спот лежит в USDT-M как залог (дисконт 5%), USDT-буфер m·номинал
+    rec("multiasset m=0.05 band[-0.10,0.20] h0.95", m=0.05, lo=-0.10, hi=0.20, haircut=0.95, mmr=0.005)
+    rec("multiasset m=0.05 band[0.00,0.15] h0.95", m=0.05, lo=0.0, hi=0.15, haircut=0.95, mmr=0.005)
+    rec("multiasset m=0.10 band[0.00,0.25] h0.95", m=0.10, lo=0.0, hi=0.25, haircut=0.95, mmr=0.005)
+    rec("multiasset m=0.05 band[0,0.15] costs x2", m=0.05, lo=0.0, hi=0.15, haircut=0.95, mmr=0.005,
+        c_spot=0.0024, c_perp=0.0014)
     res["robustness"] = rows
+
+    # ------------------------------------------------------------------ избыточная доходность над кэшем (T-bill 3m)
+    exc = base["ret"] - rf
+    yrs_all = base["ts"].astype("datetime64[ms]").astype("datetime64[Y]").astype(int) + 1970
+    res["excess_per_year_pct"] = per_year(base["ts"], exc)
+    res["excess_per_year_simple_pct"] = {str(y): round(float(base["ret"][yrs_all == y].sum() - rf[yrs_all == y].sum()) * 100, 2)
+                                         for y in np.unique(yrs_all)}  # fmt: skip
+    so_ = _win(base["ts"], *OOS)
+    nd = int(so_.sum())
+    sh_ex = float(np.mean(exc[so_]) / np.std(exc[so_]) * np.sqrt(365))
+    res["oos_excess_tstat"] = {"sharpe_excess": round(sh_ex, 3), "years": round(nd / 365.25, 2),
+                               "t_stat": round(sh_ex * np.sqrt(nd / 365.25), 3),
+                               "mean_excess_pct_yr": round(float(np.mean(exc[so_])) * 365 * 100, 3)}  # fmt: skip
+    # скользящая доходность: последние 90/180/365 дней (годовых) против ставки
+    roll = {}
+    for nday in (90, 180, 365):
+        rr = base["ret"][-nday:]
+        roll[f"last_{nday}d"] = {"carry_apr_pct": round(float((np.prod(1 + rr) ** (365 / nday) - 1) * 100), 2),
+                                 "tbill_apr_pct": round(float(np.sum(rf[-nday:]) * 365 / nday * 100), 2)}  # fmt: skip
+    res["rolling_end"] = roll
+
+    # ------------------------------------------------------------------ оверлей «в рынке только если carry > ставки»
+    # решение по закрытию дня t: трейлинг-фандинг L дней (обе монеты, на номинал) × номинал/капитал vs rf(t)+hurdle;
+    # действует с дня t+1; вне рынка — кэш по ставке T-bill; вход/выход = 4 ноги ≈ (c_spot+c_perp)·номинал/капитал
+    days_ts = base["ts"]
+    hday = d["ts"] // DAY
+    fr_day = np.zeros((len(days_ts), 2))
+    for i in range(2):
+        fr_day[:, i] = np.bincount((hday - hday[0]).astype(int), weights=d["FR"][:, i], minlength=len(days_ts))
+    fr_mean = fr_day.mean(1)
+    cum = np.r_[0.0, np.cumsum(fr_mean)]
+    sw_cost = (0.0012 + 0.0007) / 1.5
+    ov_rows = []
+    for L in (14, 30, 60):
+        for hurdle in (0.0, 0.01, 0.02):
+            trail = np.full(len(days_ts), np.nan)
+            trail[L - 1:] = (cum[L:] - cum[:-L]) / L * 365 / 1.5  # на капитал (номинал = капитал/1.5)
+            want = np.nan_to_num(trail, nan=0.0) > rf * 365 + hurdle
+            act = np.r_[True, want[:-1]]  # сигнал дня t исполняется с t+1; старт — в рынке
+            rr = np.where(act, base["ret"], rf)
+            sw = np.r_[False, act[1:] != act[:-1]]
+            rr = rr - sw * sw_cost
+            st_ov = {nm: metrics(days_ts[_win(days_ts, a, b)], rr[_win(days_ts, a, b)]) for nm, (a, b) in
+                     {"is": IS, "oos": OOS}.items()}  # fmt: skip
+            ex_ov = {nm: metrics(days_ts[_win(days_ts, a, b)], (rr - rf)[_win(days_ts, a, b)]) for nm, (a, b) in
+                     {"is": IS, "oos": OOS}.items()}  # fmt: skip
+            ov_rows.append({"L": L, "hurdle": hurdle, "switches": int(sw.sum()), "share_in": round(float(act.mean()), 3),
+                            "is": st_ov["is"], "oos": st_ov["oos"], "is_excess": ex_ov["is"], "oos_excess": ex_ov["oos"]})  # fmt: skip
+            print(f"overlay L{L} h{hurdle}: in {act.mean():.2f} sw {int(sw.sum())} | IS ex {ex_ov['is']['cagr_pct']:5.2f}/"
+                  f"{ex_ov['is']['sharpe']:5.2f} | OOS {st_ov['oos']['cagr_pct']:5.2f} ex {ex_ov['oos']['cagr_pct']:5.2f}/"
+                  f"{ex_ov['oos']['sharpe']:5.2f}", flush=True)  # fmt: skip
+    best_ov = max(ov_rows, key=lambda r: r["is_excess"]["sharpe"])
+    res["overlay"] = {"rows": ov_rows, "best_is_by_excess_sharpe": {k2: best_ov[k2] for k2 in ("L", "hurdle")},
+                      "best_is_oos_excess": best_ov["oos_excess"], "best_is_oos": best_ov["oos"],
+                      "median_oos_excess_sharpe": float(np.median([r["oos_excess"]["sharpe"] for r in ov_rows])),
+                      "share_oos_excess_positive": float(np.mean([r["oos_excess"]["cagr_pct"] > 0 for r in ov_rows]))}  # fmt: skip
+    # распределение OOS-«избыточного» Шарпа по всем вариантам робастности
+    exs = np.array([r["oos_excess_tbill"]["sharpe"] for r in rows])
+    res["robustness_excess_summary"] = {"n": len(rows), "median_oos_excess_sharpe": round(float(np.median(exs)), 3),
+                                        "share_oos_excess_sharpe_ge_1": round(float(np.mean(exs >= 1)), 3),
+                                        "share_oos_excess_positive": round(float(np.mean(exs > 0)), 3)}  # fmt: skip
+    print("excess", json.dumps({k2: res[k2] for k2 in ("excess_per_year_pct", "oos_excess_tstat", "rolling_end",
+                                                        "robustness_excess_summary")}, ensure_ascii=False), flush=True)  # fmt: skip
 
     # BTC-only/ETH-only: w=(1,0) делит на ноль в другой монете — защищено ниже
     # top-10 days removal (OOS)

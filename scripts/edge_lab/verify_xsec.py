@@ -17,7 +17,13 @@
     (позиция до ребалансировки в 00:00); знак: + ставка — лонг платит;
   - монета перестала торговаться -> выход по последнему close (с издержками), пессимистично -50% позиции.
 
-Запуск:
+Исправление относительно автора: «зомби»-бары после делистинга (объём 0, цена заморожена; 150 монет, а
+universe.json помечает лишь 31) считаются неторгуемыми -> делистинг виден, пессимистичный вариант −50%
+применяется ко всем 57 событиям в портфеле (у автора — к 5). Цена выхода при делистинге сверена с индексной
+ценой расчёта Binance (1m indexPriceKlines, среднее за 30 мин) — режим settle.
+
+Запуск (settle — до main, он пишет verify_settle.json, который main использует):
+  python3 -m scripts.edge_lab.verify_xsec settle   # цена расчёта при делистинге (качает 1m свечи ~60 дней)
   python3 -m scripts.edge_lab.verify_xsec main     # база, сравнение, робастность (панель 1d)
   python3 -m scripts.edge_lab.verify_xsec offset   # сдвиг времени ребалансировки (панель 1h, один раз)
 """
@@ -81,8 +87,34 @@ def rolling_sum_cnt(x: np.ndarray, n: int):
     return s, c
 
 
-def load_data(freq_panel: dict | None = None) -> dict:
+def next_alive_idx(alive: np.ndarray) -> np.ndarray:
+    """next_alive[t, j] = первый индекс s >= t, где монета торгуется (T, если больше не торгуется)."""
+    T, N = alive.shape
+    idx = np.where(alive, np.arange(T)[:, None], T)
+    return np.minimum.accumulate(idx[::-1], axis=0)[::-1]
+
+
+def clean_zombies(p: dict) -> dict:
+    """ИСПРАВЛЕНИЕ (найдено при проверке): после делистинга архив Binance продолжает выдавать «зомби»-свечи
+    (цена заморожена, объём 0) — у 150 монет, из которых universe.json помечает делистинговыми лишь 31.
+    Такие бары (и любые дни с нулевым объёмом) считаем неторгуемыми: NaN. Иначе позиция «живёт» в
+    замороженной цене и пессимистичный вариант делистинга (−50%) к ней никогда не применяется."""
+    q = p["qvol"]
+    dead = ~(np.isfinite(q) & (q > 0))
+    out = dict(p)
+    for k in ("open", "high", "low", "close", "qvol", "taker_buy_qvol"):
+        if k in p:
+            a = p[k].astype(float).copy()
+            a[dead] = np.nan
+            out[k] = a
+    return out
+
+
+def load_data(freq_panel: dict | None = None, clean: bool = True) -> dict:
     p = freq_panel if freq_panel is not None else panel("1d")
+    raw_close = p["close"].astype(float)
+    if clean:
+        p = clean_zombies(p)
     ts = p["ts"]
     T, N = p["close"].shape
     F = np.zeros((T, N))
@@ -98,7 +130,8 @@ def load_data(freq_panel: dict | None = None) -> dict:
         np.add.at(F[:, j], b[ok], f["rate"][ok])
     d = {"ts": ts, "symbols": p["symbols"], "O": p["open"].astype(float), "C": p["close"].astype(float),
          "QV": p["qvol"].astype(float), "F": F, "panel_funding": p["funding"].astype(float)}
-    d["noncrypto"] = noncrypto_mask(p)
+    d["noncrypto"] = noncrypto_mask({**p, "close": raw_close})
+    d["next_alive"] = next_alive_idx(np.isfinite(d["C"]) & np.isfinite(d["O"]))
     return d
 
 
@@ -157,7 +190,8 @@ def signals(d: dict, win=30, minv=21, adv_min=5e6, age_min=60, q=0.1, H=7, nmin=
 
 
 def backtest(d: dict, W: np.ndarray, adv: np.ndarray, cost_mult=1.0, pess=False, lag=1, rebalance_every=1,
-             reb_offset=0, cap_ret=None, funding="raw", min_trade=0.0, leg="both", collect=False):
+             reb_offset=0, cap_ret=None, funding="raw", min_trade=0.0, leg="both", collect=False,
+             pess_long_only=False, min_trade_strict=False):
     """W[t] — цель по закрытию t, исполнение на open[t+lag]. Возвращает дневной ряд и диагностику."""
     O, C = d["O"], d["C"]
     F = d["F"] if funding == "raw" else d["panel_funding"]
@@ -175,6 +209,7 @@ def backtest(d: dict, W: np.ndarray, adv: np.ndarray, cost_mult=1.0, pess=False,
     gross = np.zeros(T)
     npos = np.zeros(T, int)
     entries = 0
+    ent_arr = np.zeros(T, int)
     delist_events = 0
     cap = np.full(T, np.nan)
     coin_pnl = np.zeros(N)
@@ -198,10 +233,17 @@ def backtest(d: dict, W: np.ndarray, adv: np.ndarray, cost_mult=1.0, pess=False,
         extra = 0.0
         c_exit = 0.0
         if dead.any():
-            delist_events += int(dead.sum())
+            # настоящий делистинг = монета не торгуется > 7 дней (дыры архива 2022-02-26..28 и 2022-04-01..02
+            # у ~48 монет одновременно — это не делистинг, штраф к ним не применяем)
+            real = (d["next_alive"][t, dead] - t) > 7
+            delist_events += int(real.sum())
             c_exit = float(np.sum(np.abs(wd[dead]) * cps[t - 1, dead]))
             if pess:
-                extra = -0.5 * float(np.sum(np.abs(wd[dead])))
+                frac = 0.5 if pess is True else float(pess)
+                wdr = wd[dead][real]
+                if pess_long_only:
+                    wdr = np.where(wdr > 0, wdr, 0.0)
+                extra = -frac * float(np.sum(np.abs(wdr)))
             wd[dead] = 0.0
         # цель
         s = t - lag
@@ -211,11 +253,13 @@ def backtest(d: dict, W: np.ndarray, adv: np.ndarray, cost_mult=1.0, pess=False,
             tgt = np.where(alive_now, wd, 0.0) if rebalance_every > 1 else np.where(alive_now, W[max(s, 0)] * (s >= 0), 0.0)
         if min_trade > 0:
             dw = tgt - wd
-            small = (np.abs(dw) < min_trade) & (tgt != 0) & (wd != 0)
+            small = (np.abs(dw) < min_trade) & (tgt != 0) & ((wd != 0) | min_trade_strict)
             tgt = np.where(small, wd, tgt)
         dw = tgt - wd
         c = float(np.sum(np.abs(dw) * cps[t - 1])) + c_exit
-        entries += int(np.sum((wd == 0) & (tgt != 0)))
+        e_t = int(np.sum((wd == 0) & (tgt != 0)))
+        entries += e_t
+        ent_arr[t] = e_t
         rb = np.where(alive_now, C[t] / O[t] - 1, 0.0)
         if cap_ret is not None:
             rb = np.clip(rb, -cap_ret, cap_ret)
@@ -246,7 +290,7 @@ def backtest(d: dict, W: np.ndarray, adv: np.ndarray, cost_mult=1.0, pess=False,
         wd = np.where(held, tgt * (1 + rb) / denom, 0.0) if denom > 0 else np.zeros(N)
         tgt_prev = tgt
     out = {"ret": ret, "price": price, "fund": fund, "cost": cost, "turn": turn, "gross": gross, "npos": npos,
-           "entries": entries, "delist_events": delist_events, "cap": cap, "coin_pnl": coin_pnl,
+           "entries": entries, "ent_arr": ent_arr, "delist_events": delist_events, "cap": cap, "coin_pnl": coin_pnl,
            "coin_pnl_oos": coin_pnl_oos, "hold_mean": float(np.mean(held_days)) if held_days else np.nan}
     return out
 
@@ -309,12 +353,15 @@ def run_main():
     i0, i1 = window_idx(ts, IS)
     results = {}
 
-    def go(label, sig_kw=None, bt_kw=None):
+    def go(label, sig_kw=None, bt_kw=None, data=None):
         sig_kw = sig_kw or {}
         bt_kw = bt_kw or {}
-        W, adv, nk = signals(d, **sig_kw)
-        res = backtest(d, W, adv, **bt_kw)
-        s = summarize(d, res, label)
+        dd = d if data is None else data
+        W, adv, nk = signals(dd, **sig_kw)
+        res = backtest(dd, W, adv, **bt_kw)
+        s = summarize(dd, res, label)
+        s["halfyears"] = {k: v for k, v in halfyears(ts, res["ret"]).items() if k >= "2024"}
+        s["delist_events"] = res["delist_events"]
         s["sig"] = {k: (v if not isinstance(v, np.ndarray) else "mask") for k, v in sig_kw.items()}
         s["bt"] = bt_kw
         results[label] = s
@@ -332,7 +379,7 @@ def run_main():
         days = b - a
         det[nm] = {
             **m,
-            "entries": None,
+            "entries": int(base["ent_arr"][a:b].sum()),
             "turnover_2way_per_day": round(float(np.mean(base["turn"][a:b])), 4),
             "gross_mean": round(float(np.mean(base["gross"][a:b])), 3),
             "npos_mean": round(float(np.mean(base["npos"][a:b])), 1),
@@ -407,9 +454,60 @@ def run_main():
     except Exception as e:  # noqa: BLE001
         print("author series load failed", e)
 
+    # ---------------- делистинг: зомби-бары, пессимистичный вариант, цена расчёта ----------------
+    d_raw = load_data(clean=False)
+    go("AS_AUTHOR_no_zombie_clean", data=d_raw)
+    go("AS_AUTHOR_no_zombie_clean_pess50", bt_kw={"pess": True}, data=d_raw)
+    res_p50, _, _, _ = go("pessimistic_delist_50pct", bt_kw={"pess": True})
+    rp = res_p50["ret"]
+    bsp = block_boot_sharpe(rp[o0:o1])
+    results["pess50_detail"] = {
+        "OOS_boot": {"sharpe_p05": round(float(np.percentile(bsp, 5)), 2), "sharpe_p50": round(float(np.median(bsp)), 2),
+                     "P_sharpe_gt0": round(float(np.mean(bsp > 0)), 3), "P_sharpe_ge1": round(float(np.mean(bsp >= 1)), 3)},
+        "per_year": per_year(ts, rp), "halfyears": halfyears(ts, rp),
+        "OOS_2024_25": metrics(ts[o0:int(np.searchsorted(ts, ms("2026-01-01")))], rp[o0:int(np.searchsorted(ts, ms("2026-01-01")))]),
+        "OOS": metrics(ts[o0:o1], rp[o0:o1]),
+    }
+    go("pessimistic_delist_25pct", bt_kw={"pess": 0.25})
+    go("pessimistic_delist_50pct_long_only", bt_kw={"pess": True, "pess_long_only": True})
+    d_set = None
+    sf = OUTD / "verify_settle.json"
+    if sf.exists():
+        d_set = dict(d)
+        d_set["C"] = d["C"].copy()
+        n_adj = 0
+        for rec in json.loads(sf.read_text()):
+            if "index_avg30" not in rec:
+                continue
+            j = syms.index(rec["sym"])
+            t = int(np.searchsorted(ts, ms(rec["day"])))
+            d_set["C"][t, j] = rec["index_avg30"]
+            n_adj += 1
+        results["settle_adjusted_events"] = n_adj
+        res_set, _, _, _ = go("settle_at_index_avg30", data=d_set)
+        res_set_p, _, _, _ = go("settle_at_index_avg30_pess50", bt_kw={"pess": True}, data=d_set)
+        np.savez(OUTD / "verified_daily.npz", ts=ts, ret=res_set["ret"], ret_pess50=res_set_p["ret"],
+                 ret_author_style=backtest(d_raw, *signals(d_raw)[:2])["ret"],
+                 note=np.array("verify_xsec (corrected): illiq q0.1 H7 adv5M age60, gross 1.0 (0.5L/0.5S), 1x; "
+                               "taker+slippage cost_per_side(ADV30[t-1]); funding from raw settlements; zombie bars "
+                               "(zero volume after delisting) removed; delisted coin exits at Binance settlement "
+                               "(index avg of last 30 min). ret_pess50 = same with -50% of every position in a "
+                               "coin that stops trading (>7 days)."))
+    # ---------------- малый счёт: минимальный ордер Binance ----------------
+    j_btc, j_eth = syms.index("BTCUSDT"), syms.index("ETHUSDT")
+    ex_be = np.zeros(N, bool)
+    ex_be[[j_btc, j_eth]] = True
+    ex_b = np.zeros(N, bool)
+    ex_b[j_btc] = True
+    go("acct_1k: no BTC/ETH, skip trades<$5 (0.5%)", sig_kw={"excl": ex_be},
+       bt_kw={"min_trade": 0.005, "min_trade_strict": True})
+    go("acct_5k: no BTC, skip trades<$5 (0.1%)", sig_kw={"excl": ex_b},
+       bt_kw={"min_trade": 0.001, "min_trade_strict": True})
+    go("acct_20k: skip trades<$10 (0.05%)", bt_kw={"min_trade": 0.0005, "min_trade_strict": True})
+    go("acct_1k + pess50", sig_kw={"excl": ex_be}, bt_kw={"min_trade": 0.005, "min_trade_strict": True, "pess": True})
+
     # ---------------- варианты учёта ----------------
     go("panel_funding_timing", bt_kw={"funding": "panel"})
-    go("pessimistic_delist", bt_kw={"pess": True})
     go("cost_x2", bt_kw={"cost_mult": 2.0})
     go("cost_x3", bt_kw={"cost_mult": 3.0})
     go("lag2_exec_t+2", bt_kw={"lag": 2})
@@ -462,6 +560,25 @@ def run_main():
     results["dropped_top5_oos"] = [syms[j] for j in top5]
     results["dropped_top5_full"] = [syms[j] for j in top5f]
 
+    # ---------------- сетка автора c_illiq (без BTC-хеджа) на исправленных данных ----------------
+    grid = {}
+    for q in (0.1, 0.2, 0.3):
+        for H in (1, 7, 14):
+            for a in (5e6, 1e7, 2e7):
+                W, adv, _ = signals(d, q=q, H=H, adv_min=a)
+                for pz in (False, True):
+                    rr = backtest(d, W, adv, pess=pz)["ret"]
+                    grid[f"q{q}_H{H}_adv{a/1e6:g}M_pess{int(pz)}"] = {
+                        "IS": round(sharpe(rr[i0:i1]), 2), "OOS": round(sharpe(rr[o0:o1]), 2)}
+    for pz in (0, 1):
+        g = {k: v for k, v in grid.items() if k.endswith(f"pess{pz}")}
+        oo = np.array([v["OOS"] for v in g.values()])
+        best = max(g, key=lambda k: g[k]["IS"])
+        results[f"grid27_pess{pz}"] = {"n": len(oo), "median_oos": float(np.median(oo)), "share_pos": float(np.mean(oo > 0)),
+                                       "share_ge1": float(np.mean(oo >= 1)), "is_best": best, "is_best_stats": g[best]}
+        print("grid pess", pz, results[f"grid27_pess{pz}"], flush=True)
+    results["grid27"] = grid
+
     # по годам для ключевых вариантов
     results["elapsed_s"] = round(time.time() - t_start, 1)
     # распределение OOS по всем вариантам робастности (не выбор!)
@@ -480,6 +597,7 @@ def run_offset():
     ts1 = p1["ts"]
     syms = p1["symbols"]
     res_all = {}
+    nc_mask = noncrypto_mask(panel("1d"))  # тот же список не-крипто, что и в базе (по сырым дневным барам)
     for h in (0, 4, 8, 12, 16, 20):
         # индекс дня: (ts - h*HOUR) // DAY
         day = (ts1 - h * HOUR) // DAY
@@ -497,7 +615,7 @@ def run_offset():
         C = np.full((nd, N), np.nan)
         QV = np.full((nd, N), np.nan)
         F = np.zeros((nd, N))
-        valid = np.isfinite(c)
+        valid = np.isfinite(c) & (np.nan_to_num(qv) > 0)  # зомби-бары (объём 0) — неторгуемые
         for i in range(nd):
             a, b = start[i], ends[i]
             v = valid[a:b]
@@ -522,16 +640,98 @@ def run_offset():
             np.add.at(F[:, j], bb[ok], f["rate"][ok])
         dp = {"ts": dts, "symbols": syms, "open": O, "close": C, "qvol": QV, "funding": F}
         d = {"ts": dts, "symbols": syms, "O": O, "C": C, "QV": QV, "F": F, "panel_funding": F}
-        d["noncrypto"] = noncrypto_mask(dp)
+        d["noncrypto"] = nc_mask if nc_mask is not None else noncrypto_mask(dp)
+        nc_mask = d["noncrypto"]
+        d["next_alive"] = next_alive_idx(np.isfinite(C) & np.isfinite(O))
         W, adv, nk = signals(d)
         res = backtest(d, W, adv)
         s = summarize(d, res, f"offset_{h}h")
         s["per_year"] = per_year(dts, res["ret"])
         s["halfyears"] = halfyears(dts, res["ret"])
+        sp = summarize(d, backtest(d, W, adv, pess=True), f"offset_{h}h_pess50")
+        s["pess50"] = {"IS_sharpe": sp["IS_sharpe"], "OOS_sharpe": sp["OOS_sharpe"], "OOS_cagr": sp["OOS"]["cagr_pct"]}
         res_all[f"{h}h"] = s
         print(f"offset {h:2d}h  IS {s['IS_sharpe']:5.2f}  OOS {s['OOS_sharpe']:5.2f}  OOS cagr {s['OOS']['cagr_pct']:6.1f}  "
+              f"pess50 OOS {sp['OOS_sharpe']:5.2f}  "
               f"{time.time() - t_start:.0f}s", flush=True)
     (OUTD / "verify_offset.json").write_text(json.dumps(res_all, indent=1, default=str))
+
+
+# ----------------------------------------------------------------------------- цена расчёта при делистинге
+SETTLE_DIR = OUTD.parents[2] / "cache" / "edge_lab" / "xsec" / "verify_settle"
+
+
+def _kl_1m(fam: str, sym: str, day: str) -> np.ndarray | None:
+    """1m свечи (open_time, open, high, low, close, volume) из data.binance.vision, кеш — сырые zip."""
+    import io
+    import zipfile
+
+    from scripts.edge_lab.universe import _get
+
+    f = SETTLE_DIR / sym / f"{fam}-{day}.zip"
+    if not f.exists():
+        blob = _get(f"https://data.binance.vision/data/futures/um/daily/{fam}/{sym}/1m/{sym}-1m-{day}.zip")
+        if blob is None:
+            return None
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(blob)
+    with zipfile.ZipFile(f) as zf:
+        txt = zf.read(zf.namelist()[0]).decode()
+    rows = [ln.split(",")[:6] for ln in txt.splitlines() if ln[:1].isdigit()]
+    return np.array(rows, dtype=float) if rows else None
+
+
+def delist_events(d: dict, W: np.ndarray, gap: int = 7):
+    """(j, t_last): последний торговый день монеты перед паузой > gap дней, если позиция была в портфеле."""
+    C = d["C"]
+    T, N = C.shape
+    alive = np.isfinite(C)
+    ev = []
+    for j in range(N):
+        a = alive[:, j]
+        idx = np.flatnonzero(a[:-1] & ~a[1:])
+        for t in idx:
+            nxt = d["next_alive"][t + 1, j]
+            if nxt - (t + 1) > gap and t >= 2 and (W[t - 1, j] != 0 or W[t - 2, j] != 0):
+                ev.append((j, int(t)))
+    return ev
+
+
+def run_settle():
+    """Сравнение цены последней сделки (наш выход) с индексной/маркировочной ценой в момент делистинга.
+    Binance закрывает позиции принудительным расчётом; если расчёт идёт по индексу, а перп торговался с
+    премией/дисконтом (сквиз перед делистингом), реальный выход отличается от последнего close."""
+    d = load_data()
+    W, adv, nk = signals(d)
+    ts = d["ts"]
+    syms = [str(s) for s in d["symbols"]]
+    ev = delist_events(d, W)
+    out = []
+    for j, t in ev:
+        sym = syms[j]
+        day = str(ts[t].astype("datetime64[ms]"))[:10]
+        k = _kl_1m("klines", sym, day)
+        ix = _kl_1m("indexPriceKlines", sym, day)
+        mk = _kl_1m("markPriceKlines", sym, day)
+        rec = {"sym": sym, "day": day, "w_prev": round(float(W[t - 1, j]), 4), "close_panel": float(d["C"][t, j]),
+               "open_panel": float(d["O"][t, j])}
+        if k is not None and len(k):
+            live = k[k[:, 5] > 0]
+            if len(live):
+                t_end = live[-1, 0] + 60_000
+                rec["last_trade_utc"] = str(np.datetime64(int(live[-1, 0]), "ms"))
+                rec["last_close_1m"] = float(live[-1, 4])
+                for nm, arr in (("index", ix), ("mark", mk)):
+                    if arr is not None and len(arr):
+                        m = (arr[:, 0] >= t_end - 30 * 60_000) & (arr[:, 0] < t_end)
+                        if m.any():
+                            rec[f"{nm}_avg30"] = float(np.mean(arr[m, 4]))
+                            rec[f"{nm}_last"] = float(arr[m][-1, 4])
+        if "index_avg30" in rec:
+            rec["ratio_index_to_last"] = round(rec["index_avg30"] / rec["close_panel"], 4)
+        out.append(rec)
+        print(rec, flush=True)
+    (OUTD / "verify_settle.json").write_text(json.dumps(out, indent=1))
 
 
 if __name__ == "__main__":
@@ -540,3 +740,5 @@ if __name__ == "__main__":
         run_main()
     elif mode == "offset":
         run_offset()
+    elif mode == "settle":
+        run_settle()
