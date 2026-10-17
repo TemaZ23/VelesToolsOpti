@@ -28,7 +28,7 @@ from scripts.edge_lab.common import HOUR, cost_per_side, load_funding, load_hour
 from scripts.edge_lab.xsec import KEEP, XOUT
 from scripts.edge_lab.xsec_ctx import Ctx, roll_mean
 from scripts.edge_lab.xsec_data import crypto_mask, load_h4
-from scripts.edge_lab.xsec_engine import backtest, ls_weights, make_exec, overlap, summarize
+from scripts.edge_lab.xsec_engine import backtest, fill_gaps, ls_weights, make_exec, overlap, summarize
 
 SECTORS = {
     "L1": "ETH SOL ADA AVAX DOT NEAR ATOM APT SUI SEI TRX ALGO EGLD FTM ICP TON XTZ EOS NEO KAVA INJ TIA HBAR XLM "
@@ -111,6 +111,7 @@ def _hourly_pair(syms=("BTCUSDT", "ETHUSDT")) -> dict:
         ok = (b >= 0) & (b < T)
         np.add.at(F[:, j], b[ok].astype(np.int64), f["rate"][ok])
     adv = roll_mean(Q, 720, 1) * 24
+    O, C = fill_gaps(O, C, 168)
     return {"ts": ts, "open": O, "close": C, "fund_hold": F, "cps": cost_per_side(np.nan_to_num(adv)), "adv": adv}
 
 
@@ -119,11 +120,12 @@ def ethbtc(ctx: Ctx) -> list:
     h4 = load_h4()
     jb, je = ctx.j_btc, ctx.j_eth
     panels = {}
-    d1 = {"ts": ctx.ts, "open": ctx.O[:, [jb, je]], "close": ctx.C[:, [jb, je]], "fund_hold": ctx.d["fund_hold"][:, [jb, je]],
+    d1 = {"ts": ctx.ts, "open": ctx.ex["open"][:, [jb, je]], "close": ctx.ex["close"][:, [jb, je]], "fund_hold": ctx.d["fund_hold"][:, [jb, je]],
           "cps": ctx.ex["cps"][:, [jb, je]]}  # fmt: skip
     panels["1d"] = (d1, 1)
     adv4 = roll_mean(h4["qvol"][:, [jb, je]], 180, 1) * 6
-    panels["4h"] = ({"ts": h4["ts"], "open": h4["open"][:, [jb, je]], "close": h4["close"][:, [jb, je]],
+    o4, c4 = fill_gaps(h4["open"][:, [jb, je]], h4["close"][:, [jb, je]], 42)
+    panels["4h"] = ({"ts": h4["ts"], "open": o4, "close": c4,
                      "fund_hold": h4["fund_hold"][:, [jb, je]], "cps": cost_per_side(np.nan_to_num(adv4))}, 6)  # fmt: skip
     panels["1h"] = (_hourly_pair(), 24)
     for freq, (ex, bpd) in panels.items():
@@ -332,7 +334,7 @@ def main() -> None:
     print(round(time.time() - t0), flush=True)
     h4 = load_h4()
     adv4 = roll_mean(h4["qvol"], 180, 1) * 6
-    d4 = make_exec(h4, adv4)
+    d4 = make_exec(h4, adv4, 42)
     d4.update(adv=adv4, crypto=crypto_mask(h4["symbols"]), symbols=h4["symbols"])
     out["pairs_4h"] = corr_pairs(d4, "4h", 6)
     del h4, d4

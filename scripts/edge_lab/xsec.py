@@ -36,6 +36,8 @@ UNIS = {"adv10": dict(min_adv=1e7, min_age=60), "top50": dict(min_adv=5e6, min_a
 
 
 def uni_of(ctx: Ctx, cfg: dict):
+    if "min_adv" in cfg:  # явное задание (используется в проверке устойчивости ±25%)
+        return ctx.universe(min_adv=cfg["min_adv"], min_age=cfg.get("min_age", 60), top=cfg.get("top", 0))
     if cfg["uni"] in UNIS:
         return ctx.universe(**UNIS[cfg["uni"]])
     # age-factor universes: "age<min_age>_adv<M>"
@@ -59,7 +61,7 @@ def score(ctx: Ctx, cfg: dict) -> np.ndarray:
             S = np.log(ctx.adv)
     elif f == "illiq":
         with np.errstate(all="ignore"):
-            S = roll_mean(np.abs(ctx.r1) / np.where(ctx.QV > 0, ctx.QV, np.nan), 30) * 1e6
+            S = roll_mean(np.abs(ctx.r1) / np.where(ctx.QV > 0, ctx.QV, np.nan), cfg.get("n") or 30) * 1e6
     elif f == "age":
         S = ctx.age.astype(float)
     else:
@@ -74,6 +76,10 @@ def build_W(ctx: Ctx, cfg: dict) -> np.ndarray:
     side = 1.0 / ctx.vol(30) if cfg.get("wt", "eq") == "iv" else np.ones_like(S)
     W = ls_weights(S, u, side, cfg["q"], cfg.get("min_n", 20), cfg.get("mode", 0), cfg.get("kmax", 0))
     W = overlap(W, cfg["H"])
+    if cfg.get("rebal", 0) > 1:  # ребаланс раз в rebal дней (держим портфель последней даты ребаланса)
+        R = cfg["rebal"]
+        idx = (np.arange(len(W)) // R) * R
+        W = W[idx]
     if cfg.get("bn", 0):
         W = beta_hedge(W, ctx.beta(60), ctx.j_btc)
     return W

@@ -26,7 +26,7 @@ from scripts.edge_lab.common import cost_per_side, panel
 from scripts.edge_lab.xsec import KEEP, XOUT
 from numba import njit
 from scripts.edge_lab.xsec_data import crypto_mask, load_daily, load_h4
-from scripts.edge_lab.xsec_engine import backtest, ls_weights, overlap, summarize
+from scripts.edge_lab.xsec_engine import backtest, fill_gaps, ls_weights, overlap, summarize
 
 BARS_PER_DAY = {"1h": 24, "4h": 6, "1d": 1}
 
@@ -123,7 +123,8 @@ class ICtx:
         self.crypto = crypto_mask(self.symbols)
         self.adv = roll_mean_nb(d["qvol"], 30 * self.bpd) * np.float32(self.bpd)
         dt = np.float32 if freq == "1h" else np.float64
-        self.ex = {"ts": self.ts, "open": self.O.astype(dt, copy=False), "close": self.C.astype(dt, copy=False),
+        O2, C2 = fill_gaps(self.O.astype(dt, copy=False), self.C.astype(dt, copy=False), 7 * self.bpd)
+        self.ex = {"ts": self.ts, "open": O2, "close": C2,
                    "fund_hold": d["fund_hold"].astype(dt, copy=False),
                    "cps": cost_per_side(np.nan_to_num(self.adv)).astype(dt)}  # fmt: skip
         with np.errstate(all="ignore"):

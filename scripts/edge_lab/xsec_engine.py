@@ -99,7 +99,7 @@ def beta_hedge(W: np.ndarray, beta: np.ndarray, j_btc: int, renorm: bool = True)
 
 # ----------------------------------------------------------------------------- backtest
 @njit(cache=True)
-def _bt(W, O, C, F, CPS, pess, band):
+def _bt(W, O, C, F, CPS, pess, band, tmask):
     T, N = W.shape
     w = np.zeros(N)  # weights after drift at the start of bar s (before trading)
     R = np.zeros(T)
@@ -118,7 +118,7 @@ def _bt(W, O, C, F, CPS, pess, band):
         to = 0.0
         tgt = np.zeros(N)
         for i in range(N):
-            ti = W[s - 1, i]
+            ti = W[s - 1, i] if tmask[s] else w[i]
             if not np.isfinite(O[s, i]):
                 ti = 0.0
             if band > 0.0 and ti != 0.0 and w[i] != 0.0 and abs(ti - w[i]) < band:
@@ -184,10 +184,13 @@ def _bt(W, O, C, F, CPS, pess, band):
     return R, Rg, Rp, Rf, Rc, TO, G, NL, NS, ENT, DEAD
 
 
-def backtest(W, ex: dict, pess: float = 0.0, band: float = 0.0) -> dict:
-    """ex: панель исполнения с ключами open, close, fund_hold, cps (издержки на сторону по ADV), ts."""
+def backtest(W, ex: dict, pess: float = 0.0, band: float = 0.0, tmask=None) -> dict:
+    """ex: панель исполнения с ключами open, close, fund_hold, cps (издержки на сторону по ADV), ts.
+    tmask[s] = False — в баре s не торгуем (веса дрейфуют), кроме принудительных выходов."""
+    if tmask is None:
+        tmask = np.ones(len(W), dtype=np.bool_)
     out = _bt(np.ascontiguousarray(W, dtype=np.float64), ex["open"], ex["close"], ex["fund_hold"], ex["cps"],
-              float(pess), float(band))  # fmt: skip
+              float(pess), float(band), np.asarray(tmask, dtype=np.bool_))  # fmt: skip
     keys = ("ret", "gross", "price", "fund", "cost", "turnover", "exposure", "n_long", "n_short", "entries", "dead")
     return dict(zip(keys, out))
 
@@ -264,9 +267,30 @@ def summarize(ts, bt: dict, bars_per_day: float = 1.0) -> dict:
     }
 
 
-def make_exec(d: dict, adv: np.ndarray) -> dict:
-    """Панель исполнения: open/close/fund_hold из d, издержки по ADV (оценка на момент сигнала)."""
-    return {"ts": d["ts"], "open": d["open"], "close": d["close"], "fund_hold": d["fund_hold"],
+@njit(cache=True)
+def fill_gaps(O, C, max_gap):
+    """Короткие пропуски данных внутри жизни монеты (≤ max_gap баров, напр. дыры в архиве Binance) —
+    позиция не закрывается: open=close=последнее close, доходность за пропуск 0, скачок цены — на первом
+    баре после пропуска. Длинные пропуски (делистинг/релистинг) остаются NaN → принудительный выход."""
+    T, N = O.shape
+    O2 = O.copy()
+    C2 = C.copy()
+    for i in range(N):
+        last = -1
+        for t in range(T):
+            if np.isfinite(C[t, i]) and np.isfinite(O[t, i]):
+                if last >= 0 and t - last - 1 > 0 and t - last - 1 <= max_gap:
+                    for g in range(last + 1, t):
+                        O2[g, i] = C[last, i]
+                        C2[g, i] = C[last, i]
+                last = t
+    return O2, C2
+
+
+def make_exec(d: dict, adv: np.ndarray, max_gap: int = 7) -> dict:
+    """Панель исполнения: open/close/fund_hold из d (короткие дыры заполнены), издержки по ADV на момент сигнала."""
+    O2, C2 = fill_gaps(d["open"], d["close"], max_gap)
+    return {"ts": d["ts"], "open": O2, "close": C2, "fund_hold": d["fund_hold"],
             "cps": cost_per_side(np.nan_to_num(adv))}  # fmt: skip
 
 

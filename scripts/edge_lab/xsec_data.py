@@ -106,6 +106,28 @@ def build() -> None:
     print("excluded present:", sum(s in EXCLUDE for s in p["symbols"]))
 
 
+def build_twap() -> None:
+    """Цена исполнения «TWAP первых 4 часов суток»: среднее open часа 0 и close часов 0..3 (UTC).
+    Проверка устойчивости к «отскоку» (bid-ask bounce) единичного принта open[t+1]."""
+    p1 = panel("1h")
+    T1, N = p1["open"].shape
+    nb = T1 // 24
+    o = p1["open"][: nb * 24].reshape(nb, 24, N)[:, 0, :].astype(np.float64)
+    c = p1["close"][: nb * 24].reshape(nb, 24, N)[:, :4, :].astype(np.float64)
+    allp = np.concatenate([o[:, None, :], c], axis=1)
+    with np.errstate(all="ignore"):
+        tw = np.nanmean(allp, axis=1)
+    # бар считается торгуемым, только если есть open часа 0 (иначе NaN → как отсутствие open)
+    tw = np.where(np.isnan(o), np.nan, tw)
+    np.savez(XCACHE / "twap4_off0.npz", ts=p1["ts"][: nb * 24 : 24], twap=tw)
+    print("twap", tw.shape)
+
+
+def load_twap() -> dict:
+    with np.load(XCACHE / "twap4_off0.npz", allow_pickle=False) as z:
+        return {k: z[k] for k in z.files}
+
+
 def load_daily(off: int = 0) -> dict:
     with np.load(XCACHE / f"daily_off{off}.npz", allow_pickle=False) as z:
         return {k: z[k] for k in z.files}
@@ -117,4 +139,10 @@ def load_h4() -> dict:
 
 
 if __name__ == "__main__":
-    build()
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "twap":
+        build_twap()
+    else:
+        build()
+        build_twap()

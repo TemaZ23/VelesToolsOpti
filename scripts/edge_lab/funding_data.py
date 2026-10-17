@@ -2,6 +2,7 @@
 Данные для семейства funding (scripts/edge_lab/funding.py).
 
     PYTHONPATH=. python3 -m scripts.edge_lab.funding_data spot     # дневной спот Binance для фьючерсов, у которых есть спот
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding_data mark     # дневные mark price klines (для ликвидаций)
     PYTHONPATH=. python3 -m scripts.edge_lab.funding_data build    # выровненные панели (спот + фандинг со сдвигом)
 
 Кеш: cache/edge_lab/funding/spot_1d/<PERP>.npz (ts, ohlc, qvol, scale) — НЕ пересекается с файлами
@@ -32,6 +33,7 @@ from scripts.edge_lab.universe import BASE, LAST_MONTH, _get, list_prefix
 
 FAM = CACHE / "funding"
 SPOT = FAM / "spot_1d"
+MARK = FAM / "mark_1d"  # дневные свечи mark price (по ней Binance ликвидирует) для перпов со спотом
 DER = FAM / "derived"
 PREFIXES = ("1000000", "100000", "10000", "1000", "1M")
 
@@ -89,6 +91,45 @@ def fetch_spot(perp: str, pair: str, scale: float) -> dict:
     return {"perp": perp, "rows": len(a)}
 
 
+def fetch_mark(perp: str) -> dict:
+    path = MARK / f"{perp}.npz"
+    if path.exists():
+        return {"perp": perp, "cached": True}
+    keys, _ = list_prefix(f"data/futures/um/monthly/markPriceKlines/{perp}/1d/", delimiter=False)
+    months = sorted({m for k in keys for m in re.findall(r"(\d{4}-\d{2})\.zip$", k)})
+    rows = []
+    for m in [m for m in months if "2019-12" <= m <= LAST_MONTH]:
+        blob = _get(f"{BASE}data/futures/um/monthly/markPriceKlines/{perp}/1d/{perp}-1d-{m}.zip")
+        if blob:
+            r = _read(blob)
+            if len(r):
+                rows.append(r)
+    if not rows:
+        return {"perp": perp, "error": "no data"}
+    a = np.concatenate(rows)
+    a = a[np.argsort(a[:, 0], kind="stable")]
+    a = a[np.r_[True, a[1:, 0] != a[:-1, 0]]]
+    MARK.mkdir(parents=True, exist_ok=True)
+    np.savez(path, ts=a[:, 0].astype(np.int64), ohlc=a[:, 1:5])
+    return {"perp": perp, "rows": len(a)}
+
+
+def download_mark(threads: int = 12) -> None:
+    mp = json.loads((DER / "spot_map.json").read_text())
+    res = []
+    with ThreadPoolExecutor(threads) as ex:
+        futs = {ex.submit(fetch_mark, k): k for k in mp}
+        for i, f in enumerate(as_completed(futs), 1):
+            try:
+                res.append(f.result())
+            except Exception as exc:  # noqa: BLE001
+                res.append({"perp": futs[f], "error": repr(exc)})
+            if i % 100 == 0:
+                print(i, len(mp), flush=True)
+    err = [r for r in res if "error" in r]
+    print("mark готово, ошибок:", len(err), err[:10])
+
+
 def download_spot(threads: int = 12) -> None:
     mp = spot_map()
     print("перпов со спотом:", len(mp), flush=True)
@@ -128,6 +169,17 @@ def build() -> None:
         sc_ = float(d["scale"])
         so[b, j], sh[b, j], sl[b, j], sc[b, j] = (d["ohlc"][ok, k] * sc_ for k in range(4))
         sv[b, j] = d["qvol"][ok]
+    mo, mh = np.full((T, N), np.nan), np.full((T, N), np.nan)
+    for j, s in enumerate(syms):
+        path = MARK / f"{s}.npz"
+        if not path.exists():
+            continue
+        with np.load(path) as z:
+            mts, mohlc = z["ts"], z["ohlc"]
+        b = (mts - t0) // DAY
+        ok = (b >= 0) & (b < T)
+        mo[b[ok].astype(np.int64), j] = mohlc[ok, 0]
+        mh[b[ok].astype(np.int64), j] = mohlc[ok, 1]
     # фандинг «держим бар» — выплаты в (open_t, open_{t+1}]; сдвиг на 1 минуту назад
     fh = np.zeros((T, N))
     nset = np.zeros((T, N), dtype=np.int16)
@@ -141,7 +193,7 @@ def build() -> None:
         np.add.at(nset[:, j], b[ok].astype(np.int64), 1)
     DER.mkdir(parents=True, exist_ok=True)
     np.savez(DER / "aux_1d.npz", ts=ts, spot_open=so, spot_high=sh, spot_low=sl, spot_close=sc, spot_qvol=sv,
-             fund_hold=fh, n_settle=nset)  # fmt: skip
+             fund_hold=fh, n_settle=nset, mark_open=mo, mark_high=mh)  # fmt: skip
     have = (~np.isnan(sc)).any(0).sum()
     print("aux_1d сохранён; символов со спотом в панели:", int(have))
     # sanity: базис перп/спот
@@ -161,5 +213,7 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "build"
     if cmd == "spot":
         download_spot()
+    elif cmd == "mark":
+        download_mark()
     elif cmd == "build":
         build()
