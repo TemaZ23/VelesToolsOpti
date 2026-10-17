@@ -28,6 +28,13 @@ class Assessment(BaseModel):
     suggested_price_usd: float = Field(
         description="Fair market fixed price for this job on this platform, in USD."
     )
+    stated_budget_amount: float | None = Field(
+        description="Budget the client writes in the text (e.g. 'оплата 5000 рублей' -> 5000); "
+        "null if the text names no amount."
+    )
+    stated_budget_currency: str | None = Field(
+        description="ISO code of stated_budget_amount: RUB, USD, EUR...; null if no amount."
+    )
     language: Literal["ru", "en", "other"]
     requirements_summary: str = Field(description="What exactly must be delivered, 2-6 lines.")
     clarifying_questions: list[str] = Field(description="At most 3 questions that block the work.")

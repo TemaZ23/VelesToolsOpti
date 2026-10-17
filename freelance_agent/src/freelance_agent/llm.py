@@ -23,7 +23,11 @@ _FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 
 class LLMError(RuntimeError):
-    pass
+    """The model could not produce a usable answer for this particular input."""
+
+
+class LLMUnavailable(LLMError):
+    """Key, permissions, network or overload problem: nothing is wrong with the job itself."""
 
 
 class LLM:
@@ -67,10 +71,15 @@ class LLM:
 
         try:
             response = await self.client.beta.messages.parse(**kwargs)
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError,
+                anthropic.RateLimitError, anthropic.InternalServerError) as e:
+            raise LLMUnavailable(f"Claude API {e.status_code}: {e.message}") from e
         except anthropic.APIStatusError as e:
+            if e.status_code >= 500 or e.status_code in (402, 529):
+                raise LLMUnavailable(f"Claude API {e.status_code}: {e.message}") from e
             raise LLMError(f"{purpose}: Claude API {e.status_code}: {e.message}") from e
         except anthropic.APIConnectionError as e:
-            raise LLMError(f"{purpose}: Claude API unreachable: {e}") from e
+            raise LLMUnavailable(f"Claude API unreachable: {e}") from e
 
         usage = response.usage
         served_by = response.model or model

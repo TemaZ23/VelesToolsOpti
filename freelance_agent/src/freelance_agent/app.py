@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import anthropic
 import httpx2 as httpx
 
+from . import fx
 from .agents.brain import Brain
 from .agents.executor import Executor, QueryFn
 from .budget import BudgetGuard
@@ -71,6 +72,8 @@ def build(
     telegram = None
     if settings.telegram.enabled and secrets.telegram_bot_token:
         telegram = Telegram(http, secrets.telegram_bot_token, settings.telegram.chat_id)
+    if settings.economics.live_fx:
+        fx.apply_cached(store, settings.economics)
     agent = Agent(settings, store, guard, brain, executor, build_sources(settings, http, freelancer),
-                  telegram, freelancer)
+                  telegram, freelancer, fx_http=http if settings.economics.live_fx else None)
     return App(settings, store, guard, llm, brain, agent, http, client)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import getpass
 import logging
 import re
 import shutil
@@ -17,34 +18,61 @@ from . import prefilter
 from .agents.executor import sandbox_problem
 from .app import build, build_sources
 from .budget import BudgetGuard, format_report
-from .config import Secrets, Settings, load_dotenv, load_settings
+from .config import Secrets, Settings, default_home, load_dotenv, load_settings
 from .db import Store
-from .economics import platform_fee, to_usd
-from .models import Job
+from .economics import income_tax, platform_fee, record_payment, to_usd
+from .models import Job, JobStatus
+from .setup_wizard import Answers, render_config, run_setup
 from .sources.base import make_http
 from .sources.freelancer_com import FreelancerClient
 
 HERE = Path(__file__).resolve().parent
 
 
+def _config_path(args: argparse.Namespace) -> Path:
+    return Path(args.config).expanduser() if args.config else default_home() / "config.yaml"
+
+
 def _load(args: argparse.Namespace) -> tuple[Settings, Secrets]:
-    config = Path(args.config)
+    config = _config_path(args)
     load_dotenv(config.parent / ".env")
     if not config.exists():
-        sys.exit(f"{config} not found. Run: freelance-agent init")
+        sys.exit(f"{config} not found. Run: freelance-agent setup")
     return load_settings(config), Secrets.from_env()
 
 
 def cmd_init(args: argparse.Namespace) -> None:
-    target = Path(args.config)
-    for name, dest in (("config.example.yaml", target), ("env.example", target.parent / ".env")):
-        src = HERE / "templates" / name
-        if dest.exists():
-            print(f"exists: {dest}")
-        else:
-            shutil.copy(src, dest)
-            print(f"created: {dest}")
-    print("Fill in the profile in config.yaml and the keys in .env, then: freelance-agent check")
+    """Non-interactive: write example config.yaml and .env to edit by hand."""
+    target = _config_path(args)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    env = target.parent / ".env"
+    if target.exists():
+        print(f"exists: {target}")
+    else:
+        target.write_text(render_config(Answers()), encoding="utf-8")
+        print(f"created: {target}")
+    if env.exists():
+        print(f"exists: {env}")
+    else:
+        shutil.copy(HERE / "templates" / "env.example", env)
+        env.chmod(0o600)
+        print(f"created: {env}")
+    print("Fill in the profile in config.yaml and the keys in .env (or run: freelance-agent setup)")
+
+
+async def cmd_setup(args: argparse.Namespace) -> None:
+    def ask(prompt: str, default: str) -> str:
+        answer = input(f"{prompt} [{default}]: ").strip()
+        return answer or default
+
+    home = _config_path(args).parent
+    load_dotenv(home / ".env")
+    http = make_http()
+    try:
+        await run_setup(home, ask, getpass.getpass, print, http)
+    finally:
+        await http.aclose()
+    print("Дальше: freelance-agent check, затем freelance-agent scan (бесплатный обзор рынка)")
 
 
 async def cmd_check(args: argparse.Namespace) -> None:
@@ -93,7 +121,7 @@ async def cmd_check(args: argparse.Namespace) -> None:
                 me = await Telegram(http, secrets.telegram_bot_token, None).get_me()
                 report(True, f"telegram bot @{me.get('username')}")
                 report(settings.telegram.chat_id is not None,
-                       "telegram.chat_id is set (send /start to the bot while `run` is active to learn it)")
+                       "telegram.chat_id is set (freelance-agent setup finds it for you)")
     finally:
         await http.aclose()
 
@@ -176,14 +204,9 @@ def cmd_paid(args: argparse.Namespace) -> None:
     if rate is None:
         sys.exit(f"no rate for {currency} in economics.fx_to_usd")
     usd = args.amount * rate
-    store.add_ledger("revenue", usd, rec.id, f"{args.amount:g} {currency} via CLI")
-    fee = platform_fee(usd, rec.source, settings.economics)
-    if fee:
-        store.add_ledger("fee", fee, rec.id, f"{rec.source} fee")
-    from .models import JobStatus
-
+    record_payment(store, settings.economics, rec, usd, f"{args.amount:g} {currency} via CLI")
     store.set_status(rec.id, JobStatus.PAID)
-    print(f"recorded ${usd:.2f} revenue (fee ${fee:.2f}) for #{rec.id}")
+    print(f"recorded ${usd:.2f} revenue for #{rec.id}")
 
 
 def cmd_estimate(args: argparse.Namespace) -> None:
@@ -192,7 +215,7 @@ def cmd_estimate(args: argparse.Namespace) -> None:
     e, b = settings.economics, settings.budget
     fixed = sum(b.fixed_monthly_costs_usd.values())
     price = args.price
-    fee = platform_fee(price, args.source, e)
+    fee = platform_fee(price, args.source, e) + income_tax(price, e)
     exec_cost = e.execution_cost_usd[args.complexity]
     per_win = price - fee - exec_cost
     win_rate = e.prior_win_rate
@@ -200,7 +223,7 @@ def cmd_estimate(args: argparse.Namespace) -> None:
     acquisition = bids_per_win * e.proposal_cost_estimate_usd
     margin = per_win - acquisition
     print(f"Job ${price:.0f} on {args.source}, complexity {args.complexity}")
-    print(f"  platform fee           -{fee:.2f}")
+    print(f"  platform fee + tax     -{fee:.2f}")
     print(f"  AI execution (budget)  -{exec_cost:.2f}")
     print(f"  proposals per win      {bids_per_win:.0f} x ${e.proposal_cost_estimate_usd:.2f} = -{acquisition:.2f}")
     print(f"  margin per won job     {margin:.2f}")
@@ -229,10 +252,12 @@ async def cmd_smoke_llm(args: argparse.Namespace) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="freelance-agent")
-    parser.add_argument("-c", "--config", default="config.yaml")
+    parser.add_argument("-c", "--config", default=None,
+                        help="config.yaml path (default: $FREELANCE_AGENT_HOME or ~/freelance-agent)")
     parser.add_argument("-v", "--verbose", action="store_true")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("init", help="create config.yaml and .env from templates")
+    sub.add_parser("setup", help="interactive setup: keys, Telegram, profile, platforms")
+    sub.add_parser("init", help="write example config.yaml and .env to edit by hand")
     sub.add_parser("check", help="verify keys, models, sources, Telegram, sandbox")
     sub.add_parser("scan", help="free dry run: fetch and prefilter jobs, no LLM")
     sub.add_parser("once", help="one full cycle")
@@ -262,6 +287,7 @@ def main(argv: list[str] | None = None) -> None:
         "estimate": cmd_estimate,
     }
     async_handlers = {
+        "setup": cmd_setup,
         "check": cmd_check,
         "scan": cmd_scan,
         "smoke-llm": cmd_smoke_llm,

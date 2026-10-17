@@ -15,15 +15,15 @@ from typing import Any
 
 import httpx2 as httpx
 
-from . import prefilter
+from . import fx, prefilter
 from .agents.brain import Brain
 from .agents.executor import Executor, files_for_review, pack
 from .agents.schemas import Assessment
 from .budget import BudgetExceeded, BudgetGuard, format_report
 from .config import Settings
 from .db import JobRecord, Store
-from .economics import decide, platform_fee, usd_rate_for, win_probability
-from .llm import LLMError
+from .economics import decide, record_payment, usd_rate_for, win_probability
+from .llm import LLMError, LLMUnavailable
 from .models import JobStatus
 from .notify.telegram import Buttons, Telegram, TelegramError, callback, esc, parse_callback
 from .sources.base import Source
@@ -59,6 +59,7 @@ class Agent:
         sources: list[Source],
         telegram: Telegram | None,
         freelancer: FreelancerClient | None,
+        fx_http: httpx.AsyncClient | None = None,
     ) -> None:
         self.s = settings
         self.store = store
@@ -68,6 +69,7 @@ class Agent:
         self.sources = sources
         self.tg = telegram
         self.fl = freelancer
+        self.fx_http = fx_http
         self._busy: set[int] = set()
         self._tasks: set[asyncio.Task[None]] = set()
         self._wake = asyncio.Event()
@@ -115,6 +117,11 @@ class Agent:
                 stats.proposals += status in (JobStatus.AWAITING_APPROVAL, JobStatus.SUBMITTED)
             except BudgetExceeded as e:
                 await self.alert_once("budget", f"⛔ {esc(str(e))}")
+                return
+            except LLMUnavailable as e:
+                # Jobs stay NEW and are retried next cycle once the key/network is fine.
+                log.warning("Claude API unavailable: %s", e)
+                await self.alert_once("llm", f"⛔ Claude API недоступен: {esc(str(e))}")
                 return
             except (LLMError, ValueError) as e:
                 log.warning("job %s: %s", rec.id, e)
@@ -318,10 +325,7 @@ class Agent:
                               f"<pre>{esc(format_report(self.guard.report()))}</pre>")
 
     def record_payment(self, rec: JobRecord, amount_usd: float, note: str = "") -> None:
-        fee = platform_fee(amount_usd, rec.source, self.s.economics)
-        self.store.add_ledger("revenue", amount_usd, rec.id, note)
-        if fee:
-            self.store.add_ledger("fee", fee, rec.id, f"{rec.source} fee")
+        record_payment(self.store, self.s.economics, rec, amount_usd, note)
 
     # ============================================================================= talking
 
@@ -484,7 +488,7 @@ class Agent:
         if self.tg:
             try:
                 await self.tg.send_document(archive, f"📦 #{job_id} результат")
-            except TelegramError as e:
+            except Exception as e:  # the zip is a convenience copy; never lose the delivery card
                 log.warning("send_document failed: %s", e)
         body = (f"📦 <b>#{job_id} готово</b> · {esc(rec.title)}\nЗатраты ИИ на заказ: ${spent:.2f}{issues}\n\n"
                 f"<b>Сообщение клиенту</b> (ответьте на это сообщение текстом правок, "
@@ -736,6 +740,8 @@ class Agent:
 
     async def cycle(self) -> CycleStats:
         stats = CycleStats()
+        if self.s.economics.live_fx and self.fx_http is not None:
+            await fx.refresh_daily(self.fx_http, self.store, self.s.economics)
         await self.scan(stats)
         await self.triage_new(stats)
         await self.sync_freelancer()
@@ -756,7 +762,7 @@ class Agent:
         while True:
             try:
                 updates = await self.tg.get_updates(offset)
-            except (TelegramError, httpx.HTTPError) as e:
+            except Exception as e:  # the poller must never die silently
                 log.warning("telegram poll: %s", e)
                 await asyncio.sleep(5)
                 continue

@@ -130,7 +130,7 @@ def format_report(r: Report) -> str:
         "Экономика (USD, текущий месяц)",
         f"  выручка             {r.revenue_month:9.2f}",
         f"  комиссии площадок  -{r.fees_month:9.2f}",
-        f"  прочие расходы     -{r.expenses_month:9.2f}",
+        f"  налоги и прочее    -{r.expenses_month:9.2f}",
         f"  LLM (API)          -{r.llm_month:9.2f}   (сегодня {r.llm_today:.2f})",
         f"  фикс. расходы      -{r.fixed_month:9.2f}   (подписки и т.п.)",
         f"  ПРИБЫЛЬ             {r.profit_month:9.2f}",

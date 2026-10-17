@@ -126,7 +126,7 @@ def test_flru_order_from_post_to_payment(tmp_path, fake_claude):
         good = store.get_job_by_uid(GOOD_FLRU.uid)
         assert good.status == JobStatus.AWAITING_APPROVAL
         assert store.get_job_by_uid(BAD_FLRU.uid).status == JobStatus.FILTERED
-        assert good.bid_amount == 9600 and good.decision["execution_budget_usd"] == 2.25
+        assert good.bid_amount == 10000 and good.decision["execution_budget_usd"] == 2.25
         assert "Я откликнулся" in tg.last_buttons()[0][0]
 
         # 1. You paste the proposal on FL.ru and tap "I responded"
@@ -294,5 +294,24 @@ def test_telegram_updates_from_strangers_are_ignored(tmp_path, fake_claude):
         assert store.get_job_by_uid(GOOD_FLRU.uid).status == JobStatus.SKIPPED
         await agent.handle_update({"message": {"chat": {"id": 42}, "text": "/stats"}})
         assert "ПРИБЫЛЬ" in tg.sent[-1][1]
+
+    asyncio.run(scenario())
+
+
+def test_bad_api_key_leaves_jobs_for_the_next_cycle(tmp_path, fake_claude):
+    import httpx2 as httpx
+
+    def unauthorized(request):
+        return httpx.Response(401, json={"type": "error", "error": {
+            "type": "authentication_error", "message": "invalid x-api-key"}})
+
+    async def scenario():
+        fake_claude.handler = unauthorized
+        agent, store, tg, _ = build(tmp_path, fake_claude, [ListSource("flru", [GOOD_FLRU])])
+        await agent.cycle()
+        assert store.get_job_by_uid(GOOD_FLRU.uid).status == JobStatus.NEW
+        assert any("Claude API недоступен" in text for _, text, _ in tg.sent)
+        await agent.cycle()  # alerted only once a day
+        assert sum("Claude API недоступен" in text for _, text, _ in tg.sent) == 1
 
     asyncio.run(scenario())

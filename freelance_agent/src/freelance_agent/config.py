@@ -70,16 +70,20 @@ class Economics(BaseModel):
     max_execution_share: float = 0.25
     max_execution_usd: float = 8.0
     execution_cost_usd: dict[Complexity, float] = Field(default_factory=_execution_costs)
+    # Income tax on every payment, e.g. 4-6% for самозанятый (НПД) in Russia.
+    tax_percent: float = 0.0
     platform_fees: dict[str, PlatformFee] = Field(
         default_factory=lambda: {
             "freelancer": PlatformFee(percent=10.0, min_usd=5.0),
             "flru": PlatformFee(percent=0.0),
         }
     )
-    # Units of USD per one unit of currency. Freelancer.com supplies live rates itself.
+    # Units of USD per one unit of currency. Freelancer.com supplies live rates itself;
+    # with live_fx the Bank of Russia daily rates replace these once a day.
     fx_to_usd: dict[str, float] = Field(
-        default_factory=lambda: {"USD": 1.0, "EUR": 1.08, "GBP": 1.27, "RUB": 0.0125, "INR": 0.0118}
+        default_factory=lambda: {"USD": 1.0, "EUR": 1.08, "GBP": 1.27, "RUB": 0.012, "INR": 0.0118}
     )
+    live_fx: bool = True
 
 
 class Autonomy(BaseModel):
@@ -193,6 +197,11 @@ class Secrets(BaseModel):
             telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN") or None,
             freelancer_oauth_token=os.environ.get("FREELANCER_OAUTH_TOKEN") or None,
         )
+
+
+def default_home() -> Path:
+    """Where config.yaml, .env and data/ live: $FREELANCE_AGENT_HOME or ~/freelance-agent."""
+    return Path(os.environ.get("FREELANCE_AGENT_HOME") or "~/freelance-agent").expanduser()
 
 
 def load_dotenv(path: Path) -> None:

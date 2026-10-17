@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass, replace
 
 from .agents.schemas import Assessment
 from .config import Economics, Profile
+from .db import JobRecord, Store
 from .models import Job
 
 
@@ -33,6 +34,10 @@ def platform_fee(price_usd: float, source: str, econ: Economics) -> float:
     if fee is None:
         return 0.0
     return max(price_usd * fee.percent / 100.0, fee.min_usd)
+
+
+def income_tax(amount_usd: float, econ: Economics) -> float:
+    return amount_usd * econ.tax_percent / 100.0
 
 
 def win_probability(bids: int, wins: int, bid_count: int | None, econ: Economics) -> float:
@@ -82,6 +87,10 @@ def decide(job: Job, a: Assessment, profile: Profile, econ: Economics,
         return BidDecision(False, f"нет курса валюты {job.currency} (economics.fx_to_usd)")
     bmin = job.budget_min * rate if job.budget_min else None
     bmax = job.budget_max * rate if job.budget_max else None
+    if bmax is None and a.stated_budget_amount:
+        # Budget only in the text ("оплата 5000 рублей"): treat it as the ceiling.
+        bmax = to_usd(a.stated_budget_amount, a.stated_budget_currency or job.currency,
+                      None, econ.fx_to_usd)
 
     floor = profile.min_project_usd
     if bmax is not None and bmax < floor:
@@ -90,7 +99,7 @@ def decide(job: Job, a: Assessment, profile: Profile, econ: Economics,
     if bmax is not None:
         price = min(price, bmax)
 
-    fee = platform_fee(price, job.source, econ)
+    fee = platform_fee(price, job.source, econ) + income_tax(price, econ)
     net = price - fee
     needed = econ.execution_cost_usd[a.complexity]
     cap = min(econ.max_execution_usd, net * econ.max_execution_share)
@@ -126,3 +135,15 @@ def decide(job: Job, a: Assessment, profile: Profile, econ: Economics,
 
 def _round_amount(amount: float) -> float:
     return float(round(amount)) if amount >= 20 else round(amount, 2)
+
+
+def record_payment(store: Store, econ: Economics, rec: JobRecord, amount_usd: float,
+                   note: str = "") -> None:
+    """Book a received payment with the platform fee and income tax it implies."""
+    store.add_ledger("revenue", amount_usd, rec.id, note)
+    fee = platform_fee(amount_usd, rec.source, econ)
+    if fee:
+        store.add_ledger("fee", fee, rec.id, f"{rec.source} fee")
+    tax = income_tax(amount_usd, econ)
+    if tax:
+        store.add_ledger("expense", tax, rec.id, f"tax {econ.tax_percent:g}%")

@@ -54,6 +54,8 @@ ASSESSMENT = {
     "complexity": "small",
     "estimated_human_hours": 3,
     "suggested_price_usd": 120,
+    "stated_budget_amount": None,
+    "stated_budget_currency": None,
     "language": "ru",
     "requirements_summary": "Python script that scrapes product names and prices to CSV.",
     "clarifying_questions": ["Which site?"],

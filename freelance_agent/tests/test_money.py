@@ -112,7 +112,7 @@ def test_budget_below_minimum_and_execution_too_expensive():
 def test_price_is_clamped_to_budget_and_converted_to_local_currency():
     rub = job(source="flru", currency="RUB", usd_rate=None, budget_min=None, budget_max=12000, bid_count=None)
     d = decide(rub, assessment(suggested_price_usd=400), PROFILE, Economics(), 0.05)
-    assert d.bid and d.price_usd == 150.0 and d.bid_amount == 12000 and d.currency == "RUB"
+    assert d.bid and d.price_usd == 144.0 and d.bid_amount == 12000 and d.currency == "RUB"
     assert d.fee_usd == 0.0
 
 

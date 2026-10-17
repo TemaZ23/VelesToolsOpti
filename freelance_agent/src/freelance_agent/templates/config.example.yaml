@@ -1,4 +1,5 @@
-# Настройки фриланс-агента. Секреты (ключи) — только в .env, не здесь.
+# Настройки фриланс-агента. Секреты (ключи) — только в .env рядом с этим файлом.
+# Все суммы в долларах США: агент сам пересчитывает рубли по курсу ЦБ (economics.live_fx).
 
 data_dir: data                 # база SQLite и рабочие папки заказов
 poll_interval_minutes: 10      # как часто искать новые заказы
@@ -6,15 +7,13 @@ max_new_jobs_per_cycle: 40     # максимум платных оценок з
 
 # Кого представляет агент. ВСЁ здесь должно быть правдой: отклики цитируют только это.
 profile:
-  name: "Иван Петров"
-  headline: "Python-разработчик: парсеры, Telegram-боты, автоматизация"
-  about: >
-    5 лет пишу на Python. Делаю парсеры, интеграции с API, Telegram-ботов,
-    обработку Excel/CSV. Работаю с ИИ-инструментами, весь результат проверяю сам.
-  skills: [Python, парсинг, Telegram-боты, API, Excel, SQL, автоматизация]
+  name: {{name}}
+  headline: {{headline}}
+  about: {{about}}
+  skills: {{skills}}
   portfolio: []                # только реальные ссылки
-  hourly_rate_usd: 25
-  min_project_usd: 30          # дешевле — не откликаться
+  hourly_rate_usd: {{hourly_rate_usd}}
+  min_project_usd: {{min_project_usd}}   # дешевле — не откликаться
 
 models:
   triage: claude-haiku-5-5     # массовая оценка заказов, доли цента за заказ
@@ -31,7 +30,6 @@ budget:
   stop_loss_usd: 15.0          # если расходы на LLM превысили заработок на эту сумму — ставки стоп
   fixed_monthly_costs_usd:     # для расчёта окупаемости (агент их не тратит)
     claude_subscription: 20.0
-    # vps: 5.0
     # fl_pro: 10.0
 
 economics:
@@ -43,10 +41,12 @@ economics:
   max_execution_share: 0.25    # ИИ может потратить не больше 25% чистой цены заказа
   max_execution_usd: 8.0       # и не больше $8 на один заказ
   execution_cost_usd: {trivial: 0.5, small: 1.5, medium: 4.0, large: 10.0}
+  tax_percent: {{tax_percent}}           # самозанятый (НПД): 4% с физлиц, 6% с компаний
   platform_fees:
     freelancer: {percent: 10, min_usd: 5}
-    flru: {percent: 0, min_usd: 0}
-  fx_to_usd: {USD: 1.0, EUR: 1.08, GBP: 1.27, RUB: 0.0125, INR: 0.0118}
+    flru: {percent: 0, min_usd: 0}       # укажите комиссию, если работаете через Безопасную сделку
+  live_fx: true                # курс ЦБ РФ раз в день
+  fx_to_usd: {USD: 1.0, EUR: 1.08, GBP: 1.27, RUB: 0.012, INR: 0.0118, USDT: 1.0, USDC: 1.0}
 
 autonomy:
   # manual — каждый отклик/сообщение ждёт вашего нажатия в Telegram (рекомендуется для старта)
@@ -56,34 +56,32 @@ autonomy:
   auto_bid_min_score: 80
   auto_bid_max_usd: 300
   disclose_ai: false
-  disclosure_text: "I use AI tools under my supervision to deliver faster."
+  disclosure_text: "Работаю с ИИ-инструментами, результат проверяю сам."
 
 filters:
   include_keywords: []         # если не пусто — заказ должен содержать хотя бы одно слово
   exclude_keywords: [wordpress, 1с, unity, figma]
-  min_budget_usd: 30
+  min_budget_usd: {{min_project_usd}}
   min_fit_score: 55
   max_existing_bids: 60
   max_age_hours: 48
 
 sources:
-  flru:
-    enabled: true
+  flru:                        # FL.ru: оплата на российскую карту / ЮMoney
+    enabled: {{flru_enabled}}
     feeds: ["https://www.fl.ru/rss/all.xml"]
-    pro_account: false         # без PRO берём только заказы «для всех»
-  freelancer:
-    enabled: true
-    queries: [python, "web scraping", "telegram bot", "data entry excel", automation]
-    job_ids: []                # id навыков Freelancer.com, необязательно
+    pro_account: {{flru_pro}}         # без PRO берём только заказы «для всех»
+  freelancer:                  # Freelancer.com: проверьте, какие способы вывода доступны вашей стране
+    enabled: {{freelancer_enabled}}
+    queries: [python, "web scraping", "telegram bot", automation]
+    job_ids: []
     per_query_limit: 30
     max_bids_per_day: 10
-  rss: []
-  # - name: wwr
-  #   url: https://weworkremotely.com/categories/remote-programming-jobs.rss
+  rss: {{rss}}                 # Pchel.net и любые другие RSS-ленты заказов
 
 executor:
   max_turns: 60
-  sandbox: true                # ОС-песочница для Bash (Linux: bubblewrap+socat, есть в Docker-образе)
+  sandbox: true                # песочница ОС для Bash (Linux: bubblewrap + socat)
   allow_unsandboxed: false     # true только на одноразовой машине/VPS
   allow_web: false
   allowed_domains: [pypi.org, files.pythonhosted.org, registry.npmjs.org]
@@ -91,4 +89,4 @@ executor:
 
 telegram:
   enabled: true
-  chat_id: null                # узнать: запустите агента и отправьте боту /start
+  chat_id: {{chat_id}}         # ставит мастер настройки (freelance-agent setup)

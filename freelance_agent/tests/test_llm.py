@@ -51,7 +51,7 @@ def test_proposal_uses_opus_with_server_side_fallback(tmp_path, fake_claude):
     assert req["body"]["model"] == "claude-opus-5-5"
     assert req["body"]["fallbacks"] == "default"
     assert "server-side-fallback-2026-07-01" in req["headers"]["anthropic-beta"]
-    assert "Price to quote: 9600 RUB" in req["body"]["messages"][0]["content"]
+    assert "Price to quote: 10000 RUB" in req["body"]["messages"][0]["content"]
 
 
 def test_refusal_and_truncation_raise_but_are_still_billed(tmp_path, fake_claude):
@@ -76,3 +76,19 @@ def test_long_proposals_are_cut_on_a_sentence_boundary():
     text = "Первое предложение. " * 120
     short = _shorten(text, 1500)
     assert len(short) <= 1500 and short.endswith(".")
+
+
+def test_auth_and_outage_errors_are_not_blamed_on_the_job(tmp_path, fake_claude):
+    import httpx2 as httpx
+
+    from freelance_agent.llm import LLMUnavailable
+
+    def unauthorized(request):
+        return httpx.Response(401, json={"type": "error", "error": {
+            "type": "authentication_error", "message": "invalid x-api-key"}})
+
+    fake_claude.handler = unauthorized  # before the client is built: the transport binds it
+    _, store, brain = setup(tmp_path, fake_claude)
+    with pytest.raises(LLMUnavailable, match="401"):
+        asyncio.run(brain.assess(JOB, 1))
+    assert store.llm_spend() == 0

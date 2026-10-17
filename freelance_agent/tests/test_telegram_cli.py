@@ -64,3 +64,20 @@ def test_cli_init_and_estimate(tmp_path, capsys):
     main(["-c", str(cfg), "estimate", "--price", "100", "--complexity", "small"])
     out = capsys.readouterr().out
     assert "margin per won job" in out and "break-even at" in out
+
+
+def test_get_updates_long_polls_with_api_timeout():
+    seen: list[tuple[dict, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((json.loads(request.content), request.extensions.get("timeout")))
+        return httpx.Response(200, json={"ok": True, "result": [{"update_id": 1}]})
+
+    async def run() -> list:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+            return await Telegram(http, "T", 42).get_updates(5, timeout=30)
+
+    assert asyncio.run(run()) == [{"update_id": 1}]
+    body, http_timeout = seen[0]
+    assert body["timeout"] == 30 and body["offset"] == 5
+    assert http_timeout["read"] == 45  # HTTP waits longer than Telegram holds the request

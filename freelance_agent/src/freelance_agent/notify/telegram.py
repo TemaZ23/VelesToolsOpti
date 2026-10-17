@@ -43,13 +43,15 @@ class Telegram:
         self.base = f"https://api.telegram.org/bot{token}"
         self.chat_id = chat_id
 
-    async def _call(self, method: str, timeout: float | None = None, **params: Any) -> Any:
+    async def _call(self, method: str, _http_timeout: float | None = None, **params: Any) -> Any:
+        # Bot API parameters go in **params (getUpdates has its own `timeout` parameter).
         files = params.pop("_files", None)
         if files:
             r = await self.http.post(f"{self.base}/{method}", data=params, files=files,
-                                     timeout=timeout or 120)
+                                     timeout=_http_timeout or 120)
         else:
-            r = await self.http.post(f"{self.base}/{method}", json=params, timeout=timeout or 30)
+            r = await self.http.post(f"{self.base}/{method}", json=params,
+                                     timeout=_http_timeout or 30)
         data = r.json()
         if not data.get("ok"):
             raise TelegramError(f"{method}: {data.get('description')}")
@@ -62,7 +64,7 @@ class Telegram:
         params: dict[str, Any] = {"timeout": timeout, "allowed_updates": ["message", "callback_query"]}
         if offset is not None:
             params["offset"] = offset
-        return await self._call("getUpdates", timeout=timeout + 15, **params)
+        return await self._call("getUpdates", _http_timeout=timeout + 15, **params)
 
     async def send(self, text_html: str, buttons: Buttons | None = None,
                    reply_to: int | None = None) -> int:
