@@ -70,8 +70,10 @@ await page.goto(`http://127.0.0.1:${port}/index.html`);
 await page.waitForFunction(() => window.__VELES_TEST__ && window.VelesSim, null, { timeout: 30000 });
 
 const summary = await page.evaluate(
-  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate }) => {
+  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring }) => {
     const T = window.__VELES_TEST__;
+    // --verifyScoring: compare the fast portfolio replica with xB on every scoring call.
+    T.vtFastXBState.verifyAll = Boolean(verifyScoring);
     const sim = window.VelesSim;
     const strategy = sim.makeStrategy();
     let form =
@@ -199,6 +201,7 @@ const summary = await page.evaluate(
           }
         : null,
       history: leaderboard.history,
+      scoringMismatches: T.vtFastXBState.mismatches ?? [],
       logs,
       leaderboard,
       config,
@@ -217,6 +220,7 @@ const summary = await page.evaluate(
     mode: args.mode ?? 'portfolio',
     goal: args.goal ?? 'improve',
     minDealsRate: args.minDealsRate !== undefined ? Number(args.minDealsRate) : null,
+    verifyScoring: args.verifyScoring === 'true',
     template: {
       ...(args.direction ? { direction: args.direction } : {}),
       ...(args.profile ? { profile: args.profile } : {}),

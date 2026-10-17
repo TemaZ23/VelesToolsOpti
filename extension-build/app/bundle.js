@@ -133272,10 +133272,14 @@ const Zi = (e, t) => {
       },
     };
   },
-  // Coin selection: xB(...).metrics (profit / risk / %) for many subsets of one entry list. Same sweep
-  // as CL (concurrency limit, dynamic limit, close order, drawdown of the realised P&L, peak
-  // concurrent MAE), but the deals are sorted once and a subset is a mask: no timeline rows, series or
-  // Date objects, ~15× faster. Subsets must keep the order of the list (ties in start time).
+  // Fast exact replica of xB (the «Группы бэктестов» aggregation) without its charts: same sweep as CL
+  // (concurrency limit, dynamic limit, close order, realised-P&L drawdown, peak concurrent MAE) and
+  // the same per-coin statistics, over deals sorted once; a subset of the list is a mask. CL builds
+  // timeline rows, series and Date objects for every deal, which takes seconds on 100k+ deals and
+  // blocks the page; this takes milliseconds (test/e2e/evaluator.mjs compares both on random
+  // portfolios). Subsets must keep the order of the list (ties in start time).
+  //   vtPortfolioEvaluator(list, settings)(subset)        → {profit, risk, monthlyPercent, drawdownPercent, coins}
+  //   vtPortfolioEvaluator(list, settings)(subset, true)  → xB(subset, settings) without `aggregated`
   vtPortfolioEvaluator = (e, t) => {
     const r = Math.max(1, Math.round(t.maxConcurrentPositions)),
       n = t.dynamicBlockOrder && t.dynamicBlockOrder > 0 ? t.dynamicBlockOrder : null,
@@ -133287,18 +133291,27 @@ const Zi = (e, t) => {
     }),
       i.sort((c, u) => c.s - u.s);
     const o = [...new Set(i.flatMap((c) => [c.s, c.e]))].sort((c, u) => c - u);
-    return (c) => {
+    return (c, vtFull = !1) => {
       const u = new Uint8Array(e.length);
       for (const C of c) {
         const w = a.get(C);
         w !== void 0 && (u[w] = 1);
       }
+      // Per-coin statistics as xB keeps them (keyed by symbol, in list order).
+      const vtCoins = vtFull ? new Map() : null;
+      if (vtFull)
+        for (const C of c)
+          vtCoins.set(C.symbol, { net: 0, deals: 0, wins: 0, losses: 0, skipped: 0, maxMae: 0, open: !1, openMae: 0 });
       let d = 0,
         f = 0,
         h = 0,
         v = null,
         g = 0,
-        m = 0;
+        m = 0,
+        vtMaxOpen = 0,
+        vtWins = 0,
+        vtLosses = 0,
+        vtSkipped = 0;
       const y = [],
         b = (C) => {
           if (v === null) {
@@ -133306,6 +133319,21 @@ const Zi = (e, t) => {
             return;
           }
           C > v ? (v = C) : v - C > g && (g = v - C);
+        },
+        vtStat = (C, w) => {
+          if (!vtFull || C.st === "CANCELLED") return;
+          const _ = vtCoins.get(e[C.k].symbol);
+          if (!w) {
+            (vtSkipped += 1), _ && (_.skipped += 1);
+            return;
+          }
+          const I = C.m ?? 0;
+          if ((_ && (_.maxMae = Math.max(_.maxMae, I)), C.st === "STARTED")) {
+            _ && ((_.open = !0), (_.openMae += I));
+            return;
+          }
+          C.n >= 0 ? (vtWins += 1) : (vtLosses += 1),
+            _ && ((_.net += C.n), (_.deals += 1), C.n >= 0 ? (_.wins += 1) : (_.losses += 1));
         };
       for (let C = 0; C < o.length; C++) {
         const w = o[C];
@@ -133322,7 +133350,7 @@ const Zi = (e, t) => {
           const _ = i[m];
           if (!u[_.k]) continue;
           if (_.e <= w) {
-            _.st !== "STARTED" && ((d += _.n), b(d));
+            vtStat(_, !0), _.st !== "STARTED" && ((d += _.n), b(d));
             continue;
           }
           let I = r;
@@ -133331,8 +133359,9 @@ const Zi = (e, t) => {
             for (const T of y) typeof T.l == "number" && T.l <= w && ($ += 1);
             I = Math.max(1, r - $);
           }
-          y.length >= I || y.push(_);
+          y.length >= I ? vtStat(_, !1) : (y.push(_), vtStat(_, !0));
         }
+        y.length > vtMaxOpen && (vtMaxOpen = y.length);
         let _ = 0;
         for (const I of y) _ += I.m;
         _ > h && (h = _);
@@ -133344,14 +133373,81 @@ const Zi = (e, t) => {
         _ = d - (t.penalizeActiveMae ? f : 0),
         I = Math.max(h, g),
         $ = Math.max(t.totalDeposit, Er);
-      return {
-        profit: _t(_, 4),
-        risk: _t(I, 4),
-        monthlyPercent: _t((_ / $ / w) * 100, 4),
-        drawdownPercent: _t((I / $) * 100, 4),
-        coins: c.length,
-      };
+      return vtFull
+        ? {
+            aggregated: null,
+            perSymbol: vtCoins,
+            profitableDeals: vtWins,
+            losingDeals: vtLosses,
+            metrics: {
+              totalProfit: _t(d, 4),
+              activeMae: _t(f, 4),
+              adjustedProfit: _t(_, 4),
+              maxConcurrentMae: _t(h, 4),
+              maxRealizedDrawdown: _t(g, 4),
+              risk: _t(I, 4),
+              months: _t(w, 3),
+              monthlyPercent: _t((_ / $ / w) * 100, 4),
+              drawdownPercent: _t((I / $) * 100, 4),
+              maxConcurrentPositions: vtMaxOpen,
+              skippedByLimit: vtSkipped,
+              coins: c.length,
+              coinsWithDeals: [...vtCoins.values()].filter((T) => T.deals > 0 || T.open).length,
+            },
+          }
+        : {
+            profit: _t(_, 4),
+            risk: _t(I, 4),
+            monthlyPercent: _t((_ / $ / w) * 100, 4),
+            drawdownPercent: _t((I / $) * 100, 4),
+            coins: c.length,
+          };
     };
+  },
+  /** xB(entries, settings) without the charts (`aggregated: null`), for scoring. */
+  vtFastXB = (e, t) => vtPortfolioEvaluator(e, t)(e, !0),
+  vtSameXB = (e, t) => {
+    const r = (o, s) => (Number.isFinite(o) && Number.isFinite(s) ? Math.abs(o - s) <= 1e-6 * Math.max(1, Math.abs(s)) : o === s),
+      n = Object.keys(t.metrics).every((o) => r(e.metrics[o], t.metrics[o])),
+      a = e.profitableDeals === t.profitableDeals && e.losingDeals === t.losingDeals,
+      i = [...t.perSymbol.entries()].every(([o, s]) => {
+        const l = e.perSymbol.get(o);
+        return !!l && Object.keys(s).every((c) => r(l[c], s[c]));
+      });
+    return n && a && i && e.perSymbol.size === t.perSymbol.size;
+  },
+  // Scoring uses the fast replica; the first call of a page session also runs xB and compares the
+  // two, and any difference switches scoring back to xB for the session.
+  vtFastXBState = { ok: null },
+  vtScoringXB = (e, t) => {
+    if (vtFastXBState.ok === !1) return xB(e, t);
+    const r = vtFastXB(e, t);
+    if (vtFastXBState.verifyAll) {
+      // Tests: compare every call and keep the first differences.
+      const n = xB(e, t);
+      vtSameXB(r, n) ||
+        ((vtFastXBState.mismatches = vtFastXBState.mismatches ?? []),
+        vtFastXBState.mismatches.length < 3 &&
+          vtFastXBState.mismatches.push({
+            metrics: Object.keys(n.metrics)
+              .filter((a) => r.metrics[a] !== n.metrics[a])
+              .map((a) => [a, r.metrics[a], n.metrics[a]]),
+            deals: [r.profitableDeals, n.profitableDeals, r.losingDeals, n.losingDeals],
+            coins: [...n.perSymbol.entries()]
+              .filter(([a, i]) => JSON.stringify(i) !== JSON.stringify(r.perSymbol.get(a)))
+              .slice(0, 2)
+              .map(([a, i]) => [a, i, r.perSymbol.get(a)]),
+            entries: e.length,
+            settings: t,
+          }));
+      return n;
+    }
+    if (vtFastXBState.ok === null) {
+      const n = xB(e, t);
+      if (((vtFastXBState.ok = vtSameXB(r, n)), !vtFastXBState.ok))
+        return console.warn("[Veles Tools] Быстрый пересчёт портфеля расходится с xB — используется xB"), n;
+    }
+    return r;
   },
   xdt = (e, t) => {
     if (!(t.profit > Er && t.risk > Er)) return null;
@@ -133388,7 +133484,7 @@ const Zi = (e, t) => {
       const g = i.length > 0 ? i.map(Cdt).join(", ") : `${o} шт.`;
       n.push(`Бэктест не выполнен: ${g}`), (a += 1e3 * Math.max(o, i.length));
     }
-    const s = e.length > 0 ? xB(e, r.settings) : null,
+    const s = e.length > 0 ? vtScoringXB(e, r.settings) : null,
       vtRaw = (s == null ? void 0 : s.metrics) ?? {
         totalProfit: 0,
         activeMae: 0,
@@ -133627,7 +133723,7 @@ const Zi = (e, t) => {
   },
   OX = (e, t) => {
     if (e.length === 0) return { profit: 0, risk: 0 };
-    const { metrics: r } = xB(e, t);
+    const { metrics: r } = vtScoringXB(e, t);
     return { profit: r.adjustedProfit, risk: r.risk };
   },
   Iv = (e, t, r, n) => {
@@ -136802,7 +136898,7 @@ class Nf {
     const t = await this.finalEntriesFor(this.baseKey, this.baseGenome ?? {}),
       r = this.robustnessSettings(),
       vtExact = (d) => {
-        const f = xB(d, r).metrics;
+        const f = vtScoringXB(d, r).metrics;
         return {
           profit: f.adjustedProfit,
           risk: f.risk,
@@ -136820,8 +136916,14 @@ class Nf {
           g = [h];
         if (this.deps.vtCheckEvaluator)
           for (let y = 0; y < 12; y++) g.push(h.filter((b, S) => (S * 7 + y * 3) % 5 !== 0 && (S + y) % 3 !== 1));
+        const vtRef = this.deps.vtCheckEvaluator
+          ? (y) => {
+              const b = xB(y, r).metrics;
+              return { profit: b.adjustedProfit, risk: b.risk, monthlyPercent: b.monthlyPercent, drawdownPercent: b.drawdownPercent };
+            }
+          : vtExact;
         for (const y of g.filter((b) => b.length > 0))
-          if (!v(f(y), vtExact(y)))
+          if (!v(f(y), vtRef(y)))
             return (
               this.log("warning", "⚠️ Быстрый пересчёт портфеля разошёлся с «Группами бэктестов» — подбор пойдёт медленнее, точным способом"),
               vtExact

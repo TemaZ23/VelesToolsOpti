@@ -126,6 +126,13 @@ const result = await page.evaluate((cases) => {
       const b = T.xB(subset, settings).metrics;
       const bad = keys.find(([x, y]) => Math.abs(a[x] - b[y]) > 1e-6 * Math.max(1, Math.abs(b[y])));
       if (bad) mismatches.push({ c, q, key: bad[0], fast: a[bad[0]], exact: b[bad[1]], settings });
+      // The full replica used for scoring: every metric, deal counts and per-coin statistics.
+      const full = T.vtFastXB(subset, settings);
+      const exact = T.xB(subset, settings);
+      if (!T.vtSameXB(full, exact)) {
+        const key = Object.keys(exact.metrics).find((k) => full.metrics[k] !== exact.metrics[k]) ?? 'perSymbol/deals';
+        mismatches.push({ c, q, full: true, key, fast: full.metrics[key], exact: exact.metrics[key], settings });
+      }
     }
   }
   // Timing on a large portfolio (150 coins × up to 600 deals).
@@ -144,7 +151,9 @@ const result = await page.evaluate((cases) => {
     examples: mismatches.slice(0, 3),
     deals: big.reduce((sum, entry) => sum + entry.deals.length, 0),
     fastMs: time(() => fast(subset)),
+    fullFastMs: time(() => T.vtFastXB(subset, settings)),
     exactMs: time(() => T.xB(subset, settings)),
+    fullSame: T.vtSameXB(T.vtFastXB(subset, settings), T.xB(subset, settings)),
     same: JSON.stringify(fast(subset)) === JSON.stringify((({ adjustedProfit, risk, monthlyPercent, drawdownPercent }) => ({ profit: adjustedProfit, risk, monthlyPercent, drawdownPercent, coins: subset.length }))(T.xB(subset, settings).metrics)),
   };
 }, Number(args.cases ?? 400));
