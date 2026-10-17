@@ -137557,7 +137557,12 @@ class Nf {
           const y = (b = m.validation) == null ? void 0 : b.portfolio;
           return !!(y && v && y.adjustedProfit > v.adjustedProfit && y.risk < v.risk);
         });
-      g.length > 0
+      VTMODES.vmIsTemplateGoal(this.config.goal) && h.length > 0
+        ? this.log(
+            "success",
+            `🏆 На всех монетах лучше исходного шаблона по прибыли / просадке — вариантов: ${h.length}${g.length > 0 ? `, из них сразу и по прибыли, и по просадке — ${g.length}` : ""}`,
+          )
+        : g.length > 0
         ? this.log(
             "success",
             `🏆 На всех монетах лучше исходной сразу по прибыли и суммарной просадке — вариантов: ${g.length}`,
