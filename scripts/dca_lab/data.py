@@ -31,6 +31,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = REPO_ROOT / "cache" / "dca_lab"
 RAW_DIR = CACHE_DIR / "raw"
 BASE_URL = "https://data.binance.vision/data/futures/um/monthly/klines"
+SPOT_URL = "https://data.binance.vision/data/spot/monthly/klines"
+SPOT_DIR = CACHE_DIR / "spot"
 MINUTE_MS = 60_000
 
 # Список «WORK» из LONG_STRATEGY (Bybit). Тикеры Binance отличаются для SHIB.
@@ -103,16 +105,25 @@ def _parse_zip(path: Path) -> np.ndarray:
     if not text[:1].isdigit():  # заголовок есть в новых архивах
         text = text[first_line_end + 1 :]
     arr = np.loadtxt(io.StringIO(text), delimiter=",", usecols=(0, 1, 2, 3, 4, 7), dtype=np.float64, ndmin=2)
+    # Спотовые архивы с 2025 года пишут время в микросекундах.
+    if len(arr) and arr[0, 0] > 1e14:
+        arr[:, 0] = np.floor(arr[:, 0] / 1000.0)
     return arr
 
 
-def build_symbol_cache(symbol: str, months: list[str], workers: int = 6, extend: bool = False) -> Path | None:
+def build_symbol_cache(
+    symbol: str, months: list[str], workers: int = 6, extend: bool = False, market: str = "futures"
+) -> Path | None:
     """
     Скачивает месячные архивы и собирает единый npz для символа.
     extend=True — дописывает к существующему кешу только недостающие более ранние месяцы.
+    market="spot" — спот Binance, кеш в `cache/dca_lab/spot/`.
     """
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = CACHE_DIR / f"{symbol}.npz"
+    cache_dir = SPOT_DIR if market == "spot" else CACHE_DIR
+    base_url = SPOT_URL if market == "spot" else BASE_URL
+    raw_dir = RAW_DIR / "spot" if market == "spot" else RAW_DIR
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    out_path = cache_dir / f"{symbol}.npz"
     existing: np.ndarray | None = None
     if extend and out_path.exists():
         with np.load(out_path) as z:
@@ -126,8 +137,8 @@ def build_symbol_cache(symbol: str, months: list[str], workers: int = 6, extend:
         futures = {}
         for month in months:
             fname = f"{symbol}-1m-{month}.zip"
-            dest = RAW_DIR / symbol / fname
-            futures[pool.submit(_download, f"{BASE_URL}/{symbol}/1m/{fname}", dest)] = dest
+            dest = raw_dir / symbol / fname
+            futures[pool.submit(_download, f"{base_url}/{symbol}/1m/{fname}", dest)] = dest
         for fut in as_completed(futures):
             if fut.result():
                 zips.append(futures[fut])
@@ -165,8 +176,8 @@ def build_symbol_cache(symbol: str, months: list[str], workers: int = 6, extend:
     return out_path
 
 
-def load_symbol(symbol: str) -> dict[str, np.ndarray]:
-    path = CACHE_DIR / f"{symbol}.npz"
+def load_symbol(symbol: str, market: str = "futures") -> dict[str, np.ndarray]:
+    path = (SPOT_DIR if market == "spot" else CACHE_DIR) / f"{symbol}.npz"
     with np.load(path) as z:
         return {"ts": z["ts"], "ohlc": z["ohlc"], "qvol": z["qvol"]}
 
@@ -187,20 +198,22 @@ def main() -> None:
     parser.add_argument("--stress", action="store_true", help="скачать расширенный список STRESS-TEST")
     parser.add_argument("--extend", action="store_true", help="дописать более ранние месяцы к уже скачанным монетам")
     parser.add_argument("--keep-raw", action="store_true", help="не удалять zip после сборки")
+    parser.add_argument("--market", choices=("futures", "spot"), default="futures", help="рынок Binance")
     args = parser.parse_args()
 
     months = month_range(args.start, args.end)
     coins = STRESS_COINS if args.stress else args.coins
     for i, coin in enumerate(coins, 1):
-        if (CACHE_DIR / f"{coin_to_symbol(coin)}.npz").exists() and not args.extend:
+        cache_dir = SPOT_DIR if args.market == "spot" else CACHE_DIR
+        if (cache_dir / f"{coin_to_symbol(coin)}.npz").exists() and not args.extend:
             continue
         symbol = coin_to_symbol(coin)
         t = time.time()
-        path = build_symbol_cache(symbol, months, extend=args.extend)
+        path = build_symbol_cache(symbol, months, extend=args.extend, market=args.market)
         status = "нет данных" if path is None else f"{path.stat().st_size / 1e6:.0f} MB"
         print(f"[{i}/{len(coins)}] {symbol}: {status} ({time.time() - t:.0f}s)", flush=True)
         if not args.keep_raw:
-            raw = RAW_DIR / symbol
+            raw = (RAW_DIR / "spot" if args.market == "spot" else RAW_DIR) / symbol
             if raw.exists():
                 for f in raw.iterdir():
                     f.unlink()

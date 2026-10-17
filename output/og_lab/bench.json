@@ -1,0 +1,257 @@
+{
+ "const_short": {
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": -2.38,
+   "dd_abs_pct": 100.0,
+   "eff": -0.0238,
+   "worst_month_pct": -100.0,
+   "neg_months": 41,
+   "deals": 0,
+   "tp": 0,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 0.0,
+   "fees_pct": 0.06,
+   "funding_pct": -1.66,
+   "open_upnl_pct": 0.0,
+   "liquidated": 1
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -3.7,
+   "dd_abs_pct": 100.0,
+   "eff": -0.037,
+   "worst_month_pct": -100.0,
+   "neg_months": 25,
+   "deals": 0,
+   "tp": 0,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 0.0,
+   "fees_pct": 0.06,
+   "funding_pct": -2.72,
+   "open_upnl_pct": 0.0,
+   "liquidated": 1
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -6.03,
+   "dd_abs_pct": 100.0,
+   "eff": -0.0603,
+   "worst_month_pct": -100.0,
+   "neg_months": 15,
+   "deals": 0,
+   "tp": 0,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 0.0,
+   "fees_pct": 0.06,
+   "funding_pct": -2.33,
+   "open_upnl_pct": 0.0,
+   "liquidated": 1
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": -8.34,
+    "dd_abs_pct": 100.0,
+    "deals": 0
+   },
+   "2022": {
+    "avg_month_pct": -8.34,
+    "dd_abs_pct": 100.0,
+    "deals": 0
+   },
+   "2023": {
+    "avg_month_pct": -8.34,
+    "dd_abs_pct": 100.0,
+    "deals": 0
+   },
+   "2024": {
+    "avg_month_pct": -8.32,
+    "dd_abs_pct": 100.0,
+    "deals": 0
+   },
+   "2025": {
+    "avg_month_pct": -8.34,
+    "dd_abs_pct": 100.0,
+    "deals": 0
+   },
+   "2026": {
+    "avg_month_pct": 8.67,
+    "dd_abs_pct": 23.71,
+    "deals": 1
+   }
+  }
+ },
+ "baseline_fade": {
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": -2.38,
+   "dd_abs_pct": 100.0,
+   "eff": -0.0238,
+   "worst_month_pct": -100.0,
+   "neg_months": 15,
+   "deals": 31,
+   "tp": 31,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 7.4,
+   "fees_pct": 0.59,
+   "funding_pct": -0.3,
+   "open_upnl_pct": 0.0,
+   "liquidated": 1
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 1.55,
+   "dd_abs_pct": 42.78,
+   "eff": 0.0361,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 34,
+   "tp": 34,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 29.2,
+   "fees_pct": 0.58,
+   "funding_pct": -0.4,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 1.69,
+   "dd_abs_pct": 42.87,
+   "eff": 0.0395,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 26,
+   "tp": 26,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 29.9,
+   "fees_pct": 0.4,
+   "funding_pct": -0.33,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 1.63,
+    "dd_abs_pct": 78.47,
+    "deals": 13
+   },
+   "2022": {
+    "avg_month_pct": 1.63,
+    "dd_abs_pct": 25.69,
+    "deals": 14
+   },
+   "2023": {
+    "avg_month_pct": -8.34,
+    "dd_abs_pct": 100.0,
+    "deals": 4
+   },
+   "2024": {
+    "avg_month_pct": 1.49,
+    "dd_abs_pct": 42.13,
+    "deals": 11
+   },
+   "2025": {
+    "avg_month_pct": 1.22,
+    "dd_abs_pct": 42.78,
+    "deals": 13
+   },
+   "2026": {
+    "avg_month_pct": 1.31,
+    "dd_abs_pct": 8.96,
+    "deals": 12
+   }
+  }
+ },
+ "baseline_long": {
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 0.68,
+   "dd_abs_pct": 12.4,
+   "eff": 0.0547,
+   "worst_month_pct": -6.77,
+   "neg_months": 2,
+   "deals": 31,
+   "tp": 31,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 48.7,
+   "fees_pct": 0.51,
+   "funding_pct": 1.23,
+   "open_upnl_pct": -3.14,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -2.18,
+   "dd_abs_pct": 79.35,
+   "eff": -0.0274,
+   "worst_month_pct": -60.99,
+   "neg_months": 6,
+   "deals": 17,
+   "tp": 16,
+   "sl": 0,
+   "pf": 0.21,
+   "avg_deal_h": 418.5,
+   "fees_pct": 0.28,
+   "funding_pct": 2.65,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -3.95,
+   "dd_abs_pct": 79.38,
+   "eff": -0.0497,
+   "worst_month_pct": -64.83,
+   "neg_months": 6,
+   "deals": 10,
+   "tp": 9,
+   "sl": 0,
+   "pf": 0.11,
+   "avg_deal_h": 677.1,
+   "fees_pct": 0.17,
+   "funding_pct": 2.56,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 0.54,
+    "dd_abs_pct": 3.88,
+    "deals": 6
+   },
+   "2022": {
+    "avg_month_pct": 0.11,
+    "dd_abs_pct": 12.4,
+    "deals": 11
+   },
+   "2023": {
+    "avg_month_pct": 0.8,
+    "dd_abs_pct": 9.34,
+    "deals": 10
+   },
+   "2024": {
+    "avg_month_pct": 0.82,
+    "dd_abs_pct": 24.51,
+    "deals": 8
+   },
+   "2025": {
+    "avg_month_pct": 0.9,
+    "dd_abs_pct": 6.15,
+    "deals": 11
+   },
+   "2026": {
+    "avg_month_pct": -5.81,
+    "dd_abs_pct": 63.51,
+    "deals": 2
+   }
+  }
+ }
+}
