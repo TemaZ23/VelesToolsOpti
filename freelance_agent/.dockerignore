@@ -1,0 +1,5 @@
+.venv
+data
+agent-data
+.pytest_cache
+**/__pycache__

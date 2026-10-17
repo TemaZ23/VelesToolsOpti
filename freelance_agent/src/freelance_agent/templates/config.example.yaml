@@ -1,0 +1,94 @@
+# Настройки фриланс-агента. Секреты (ключи) — только в .env, не здесь.
+
+data_dir: data                 # база SQLite и рабочие папки заказов
+poll_interval_minutes: 10      # как часто искать новые заказы
+max_new_jobs_per_cycle: 40     # максимум платных оценок заказов за цикл
+
+# Кого представляет агент. ВСЁ здесь должно быть правдой: отклики цитируют только это.
+profile:
+  name: "Иван Петров"
+  headline: "Python-разработчик: парсеры, Telegram-боты, автоматизация"
+  about: >
+    5 лет пишу на Python. Делаю парсеры, интеграции с API, Telegram-ботов,
+    обработку Excel/CSV. Работаю с ИИ-инструментами, весь результат проверяю сам.
+  skills: [Python, парсинг, Telegram-боты, API, Excel, SQL, автоматизация]
+  portfolio: []                # только реальные ссылки
+  hourly_rate_usd: 25
+  min_project_usd: 30          # дешевле — не откликаться
+
+models:
+  triage: claude-haiku-5-5     # массовая оценка заказов, доли цента за заказ
+  triage_effort: low
+  writer: claude-opus-5-5      # отклики, переписка, проверка результата
+  writer_effort: medium
+  executor: claude-opus-5-5    # выполнение работы (Claude Agent SDK)
+  executor_effort: high
+  server_side_fallback: true
+
+budget:
+  daily_llm_limit_usd: 2.0     # в день на ПОИСК заказов (оценка + отклики)
+  monthly_llm_limit_usd: 40.0  # в месяц на всё, включая выполнение
+  stop_loss_usd: 15.0          # если расходы на LLM превысили заработок на эту сумму — ставки стоп
+  fixed_monthly_costs_usd:     # для расчёта окупаемости (агент их не тратит)
+    claude_subscription: 20.0
+    # vps: 5.0
+    # fl_pro: 10.0
+
+economics:
+  prior_win_rate: 0.05         # стартовая конверсия откликов, дальше считается по факту
+  prior_strength: 20
+  min_profit_per_job_usd: 15   # минимальная прибыль с выигранного заказа
+  min_ev_to_bid_cost_ratio: 3  # ожидаемая прибыль должна быть >= 3x стоимости отклика
+  proposal_cost_estimate_usd: 0.06
+  max_execution_share: 0.25    # ИИ может потратить не больше 25% чистой цены заказа
+  max_execution_usd: 8.0       # и не больше $8 на один заказ
+  execution_cost_usd: {trivial: 0.5, small: 1.5, medium: 4.0, large: 10.0}
+  platform_fees:
+    freelancer: {percent: 10, min_usd: 5}
+    flru: {percent: 0, min_usd: 0}
+  fx_to_usd: {USD: 1.0, EUR: 1.08, GBP: 1.27, RUB: 0.0125, INR: 0.0118}
+
+autonomy:
+  # manual — каждый отклик/сообщение ждёт вашего нажатия в Telegram (рекомендуется для старта)
+  # semi   — ставки в пределах лимитов ниже уходят сами (только Freelancer.com), сообщения ждут
+  # auto   — ставки, ответы, принятие заказа и сдача уходят сами (только Freelancer.com)
+  mode: manual
+  auto_bid_min_score: 80
+  auto_bid_max_usd: 300
+  disclose_ai: false
+  disclosure_text: "I use AI tools under my supervision to deliver faster."
+
+filters:
+  include_keywords: []         # если не пусто — заказ должен содержать хотя бы одно слово
+  exclude_keywords: [wordpress, 1с, unity, figma]
+  min_budget_usd: 30
+  min_fit_score: 55
+  max_existing_bids: 60
+  max_age_hours: 48
+
+sources:
+  flru:
+    enabled: true
+    feeds: ["https://www.fl.ru/rss/all.xml"]
+    pro_account: false         # без PRO берём только заказы «для всех»
+  freelancer:
+    enabled: true
+    queries: [python, "web scraping", "telegram bot", "data entry excel", automation]
+    job_ids: []                # id навыков Freelancer.com, необязательно
+    per_query_limit: 30
+    max_bids_per_day: 10
+  rss: []
+  # - name: wwr
+  #   url: https://weworkremotely.com/categories/remote-programming-jobs.rss
+
+executor:
+  max_turns: 60
+  sandbox: true                # ОС-песочница для Bash (Linux: bubblewrap+socat, есть в Docker-образе)
+  allow_unsandboxed: false     # true только на одноразовой машине/VPS
+  allow_web: false
+  allowed_domains: [pypi.org, files.pythonhosted.org, registry.npmjs.org]
+  review_retries: 1
+
+telegram:
+  enabled: true
+  chat_id: null                # узнать: запустите агента и отправьте боту /start

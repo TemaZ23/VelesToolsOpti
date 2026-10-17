@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freelance-agent"
+version = "0.1.0"
+description = "Autonomous freelance agent powered by Claude: finds jobs, writes proposals, talks to clients, does the work, tracks profit."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "anthropic>=1.15,<2",
+  "claude-agent-sdk>=0.2.168,<0.3",
+  "feedparser>=6.0.11,<7",
+  "httpx2>=2.13,<3",
+  "pydantic>=2.9,<3",
+  "PyYAML>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+freelance-agent = "freelance_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+freelance_agent = ["py.typed", "templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["live: hits real job-board endpoints over the network (no LLM, no money)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "B", "UP", "I"]

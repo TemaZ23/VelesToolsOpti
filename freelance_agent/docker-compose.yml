@@ -1,0 +1,12 @@
+services:
+  agent:
+    build: .
+    restart: unless-stopped
+    # config.yaml, .env and data/ live here on the host
+    volumes:
+      - ./agent-data:/work
+    # bubblewrap (the executor's sandbox) needs to create namespaces inside the container.
+    # `freelance-agent check` tells you whether it works on your host.
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
