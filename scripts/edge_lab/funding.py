@@ -6,7 +6,11 @@
     PYTHONPATH=. python3 -m scripts.edge_lab.funding timing   # (c) экстремумы фандинга как сигнал
     PYTHONPATH=. python3 -m scripts.edge_lab.funding carry    # (a) cash-and-carry спот/перп
     PYTHONPATH=. python3 -m scripts.edge_lab.funding_micro    # (d) микроструктура выплат (часовые)
-    PYTHONPATH=. python3 -m scripts.edge_lab.funding final    # сборка results.json / best_daily.npz
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding_m1 fetch|study      # (d) минутки вокруг выплат
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding_tick fetch|study    # (d) сделки aggTrades ±120 с
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding control              # (c) контроль: реверсия цены
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding_robust carry|alt    # устойчивость кандидатов
+    PYTHONPATH=. python3 -m scripts.edge_lab.funding_report               # results.json / best_daily.npz
 
 Тайминг (без заглядывания): решение после закрытия дневного бара t по данным <= t, сделка по open[t+1].
 Позиция держится на баре k = open[k] -> open[k+1]; цена: ret[k] = open[k+1]/open[k]-1 (если монета

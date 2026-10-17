@@ -1,0 +1,478 @@
+{
+ "cfg": {
+  "asset": "ALT",
+  "kind": "pct",
+  "L": 7,
+  "W": 90,
+  "x": 0.99,
+  "H": 1,
+  "dir": 1,
+  "side": "long"
+ },
+ "engine_match_max_abs_diff": 1.1102230246251565e-16,
+ "is_concentration": {
+  "total_simple_sum_pct": 207.3,
+  "n_coins_traded": 186,
+  "top5": [
+   {
+    "sym": "RUNEUSDT",
+    "pnl_pct": 13.2,
+    "price_pct": 12.8,
+    "fund_pct": 0.6
+   },
+   {
+    "sym": "SOLUSDT",
+    "pnl_pct": 12.3,
+    "price_pct": 10.0,
+    "fund_pct": 2.5
+   },
+   {
+    "sym": "BELUSDT",
+    "pnl_pct": 12.1,
+    "price_pct": 11.6,
+    "fund_pct": 0.7
+   },
+   {
+    "sym": "TRBUSDT",
+    "pnl_pct": 11.9,
+    "price_pct": 5.7,
+    "fund_pct": 6.5
+   },
+   {
+    "sym": "BLZUSDT",
+    "pnl_pct": 11.4,
+    "price_pct": 8.7,
+    "fund_pct": 2.9
+   }
+  ],
+  "worst5": [
+   {
+    "sym": "LUNAUSDT",
+    "pnl_pct": -10.2
+   },
+   {
+    "sym": "PERPUSDT",
+    "pnl_pct": -7.0
+   },
+   {
+    "sym": "1INCHUSDT",
+    "pnl_pct": -4.9
+   },
+   {
+    "sym": "KNCUSDT",
+    "pnl_pct": -4.1
+   },
+   {
+    "sym": "HNTUSDT",
+    "pnl_pct": -3.9
+   }
+  ],
+  "share_top5": 0.294,
+  "sum_without_top5_pct": 146.5,
+  "sum_without_top10_pct": 98.3
+ },
+ "oos_concentration": {
+  "total_simple_sum_pct": 201.5,
+  "n_coins_traded": 527,
+  "top5": [
+   {
+    "sym": "ALPACAUSDT",
+    "pnl_pct": 87.3,
+    "price_pct": 77.8,
+    "fund_pct": 9.5
+   },
+   {
+    "sym": "TNSRUSDT",
+    "pnl_pct": 21.6,
+    "price_pct": 18.9,
+    "fund_pct": 2.7
+   },
+   {
+    "sym": "SIRENUSDT",
+    "pnl_pct": 19.6,
+    "price_pct": 18.1,
+    "fund_pct": 1.6
+   },
+   {
+    "sym": "LABUSDT",
+    "pnl_pct": 17.4,
+    "price_pct": 11.6,
+    "fund_pct": 5.8
+   },
+   {
+    "sym": "ZECUSDT",
+    "pnl_pct": 16.8,
+    "price_pct": 16.6,
+    "fund_pct": 0.4
+   }
+  ],
+  "worst5": [
+   {
+    "sym": "STGUSDT",
+    "pnl_pct": -11.7
+   },
+   {
+    "sym": "BEATUSDT",
+    "pnl_pct": -10.3
+   },
+   {
+    "sym": "BICOUSDT",
+    "pnl_pct": -10.3
+   },
+   {
+    "sym": "BELUSDT",
+    "pnl_pct": -8.9
+   },
+   {
+    "sym": "BANKUSDT",
+    "pnl_pct": -8.9
+   }
+  ],
+  "share_top5": 0.807,
+  "sum_without_top5_pct": 38.9,
+  "sum_without_top10_pct": -32.1
+ },
+ "variants": {
+  "base": {
+   "is": {
+    "cagr_pct": 48.03,
+    "sharpe": 1.01,
+    "max_dd_pct": 37.9,
+    "worst_month_pct": -17.79,
+    "pos_months_pct": 56.2,
+    "ann_fund_pct": 16.68,
+    "ann_price_pct": 41.97,
+    "ann_cost_pct": 6.9
+   },
+   "oos": {
+    "cagr_pct": 52.92,
+    "sharpe": 0.91,
+    "max_dd_pct": 57.13,
+    "worst_month_pct": -31.63,
+    "pos_months_pct": 60.6,
+    "ann_fund_pct": 102.26,
+    "ann_price_pct": -10.54,
+    "ann_cost_pct": 18.28
+   },
+   "oos_half_years": {
+    "2024H1": 17.73,
+    "2024H2": 50.79,
+    "2025H1": 67.29,
+    "2025H2": -29.4,
+    "2026H1": 77.42,
+    "2026H2": -13.6
+   },
+   "oos_pess_delist": {
+    "cagr_pct": 20.58,
+    "sharpe": 0.62,
+    "max_dd_pct": 60.61
+   }
+  },
+  "costs x1.5": {
+   "is": {
+    "cagr_pct": 43.02,
+    "sharpe": 0.94,
+    "max_dd_pct": 38.42,
+    "worst_month_pct": -18.64,
+    "pos_months_pct": 56.2,
+    "ann_fund_pct": 16.68,
+    "ann_price_pct": 41.97,
+    "ann_cost_pct": 10.35
+   },
+   "oos": {
+    "cagr_pct": 39.58,
+    "sharpe": 0.8,
+    "max_dd_pct": 58.76,
+    "worst_month_pct": -32.53,
+    "pos_months_pct": 54.5,
+    "ann_fund_pct": 102.26,
+    "ann_price_pct": -10.54,
+    "ann_cost_pct": 27.42
+   },
+   "oos_half_years": {
+    "2024H1": 14.01,
+    "2024H2": 44.89,
+    "2025H1": 58.44,
+    "2025H2": -32.77,
+    "2026H1": 68.18,
+    "2026H2": -15.49
+   },
+   "oos_pess_delist": {
+    "cagr_pct": 10.06,
+    "sharpe": 0.49,
+    "max_dd_pct": 62.11
+   }
+  },
+  "costs x2": {
+   "is": {
+    "cagr_pct": 38.18,
+    "sharpe": 0.88,
+    "max_dd_pct": 38.94,
+    "worst_month_pct": -19.49,
+    "pos_months_pct": 54.2,
+    "ann_fund_pct": 16.68,
+    "ann_price_pct": 41.97,
+    "ann_cost_pct": 13.81
+   },
+   "oos": {
+    "cagr_pct": 27.39,
+    "sharpe": 0.68,
+    "max_dd_pct": 60.44,
+    "worst_month_pct": -33.42,
+    "pos_months_pct": 51.5,
+    "ann_fund_pct": 102.26,
+    "ann_price_pct": -10.54,
+    "ann_cost_pct": 36.57
+   },
+   "oos_half_years": {
+    "2024H1": 10.4,
+    "2024H2": 39.22,
+    "2025H1": 50.05,
+    "2025H2": -35.99,
+    "2026H1": 59.42,
+    "2026H2": -17.34
+   },
+   "oos_pess_delist": {
+    "cagr_pct": 0.45,
+    "sharpe": 0.37,
+    "max_dd_pct": 63.65
+   }
+  },
+  "no 00:00 settlement": {
+   "is": {
+    "cagr_pct": 42.1,
+    "sharpe": 0.93,
+    "max_dd_pct": 38.39,
+    "worst_month_pct": -17.95,
+    "pos_months_pct": 54.2,
+    "ann_fund_pct": 12.59,
+    "ann_price_pct": 41.97,
+    "ann_cost_pct": 6.9
+   },
+   "oos": {
+    "cagr_pct": 40.47,
+    "sharpe": 0.8,
+    "max_dd_pct": 58.1,
+    "worst_month_pct": -32.05,
+    "pos_months_pct": 54.5,
+    "ann_fund_pct": 93.73,
+    "ann_price_pct": -10.55,
+    "ann_cost_pct": 18.28
+   },
+   "oos_half_years": {
+    "2024H1": 16.77,
+    "2024H2": 47.74,
+    "2025H1": 60.43,
+    "2025H2": -31.98,
+    "2026H1": 63.05,
+    "2026H2": -17.1
+   },
+   "oos_pess_delist": {
+    "cagr_pct": 10.76,
+    "sharpe": 0.5,
+    "max_dd_pct": 61.51
+   }
+  },
+  "no 00:00 + costs x1.5": {
+   "is": {
+    "cagr_pct": 37.29,
+    "sharpe": 0.87,
+    "max_dd_pct": 38.91,
+    "worst_month_pct": -18.8,
+    "pos_months_pct": 54.2,
+    "ann_fund_pct": 12.59,
+    "ann_price_pct": 41.97,
+    "ann_cost_pct": 10.36
+   },
+   "oos": {
+    "cagr_pct": 28.2,
+    "sharpe": 0.69,
+    "max_dd_pct": 59.78,
+    "worst_month_pct": -32.95,
+    "pos_months_pct": 51.5,
+    "ann_fund_pct": 93.73,
+    "ann_price_pct": -10.55,
+    "ann_cost_pct": 27.42
+   },
+   "oos_half_years": {
+    "2024H1": 13.08,
+    "2024H2": 41.96,
+    "2025H1": 51.94,
+    "2025H2": -35.23,
+    "2026H1": 54.55,
+    "2026H2": -18.91
+   },
+   "oos_pess_delist": {
+    "cagr_pct": 1.1,
+    "sharpe": 0.38,
+    "max_dd_pct": 63.05
+   }
+  }
+ },
+ "neighbors": [
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 1,
+    "W": 90,
+    "x": 0.99,
+    "H": 1,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": -0.14,
+   "oos_sh": 1.46,
+   "oos_cagr": 95.81,
+   "oos_dd": 37.9
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 3,
+    "W": 90,
+    "x": 0.99,
+    "H": 1,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.2,
+   "oos_sh": 1.56,
+   "oos_cagr": 126.46,
+   "oos_dd": 32.33
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.9,
+    "H": 1,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.39,
+   "oos_sh": 0.47,
+   "oos_cagr": 4.47,
+   "oos_dd": 69.94
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.95,
+    "H": 1,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.62,
+   "oos_sh": 0.74,
+   "oos_cagr": 32.51,
+   "oos_dd": 66.94
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.99,
+    "H": 1,
+    "dir": 1,
+    "side": "both"
+   },
+   "is_sh": 0.68,
+   "oos_sh": 0.68,
+   "oos_cagr": 22.99,
+   "oos_dd": 69.53
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.99,
+    "H": 1,
+    "dir": 1,
+    "side": "short"
+   },
+   "is_sh": -0.32,
+   "oos_sh": -0.02,
+   "oos_cagr": -14.42,
+   "oos_dd": 77.39
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.99,
+    "H": 1,
+    "dir": -1,
+    "side": "long"
+   },
+   "is_sh": -0.03,
+   "oos_sh": -0.37,
+   "oos_cagr": -26.83,
+   "oos_dd": 80.66
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.99,
+    "H": 3,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.88,
+   "oos_sh": 0.9,
+   "oos_cagr": 51.68,
+   "oos_dd": 61.03
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 90,
+    "x": 0.99,
+    "H": 7,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.5,
+   "oos_sh": 0.78,
+   "oos_cagr": 36.55,
+   "oos_dd": 61.57
+  },
+  {
+   "cfg": {
+    "asset": "ALT",
+    "kind": "pct",
+    "L": 7,
+    "W": 365,
+    "x": 0.99,
+    "H": 1,
+    "dir": 1,
+    "side": "long"
+   },
+   "is_sh": 0.83,
+   "oos_sh": 0.89,
+   "oos_cagr": 50.68,
+   "oos_dd": 59.02
+  }
+ ],
+ "exposure": {
+  "days_with_position_share_oos": 0.932,
+  "avg_gross_when_active_oos": 0.609
+ }
+}

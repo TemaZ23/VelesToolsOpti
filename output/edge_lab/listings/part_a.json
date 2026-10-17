@@ -1,0 +1,1647 @@
+{
+ "n_events": {
+  "crypto": 675,
+  "index": 5,
+  "rename": 13,
+  "tradfi": 212
+ },
+ "listing_hour": {
+  "ret_first_hour": {
+   "n": 675,
+   "mean": 2.2,
+   "median": -0.12,
+   "p10": -12.5,
+   "p90": 17.1,
+   "neg_pct": 50.5
+  },
+  "range_first_hour": {
+   "n": 675,
+   "mean": 520.07,
+   "median": 14.01,
+   "p10": 5.2,
+   "p90": 48.6,
+   "neg_pct": 0.0
+  },
+  "range_second_hour": {
+   "n": 675,
+   "mean": 12.65,
+   "median": 9.55,
+   "p10": 3.2,
+   "p90": 26.4,
+   "neg_pct": 0.0
+  },
+  "P0_vs_first_print": {
+   "n": 675,
+   "mean": 2.2,
+   "median": -0.09,
+   "p10": -12.5,
+   "p90": 17.0,
+   "neg_pct": 50.5
+  },
+  "qvol_first_hour_musd_median": 7.31
+ },
+ "horizons": {
+  "crypto": {
+   "1d": {
+    "ret": {
+     "n": 675,
+     "mean": -0.46,
+     "median": -3.83,
+     "p10": -25.1,
+     "p90": 24.2,
+     "neg_pct": 61.9
+    },
+    "ret_minus_btc": {
+     "n": 675,
+     "mean": -0.44,
+     "median": -3.49,
+     "p10": -24.8,
+     "p90": 23.5,
+     "neg_pct": 62.4
+    },
+    "short_funding": {
+     "n": 675,
+     "mean": -0.43,
+     "median": 0.03,
+     "p10": -1.4,
+     "p90": 0.4,
+     "neg_pct": 40.6
+    },
+    "short_pnl_gross": {
+     "n": 675,
+     "mean": 0.03,
+     "median": 3.7,
+     "p10": -25.0,
+     "p90": 24.0,
+     "neg_pct": 38.4
+    },
+    "short_pnl_t_month_cluster": 0.32,
+    "mae_short": {
+     "n": 675,
+     "mean": 22.84,
+     "median": 10.48,
+     "p10": 1.8,
+     "p90": 49.0,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 23.9,
+     "0.5": 9.8,
+     "1.0": 3.6,
+     "2.0": 0.4
+    },
+    "dead_by_horizon_pct": 0.0,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -0.5,
+      "ret_median": -1.2,
+      "ex_btc_median": -1.0,
+      "short_funding_mean": 0.02,
+      "short_pnl_mean": 0.5,
+      "mae_p90": 24.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": -0.8,
+      "ret_median": -2.3,
+      "ex_btc_median": -2.4,
+      "short_funding_mean": 0.11,
+      "short_pnl_mean": 0.9,
+      "mae_p90": 33.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": 5.3,
+      "ret_median": 0.5,
+      "ex_btc_median": 1.3,
+      "short_funding_mean": -0.25,
+      "short_pnl_mean": -5.6,
+      "mae_p90": 36.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": -1.8,
+      "ret_median": -1.8,
+      "ex_btc_median": -2.0,
+      "short_funding_mean": -0.27,
+      "short_pnl_mean": 1.5,
+      "mae_p90": 28.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": 0.1,
+      "ret_median": -4.7,
+      "ex_btc_median": -5.1,
+      "short_funding_mean": -0.31,
+      "short_pnl_mean": -0.4,
+      "mae_p90": 45.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -0.1,
+      "ret_median": -8.1,
+      "ex_btc_median": -6.9,
+      "short_funding_mean": -0.85,
+      "short_pnl_mean": -0.8,
+      "mae_p90": 82.0
+     },
+     "2026": {
+      "n": 51,
+      "ret_mean": -3.2,
+      "ret_median": -11.1,
+      "ex_btc_median": -9.4,
+      "short_funding_mean": -0.4,
+      "short_pnl_mean": 2.8,
+      "mae_p90": 46.0
+     }
+    }
+   },
+   "3d": {
+    "ret": {
+     "n": 675,
+     "mean": -2.22,
+     "median": -7.13,
+     "p10": -35.2,
+     "p90": 31.7,
+     "neg_pct": 64.0
+    },
+    "ret_minus_btc": {
+     "n": 675,
+     "mean": -2.37,
+     "median": -7.15,
+     "p10": -34.4,
+     "p90": 30.2,
+     "neg_pct": 65.5
+    },
+    "short_funding": {
+     "n": 675,
+     "mean": -0.87,
+     "median": 0.08,
+     "p10": -3.3,
+     "p90": 1.0,
+     "neg_pct": 42.1
+    },
+    "short_pnl_gross": {
+     "n": 675,
+     "mean": 1.35,
+     "median": 6.91,
+     "p10": -31.5,
+     "p90": 33.5,
+     "neg_pct": 37.9
+    },
+    "short_pnl_t_month_cluster": 1.83,
+    "mae_short": {
+     "n": 675,
+     "mean": 31.06,
+     "median": 14.35,
+     "p10": 2.4,
+     "p90": 72.5,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 32.9,
+     "0.5": 15.1,
+     "1.0": 7.1,
+     "2.0": 1.2
+    },
+    "dead_by_horizon_pct": 0.0,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -4.1,
+      "ret_median": -3.4,
+      "ex_btc_median": -3.0,
+      "short_funding_mean": 0.08,
+      "short_pnl_mean": 4.2,
+      "mae_p90": 32.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": -6.5,
+      "ret_median": -8.2,
+      "ex_btc_median": -6.5,
+      "short_funding_mean": 0.42,
+      "short_pnl_mean": 7.0,
+      "mae_p90": 37.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": 1.9,
+      "ret_median": -5.7,
+      "ex_btc_median": -3.2,
+      "short_funding_mean": -0.97,
+      "short_pnl_mean": -2.9,
+      "mae_p90": 51.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": -1.4,
+      "ret_median": -3.7,
+      "ex_btc_median": -4.9,
+      "short_funding_mean": -1.0,
+      "short_pnl_mean": 0.4,
+      "mae_p90": 38.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": 3.5,
+      "ret_median": -7.6,
+      "ex_btc_median": -9.1,
+      "short_funding_mean": -0.72,
+      "short_pnl_mean": -4.2,
+      "mae_p90": 70.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -3.5,
+      "ret_median": -10.0,
+      "ex_btc_median": -10.9,
+      "short_funding_mean": -1.46,
+      "short_pnl_mean": 2.1,
+      "mae_p90": 108.0
+     },
+     "2026": {
+      "n": 51,
+      "ret_mean": -6.0,
+      "ret_median": -11.6,
+      "ex_btc_median": -10.0,
+      "short_funding_mean": -1.04,
+      "short_pnl_mean": 5.0,
+      "mae_p90": 82.0
+     }
+    }
+   },
+   "7d": {
+    "ret": {
+     "n": 675,
+     "mean": -2.95,
+     "median": -11.78,
+     "p10": -44.8,
+     "p90": 38.7,
+     "neg_pct": 65.3
+    },
+    "ret_minus_btc": {
+     "n": 675,
+     "mean": -3.78,
+     "median": -12.14,
+     "p10": -46.6,
+     "p90": 36.2,
+     "neg_pct": 67.1
+    },
+    "short_funding": {
+     "n": 675,
+     "mean": -1.62,
+     "median": 0.16,
+     "p10": -5.4,
+     "p90": 1.7,
+     "neg_pct": 41.6
+    },
+    "short_pnl_gross": {
+     "n": 675,
+     "mean": 1.33,
+     "median": 11.1,
+     "p10": -41.1,
+     "p90": 44.7,
+     "neg_pct": 35.0
+    },
+    "short_pnl_t_month_cluster": 1.41,
+    "mae_short": {
+     "n": 675,
+     "mean": 41.37,
+     "median": 18.22,
+     "p10": 2.6,
+     "p90": 101.1,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 40.9,
+     "0.5": 20.9,
+     "1.0": 10.2,
+     "2.0": 2.5
+    },
+    "dead_by_horizon_pct": 0.0,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -5.9,
+      "ret_median": -7.5,
+      "ex_btc_median": -7.6,
+      "short_funding_mean": 0.19,
+      "short_pnl_mean": 6.1,
+      "mae_p90": 44.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": -3.6,
+      "ret_median": -10.0,
+      "ex_btc_median": -8.9,
+      "short_funding_mean": 1.01,
+      "short_pnl_mean": 4.6,
+      "mae_p90": 68.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": -0.0,
+      "ret_median": -12.3,
+      "ex_btc_median": -7.1,
+      "short_funding_mean": -1.53,
+      "short_pnl_mean": -1.5,
+      "mae_p90": 68.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": -4.8,
+      "ret_median": -9.9,
+      "ex_btc_median": -11.1,
+      "short_funding_mean": -1.99,
+      "short_pnl_mean": 2.8,
+      "mae_p90": 63.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": 0.9,
+      "ret_median": -9.2,
+      "ex_btc_median": -13.1,
+      "short_funding_mean": -0.73,
+      "short_pnl_mean": -1.6,
+      "mae_p90": 78.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -3.5,
+      "ret_median": -19.8,
+      "ex_btc_median": -17.1,
+      "short_funding_mean": -3.11,
+      "short_pnl_mean": 0.4,
+      "mae_p90": 144.0
+     },
+     "2026": {
+      "n": 51,
+      "ret_mean": -2.5,
+      "ret_median": -16.6,
+      "ex_btc_median": -12.1,
+      "short_funding_mean": -1.91,
+      "short_pnl_mean": 0.5,
+      "mae_p90": 98.0
+     }
+    }
+   },
+   "14d": {
+    "ret": {
+     "n": 674,
+     "mean": -2.02,
+     "median": -14.96,
+     "p10": -54.1,
+     "p90": 48.9,
+     "neg_pct": 65.7
+    },
+    "ret_minus_btc": {
+     "n": 674,
+     "mean": -3.83,
+     "median": -15.59,
+     "p10": -52.0,
+     "p90": 45.2,
+     "neg_pct": 68.0
+    },
+    "short_funding": {
+     "n": 674,
+     "mean": -1.94,
+     "median": 0.28,
+     "p10": -7.2,
+     "p90": 3.1,
+     "neg_pct": 40.8
+    },
+    "short_pnl_gross": {
+     "n": 674,
+     "mean": 0.09,
+     "median": 13.81,
+     "p10": -51.7,
+     "p90": 53.8,
+     "neg_pct": 36.9
+    },
+    "short_pnl_t_month_cluster": 0.96,
+    "mae_short": {
+     "n": 674,
+     "mean": 54.37,
+     "median": 23.93,
+     "p10": 2.9,
+     "p90": 123.9,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 48.7,
+     "0.5": 28.2,
+     "1.0": 13.5,
+     "2.0": 4.2
+    },
+    "dead_by_horizon_pct": 0.1,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -2.3,
+      "ret_median": -10.0,
+      "ex_btc_median": -10.4,
+      "short_funding_mean": 0.43,
+      "short_pnl_mean": 2.7,
+      "mae_p90": 68.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": 3.9,
+      "ret_median": -3.1,
+      "ex_btc_median": -7.1,
+      "short_funding_mean": 2.46,
+      "short_pnl_mean": -1.4,
+      "mae_p90": 96.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": -6.8,
+      "ret_median": -18.4,
+      "ex_btc_median": -11.6,
+      "short_funding_mean": -1.7,
+      "short_pnl_mean": 5.1,
+      "mae_p90": 77.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": -2.5,
+      "ret_median": -12.0,
+      "ex_btc_median": -14.7,
+      "short_funding_mean": -2.64,
+      "short_pnl_mean": -0.2,
+      "mae_p90": 83.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": 0.2,
+      "ret_median": -13.6,
+      "ex_btc_median": -15.0,
+      "short_funding_mean": -0.51,
+      "short_pnl_mean": -0.7,
+      "mae_p90": 104.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -1.3,
+      "ret_median": -20.1,
+      "ex_btc_median": -22.6,
+      "short_funding_mean": -3.76,
+      "short_pnl_mean": -2.5,
+      "mae_p90": 163.0
+     },
+     "2026": {
+      "n": 50,
+      "ret_mean": -14.4,
+      "ret_median": -29.1,
+      "ex_btc_median": -17.9,
+      "short_funding_mean": -4.26,
+      "short_pnl_mean": 10.2,
+      "mae_p90": 154.0
+     }
+    }
+   },
+   "30d": {
+    "ret": {
+     "n": 671,
+     "mean": -1.17,
+     "median": -21.72,
+     "p10": -63.1,
+     "p90": 59.5,
+     "neg_pct": 67.7
+    },
+    "ret_minus_btc": {
+     "n": 671,
+     "mean": -5.32,
+     "median": -24.19,
+     "p10": -62.3,
+     "p90": 49.5,
+     "neg_pct": 73.2
+    },
+    "short_funding": {
+     "n": 671,
+     "mean": -11.37,
+     "median": 0.54,
+     "p10": -11.8,
+     "p90": 6.5,
+     "neg_pct": 40.2
+    },
+    "short_pnl_gross": {
+     "n": 671,
+     "mean": -10.21,
+     "median": 20.71,
+     "p10": -66.5,
+     "p90": 62.6,
+     "neg_pct": 32.2
+    },
+    "short_pnl_t_month_cluster": -0.13,
+    "mae_short": {
+     "n": 671,
+     "mean": 78.71,
+     "median": 30.28,
+     "p10": 3.3,
+     "p90": 156.8,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 55.4,
+     "0.5": 35.0,
+     "1.0": 19.1,
+     "2.0": 7.2
+    },
+    "dead_by_horizon_pct": 0.1,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -4.7,
+      "ret_median": -14.0,
+      "ex_btc_median": -18.8,
+      "short_funding_mean": 1.75,
+      "short_pnl_mean": 6.4,
+      "mae_p90": 91.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": 6.5,
+      "ret_median": -8.1,
+      "ex_btc_median": -18.1,
+      "short_funding_mean": 7.42,
+      "short_pnl_mean": 1.0,
+      "mae_p90": 149.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": 0.9,
+      "ret_median": -28.2,
+      "ex_btc_median": -21.1,
+      "short_funding_mean": -1.89,
+      "short_pnl_mean": -2.8,
+      "mae_p90": 83.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": 4.4,
+      "ret_median": -14.0,
+      "ex_btc_median": -21.1,
+      "short_funding_mean": -3.08,
+      "short_pnl_mean": -7.4,
+      "mae_p90": 122.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": 4.5,
+      "ret_median": -13.6,
+      "ex_btc_median": -24.6,
+      "short_funding_mean": 0.25,
+      "short_pnl_mean": -4.3,
+      "mae_p90": 133.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -5.3,
+      "ret_median": -32.8,
+      "ex_btc_median": -31.1,
+      "short_funding_mean": -31.57,
+      "short_pnl_mean": -26.3,
+      "mae_p90": 181.0
+     },
+     "2026": {
+      "n": 47,
+      "ret_mean": -12.0,
+      "ret_median": -31.3,
+      "ex_btc_median": -22.0,
+      "short_funding_mean": -6.51,
+      "short_pnl_mean": 5.5,
+      "mae_p90": 179.0
+     }
+    }
+   },
+   "60d": {
+    "ret": {
+     "n": 669,
+     "mean": 1.02,
+     "median": -29.92,
+     "p10": -73.0,
+     "p90": 65.8,
+     "neg_pct": 73.8
+    },
+    "ret_minus_btc": {
+     "n": 669,
+     "mean": -6.75,
+     "median": -35.12,
+     "p10": -75.2,
+     "p90": 53.8,
+     "neg_pct": 78.5
+    },
+    "short_funding": {
+     "n": 669,
+     "mean": -16.05,
+     "median": 0.95,
+     "p10": -14.7,
+     "p90": 10.5,
+     "neg_pct": 38.1
+    },
+    "short_pnl_gross": {
+     "n": 669,
+     "mean": -17.06,
+     "median": 29.63,
+     "p10": -72.5,
+     "p90": 73.2,
+     "neg_pct": 28.0
+    },
+    "short_pnl_t_month_cluster": -0.83,
+    "mae_short": {
+     "n": 669,
+     "mean": 120.9,
+     "median": 36.68,
+     "p10": 4.1,
+     "p90": 207.1,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 60.2,
+     "0.5": 41.3,
+     "1.0": 25.3,
+     "2.0": 10.5
+    },
+    "dead_by_horizon_pct": 0.3,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": -0.1,
+      "ret_median": -22.7,
+      "ex_btc_median": -23.7,
+      "short_funding_mean": 4.33,
+      "short_pnl_mean": 4.5,
+      "mae_p90": 161.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": 79.0,
+      "ret_median": -32.3,
+      "ex_btc_median": -18.9,
+      "short_funding_mean": 13.85,
+      "short_pnl_mean": -65.1,
+      "mae_p90": 166.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": -17.4,
+      "ret_median": -39.8,
+      "ex_btc_median": -23.9,
+      "short_funding_mean": -2.95,
+      "short_pnl_mean": 14.5,
+      "mae_p90": 107.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": 2.8,
+      "ret_median": -19.2,
+      "ex_btc_median": -36.9,
+      "short_funding_mean": -1.24,
+      "short_pnl_mean": -4.1,
+      "mae_p90": 165.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": -1.3,
+      "ret_median": -25.5,
+      "ex_btc_median": -43.4,
+      "short_funding_mean": 1.85,
+      "short_pnl_mean": 3.2,
+      "mae_p90": 177.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": -13.8,
+      "ret_median": -38.1,
+      "ex_btc_median": -40.6,
+      "short_funding_mean": -48.26,
+      "short_pnl_mean": -34.5,
+      "mae_p90": 248.0
+     },
+     "2026": {
+      "n": 45,
+      "ret_mean": -6.2,
+      "ret_median": -39.7,
+      "ex_btc_median": -26.4,
+      "short_funding_mean": -7.38,
+      "short_pnl_mean": -1.2,
+      "mae_p90": 180.0
+     }
+    }
+   },
+   "90d": {
+    "ret": {
+     "n": 666,
+     "mean": 19.02,
+     "median": -36.61,
+     "p10": -78.4,
+     "p90": 73.8,
+     "neg_pct": 74.8
+    },
+    "ret_minus_btc": {
+     "n": 666,
+     "mean": 4.99,
+     "median": -42.75,
+     "p10": -86.7,
+     "p90": 46.4,
+     "neg_pct": 80.2
+    },
+    "short_funding": {
+     "n": 666,
+     "mean": -35.08,
+     "median": 1.35,
+     "p10": -17.1,
+     "p90": 12.9,
+     "neg_pct": 37.1
+    },
+    "short_pnl_gross": {
+     "n": 666,
+     "mean": -54.11,
+     "median": 36.67,
+     "p10": -93.4,
+     "p90": 80.7,
+     "neg_pct": 26.1
+    },
+    "short_pnl_t_month_cluster": -1.17,
+    "mae_short": {
+     "n": 666,
+     "mean": 177.66,
+     "median": 43.74,
+     "p10": 5.1,
+     "p90": 266.5,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 64.7,
+     "0.5": 46.4,
+     "1.0": 30.3,
+     "2.0": 14.4
+    },
+    "dead_by_horizon_pct": 0.8,
+    "by_year": {
+     "2020": {
+      "n": 77,
+      "ret_mean": 27.1,
+      "ret_median": -21.7,
+      "ex_btc_median": -39.5,
+      "short_funding_mean": 10.47,
+      "short_pnl_mean": -16.7,
+      "mae_p90": 264.0
+     },
+     "2021": {
+      "n": 58,
+      "ret_mean": 66.6,
+      "ret_median": -47.0,
+      "ex_btc_median": -27.3,
+      "short_funding_mean": 25.39,
+      "short_pnl_mean": -41.2,
+      "mae_p90": 352.0
+     },
+     "2022": {
+      "n": 24,
+      "ret_mean": -39.0,
+      "ret_median": -50.9,
+      "ex_btc_median": -24.7,
+      "short_funding_mean": -4.2,
+      "short_pnl_mean": 34.8,
+      "mae_p90": 114.0
+     },
+     "2023": {
+      "n": 98,
+      "ret_mean": 3.9,
+      "ret_median": -22.9,
+      "ex_btc_median": -42.2,
+      "short_funding_mean": -0.3,
+      "short_pnl_mean": -4.2,
+      "mae_p90": 201.0
+     },
+     "2024": {
+      "n": 127,
+      "ret_mean": -15.3,
+      "ret_median": -41.1,
+      "ex_btc_median": -56.1,
+      "short_funding_mean": 2.81,
+      "short_pnl_mean": 18.2,
+      "mae_p90": 210.0
+     },
+     "2025": {
+      "n": 240,
+      "ret_mean": 33.8,
+      "ret_median": -50.7,
+      "ex_btc_median": -45.3,
+      "short_funding_mean": -107.16,
+      "short_pnl_mean": -140.9,
+      "mae_p90": 305.0
+     },
+     "2026": {
+      "n": 42,
+      "ret_mean": 26.6,
+      "ret_median": -50.9,
+      "ex_btc_median": -42.7,
+      "short_funding_mean": -3.66,
+      "short_pnl_mean": -30.3,
+      "mae_p90": 199.0
+     }
+    }
+   }
+  },
+  "tradfi": {
+   "1d": {
+    "ret": {
+     "n": 212,
+     "mean": -0.42,
+     "median": -0.67,
+     "p10": -6.5,
+     "p90": 6.4,
+     "neg_pct": 55.7
+    },
+    "ret_minus_btc": {
+     "n": 212,
+     "mean": 0.36,
+     "median": 0.04,
+     "p10": -6.4,
+     "p90": 6.7,
+     "neg_pct": 49.5
+    },
+    "short_funding": {
+     "n": 212,
+     "mean": 0.06,
+     "median": 0.02,
+     "p10": -0.1,
+     "p90": 0.4,
+     "neg_pct": 15.6
+    },
+    "short_pnl_gross": {
+     "n": 212,
+     "mean": 0.48,
+     "median": 0.67,
+     "p10": -6.4,
+     "p90": 6.7,
+     "neg_pct": 43.4
+    },
+    "short_pnl_t_month_cluster": 0.44,
+    "mae_short": {
+     "n": 212,
+     "mean": 4.28,
+     "median": 2.71,
+     "p10": 0.5,
+     "p90": 9.2,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 0.9,
+     "0.5": 0.5,
+     "1.0": 0.0,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "3d": {
+    "ret": {
+     "n": 200,
+     "mean": -1.01,
+     "median": -1.27,
+     "p10": -9.7,
+     "p90": 7.5,
+     "neg_pct": 57.0
+    },
+    "ret_minus_btc": {
+     "n": 200,
+     "mean": -0.29,
+     "median": -0.12,
+     "p10": -9.6,
+     "p90": 9.3,
+     "neg_pct": 51.0
+    },
+    "short_funding": {
+     "n": 200,
+     "mean": 0.12,
+     "median": 0.06,
+     "p10": -0.1,
+     "p90": 0.7,
+     "neg_pct": 21.0
+    },
+    "short_pnl_gross": {
+     "n": 200,
+     "mean": 1.13,
+     "median": 1.17,
+     "p10": -6.9,
+     "p90": 9.8,
+     "neg_pct": 42.5
+    },
+    "short_pnl_t_month_cluster": 0.86,
+    "mae_short": {
+     "n": 200,
+     "mean": 6.54,
+     "median": 4.1,
+     "p10": 0.8,
+     "p90": 15.4,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 3.0,
+     "0.5": 0.5,
+     "1.0": 0.0,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "7d": {
+    "ret": {
+     "n": 200,
+     "mean": -1.2,
+     "median": -1.03,
+     "p10": -12.7,
+     "p90": 10.5,
+     "neg_pct": 54.0
+    },
+    "ret_minus_btc": {
+     "n": 200,
+     "mean": -1.48,
+     "median": -0.34,
+     "p10": -16.9,
+     "p90": 12.5,
+     "neg_pct": 52.0
+    },
+    "short_funding": {
+     "n": 200,
+     "mean": 0.18,
+     "median": 0.16,
+     "p10": -0.5,
+     "p90": 1.1,
+     "neg_pct": 30.0
+    },
+    "short_pnl_gross": {
+     "n": 200,
+     "mean": 1.39,
+     "median": 0.92,
+     "p10": -9.8,
+     "p90": 13.1,
+     "neg_pct": 44.5
+    },
+    "short_pnl_t_month_cluster": 0.63,
+    "mae_short": {
+     "n": 200,
+     "mean": 8.89,
+     "median": 5.45,
+     "p10": 1.2,
+     "p90": 19.2,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 8.0,
+     "0.5": 1.0,
+     "1.0": 0.0,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "14d": {
+    "ret": {
+     "n": 191,
+     "mean": -2.25,
+     "median": -1.8,
+     "p10": -17.6,
+     "p90": 12.3,
+     "neg_pct": 60.2
+    },
+    "ret_minus_btc": {
+     "n": 191,
+     "mean": -2.33,
+     "median": -2.46,
+     "p10": -25.1,
+     "p90": 18.2,
+     "neg_pct": 54.5
+    },
+    "short_funding": {
+     "n": 191,
+     "mean": 0.3,
+     "median": 0.24,
+     "p10": -0.8,
+     "p90": 1.7,
+     "neg_pct": 29.3
+    },
+    "short_pnl_gross": {
+     "n": 191,
+     "mean": 2.55,
+     "median": 2.3,
+     "p10": -12.0,
+     "p90": 17.1,
+     "neg_pct": 36.6
+    },
+    "short_pnl_t_month_cluster": 0.68,
+    "mae_short": {
+     "n": 191,
+     "mean": 11.6,
+     "median": 7.97,
+     "p10": 2.0,
+     "p90": 29.1,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 12.6,
+     "0.5": 2.1,
+     "1.0": 0.0,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "30d": {
+    "ret": {
+     "n": 180,
+     "mean": -0.64,
+     "median": -0.89,
+     "p10": -24.5,
+     "p90": 19.7,
+     "neg_pct": 52.8
+    },
+    "ret_minus_btc": {
+     "n": 180,
+     "mean": -1.6,
+     "median": -3.94,
+     "p10": -30.0,
+     "p90": 27.2,
+     "neg_pct": 57.2
+    },
+    "short_funding": {
+     "n": 180,
+     "mean": 0.52,
+     "median": 0.44,
+     "p10": -1.0,
+     "p90": 2.8,
+     "neg_pct": 30.6
+    },
+    "short_pnl_gross": {
+     "n": 180,
+     "mean": 1.16,
+     "median": 1.61,
+     "p10": -19.7,
+     "p90": 21.5,
+     "neg_pct": 45.0
+    },
+    "short_pnl_t_month_cluster": -1.25,
+    "mae_short": {
+     "n": 180,
+     "mean": 17.92,
+     "median": 11.8,
+     "p10": 2.6,
+     "p90": 42.0,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 20.0,
+     "0.5": 7.8,
+     "1.0": 1.1,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "60d": {
+    "ret": {
+     "n": 150,
+     "mean": -4.66,
+     "median": -4.26,
+     "p10": -37.6,
+     "p90": 20.6,
+     "neg_pct": 58.7
+    },
+    "ret_minus_btc": {
+     "n": 150,
+     "mean": -8.08,
+     "median": -9.26,
+     "p10": -40.6,
+     "p90": 26.3,
+     "neg_pct": 63.3
+    },
+    "short_funding": {
+     "n": 150,
+     "mean": 1.21,
+     "median": 0.83,
+     "p10": -1.2,
+     "p90": 4.9,
+     "neg_pct": 26.0
+    },
+    "short_pnl_gross": {
+     "n": 150,
+     "mean": 5.87,
+     "median": 5.01,
+     "p10": -19.6,
+     "p90": 38.6,
+     "neg_pct": 37.3
+    },
+    "short_pnl_t_month_cluster": -0.26,
+    "mae_short": {
+     "n": 150,
+     "mean": 22.97,
+     "median": 14.78,
+     "p10": 3.6,
+     "p90": 47.8,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 28.7,
+     "0.5": 10.0,
+     "1.0": 2.0,
+     "2.0": 0.0
+    },
+    "dead_by_horizon_pct": 0.0
+   },
+   "90d": {
+    "ret": {
+     "n": 120,
+     "mean": -2.16,
+     "median": -5.06,
+     "p10": -37.2,
+     "p90": 23.3,
+     "neg_pct": 57.5
+    },
+    "ret_minus_btc": {
+     "n": 120,
+     "mean": -9.33,
+     "median": -15.27,
+     "p10": -55.6,
+     "p90": 32.4,
+     "neg_pct": 63.3
+    },
+    "short_funding": {
+     "n": 120,
+     "mean": 1.48,
+     "median": 0.96,
+     "p10": -2.1,
+     "p90": 5.2,
+     "neg_pct": 26.7
+    },
+    "short_pnl_gross": {
+     "n": 120,
+     "mean": 3.64,
+     "median": 5.53,
+     "p10": -22.7,
+     "p90": 37.9,
+     "neg_pct": 41.7
+    },
+    "short_pnl_t_month_cluster": -0.67,
+    "mae_short": {
+     "n": 120,
+     "mean": 27.78,
+     "median": 17.39,
+     "p10": 5.0,
+     "p90": 53.2,
+     "neg_pct": 0.0
+    },
+    "mae_share_gt": {
+     "0.25": 35.8,
+     "0.5": 11.7,
+     "1.0": 3.3,
+     "2.0": 1.7
+    },
+    "dead_by_horizon_pct": 0.0
+   }
+  }
+ },
+ "path_median_mean_pct": {
+  "0": [
+   0.0,
+   0.0
+  ],
+  "1": [
+   -3.83,
+   -0.46
+  ],
+  "2": [
+   -6.06,
+   -1.97
+  ],
+  "3": [
+   -7.13,
+   -2.22
+  ],
+  "4": [
+   -8.11,
+   -2.35
+  ],
+  "5": [
+   -8.87,
+   -1.82
+  ],
+  "6": [
+   -9.93,
+   -2.26
+  ],
+  "7": [
+   -11.78,
+   -2.95
+  ],
+  "8": [
+   -12.5,
+   -3.47
+  ],
+  "9": [
+   -13.17,
+   -2.75
+  ],
+  "10": [
+   -13.64,
+   -2.95
+  ],
+  "11": [
+   -12.88,
+   -2.86
+  ],
+  "12": [
+   -13.79,
+   -2.24
+  ],
+  "13": [
+   -13.81,
+   -2.04
+  ],
+  "14": [
+   -14.96,
+   -2.02
+  ],
+  "15": [
+   -15.38,
+   -1.07
+  ],
+  "16": [
+   -17.53,
+   -0.77
+  ],
+  "17": [
+   -17.38,
+   -0.53
+  ],
+  "18": [
+   -17.51,
+   -0.12
+  ],
+  "19": [
+   -17.51,
+   -1.18
+  ],
+  "20": [
+   -19.3,
+   1.46
+  ],
+  "21": [
+   -18.78,
+   3.18
+  ],
+  "22": [
+   -19.7,
+   1.87
+  ],
+  "23": [
+   -19.9,
+   0.65
+  ],
+  "24": [
+   -20.67,
+   -0.06
+  ],
+  "25": [
+   -19.89,
+   -2.57
+  ],
+  "26": [
+   -20.33,
+   -1.13
+  ],
+  "27": [
+   -19.82,
+   0.17
+  ],
+  "28": [
+   -20.74,
+   1.63
+  ],
+  "29": [
+   -20.98,
+   2.55
+  ],
+  "30": [
+   -21.72,
+   -1.17
+  ],
+  "31": [
+   -21.26,
+   -2.52
+  ],
+  "32": [
+   -22.98,
+   -4.39
+  ],
+  "33": [
+   -23.5,
+   -4.6
+  ],
+  "34": [
+   -23.51,
+   -5.22
+  ],
+  "35": [
+   -23.78,
+   -4.95
+  ],
+  "36": [
+   -22.95,
+   -5.22
+  ],
+  "37": [
+   -23.45,
+   -5.64
+  ],
+  "38": [
+   -22.99,
+   -6.73
+  ],
+  "39": [
+   -23.82,
+   -6.08
+  ],
+  "40": [
+   -23.2,
+   -4.98
+  ],
+  "41": [
+   -24.1,
+   -5.79
+  ],
+  "42": [
+   -24.2,
+   -6.22
+  ],
+  "43": [
+   -23.77,
+   -6.23
+  ],
+  "44": [
+   -24.92,
+   -5.87
+  ],
+  "45": [
+   -26.06,
+   -5.01
+  ],
+  "46": [
+   -26.48,
+   -4.82
+  ],
+  "47": [
+   -26.23,
+   -3.52
+  ],
+  "48": [
+   -27.5,
+   -1.52
+  ],
+  "49": [
+   -27.73,
+   -0.58
+  ],
+  "50": [
+   -27.46,
+   4.33
+  ],
+  "51": [
+   -26.59,
+   6.11
+  ],
+  "52": [
+   -27.35,
+   2.96
+  ],
+  "53": [
+   -27.94,
+   3.17
+  ],
+  "54": [
+   -27.65,
+   0.72
+  ],
+  "55": [
+   -28.37,
+   -0.15
+  ],
+  "56": [
+   -28.46,
+   -0.34
+  ],
+  "57": [
+   -29.22,
+   -0.75
+  ],
+  "58": [
+   -28.58,
+   -0.65
+  ],
+  "59": [
+   -29.07,
+   0.49
+  ],
+  "60": [
+   -29.92,
+   1.02
+  ],
+  "61": [
+   -29.7,
+   0.28
+  ],
+  "62": [
+   -29.87,
+   0.04
+  ],
+  "63": [
+   -29.97,
+   -0.74
+  ],
+  "64": [
+   -30.64,
+   -0.51
+  ],
+  "65": [
+   -30.48,
+   -0.59
+  ],
+  "66": [
+   -31.3,
+   -0.35
+  ],
+  "67": [
+   -31.61,
+   -0.54
+  ],
+  "68": [
+   -31.94,
+   -0.04
+  ],
+  "69": [
+   -31.65,
+   -0.31
+  ],
+  "70": [
+   -32.16,
+   0.4
+  ],
+  "71": [
+   -32.2,
+   -0.43
+  ],
+  "72": [
+   -32.57,
+   -0.23
+  ],
+  "73": [
+   -33.53,
+   -0.16
+  ],
+  "74": [
+   -32.63,
+   0.39
+  ],
+  "75": [
+   -32.68,
+   -0.2
+  ],
+  "76": [
+   -33.72,
+   2.4
+  ],
+  "77": [
+   -34.72,
+   0.32
+  ],
+  "78": [
+   -34.65,
+   1.01
+  ],
+  "79": [
+   -34.07,
+   0.46
+  ],
+  "80": [
+   -34.78,
+   0.78
+  ],
+  "81": [
+   -35.65,
+   3.07
+  ],
+  "82": [
+   -35.73,
+   12.5
+  ],
+  "83": [
+   -35.57,
+   28.25
+  ],
+  "84": [
+   -36.46,
+   33.39
+  ],
+  "85": [
+   -36.38,
+   31.64
+  ],
+  "86": [
+   -35.62,
+   33.85
+  ],
+  "87": [
+   -36.78,
+   24.47
+  ],
+  "88": [
+   -36.56,
+   19.54
+  ],
+  "89": [
+   -36.77,
+   18.58
+  ],
+  "90": [
+   -36.61,
+   19.02
+  ]
+ },
+ "top_squeezes_30d": [
+  {
+   "sym": "COAIUSDT",
+   "date": "2025-09-25",
+   "max_up_pct": 5451
+  },
+  {
+   "sym": "MMTUSDT",
+   "date": "2025-11-04",
+   "max_up_pct": 1395
+  },
+  {
+   "sym": "AVNTUSDT",
+   "date": "2025-09-09",
+   "max_up_pct": 1287
+  },
+  {
+   "sym": "BTWUSDT",
+   "date": "2026-06-04",
+   "max_up_pct": 1095
+  },
+  {
+   "sym": "BEATUSDT",
+   "date": "2025-11-12",
+   "max_up_pct": 983
+  },
+  {
+   "sym": "GASUSDT",
+   "date": "2023-10-25",
+   "max_up_pct": 825
+  },
+  {
+   "sym": "GMTUSDT",
+   "date": "2022-03-15",
+   "max_up_pct": 774
+  },
+  {
+   "sym": "1000BONKUSDT",
+   "date": "2023-11-22",
+   "max_up_pct": 717
+  },
+  {
+   "sym": "HEMIUSDT",
+   "date": "2025-08-29",
+   "max_up_pct": 629
+  },
+  {
+   "sym": "AIAUSDT",
+   "date": "2025-09-18",
+   "max_up_pct": 621
+  },
+  {
+   "sym": "NEIROUSDT",
+   "date": "2024-09-16",
+   "max_up_pct": 603
+  },
+  {
+   "sym": "ORDIUSDT",
+   "date": "2023-11-07",
+   "max_up_pct": 563
+  },
+  {
+   "sym": "PNUTUSDT",
+   "date": "2024-11-11",
+   "max_up_pct": 531
+  },
+  {
+   "sym": "LUNAUSDT",
+   "date": "2021-01-28",
+   "max_up_pct": 530
+  },
+  {
+   "sym": "BROCCOLIF3BUSDT",
+   "date": "2025-03-21",
+   "max_up_pct": 491
+  }
+ ]
+}

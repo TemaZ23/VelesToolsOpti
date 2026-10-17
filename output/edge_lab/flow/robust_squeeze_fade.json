@@ -1,0 +1,405 @@
+{
+ "hyp": "squeeze_fade",
+ "cfg": {
+  "w": 2,
+  "X": 0.07,
+  "V": 0,
+  "inst": "BTC+ETH",
+  "H": 4,
+  "stop": 0.0,
+  "tp": 0.03,
+  "src": "BTC"
+ },
+ "grid_IS": {
+  "final_x": 1.3648,
+  "cagr_pct": 8.08,
+  "avg_month_pct": 0.69,
+  "median_month_pct": 0.0,
+  "sharpe": 1.56,
+  "max_dd_pct": 4.1,
+  "worst_month_pct": -2.34,
+  "pos_months_pct": 14.6,
+  "months": 48,
+  "trades": 41,
+  "avg_trade_net_pct": 1.546
+ },
+ "grid_OOS": {
+  "final_x": 0.9804,
+  "cagr_pct": -0.72,
+  "avg_month_pct": -0.06,
+  "median_month_pct": 0.0,
+  "sharpe": -0.33,
+  "max_dd_pct": 3.23,
+  "worst_month_pct": -3.23,
+  "pos_months_pct": 3.0,
+  "months": 33,
+  "trades": 4,
+  "avg_trade_net_pct": -0.958
+ },
+ "details": {
+  "IS": {
+   "final_x": 1.3648,
+   "cagr_pct": 8.08,
+   "avg_month_pct": 0.69,
+   "median_month_pct": 0.0,
+   "sharpe": 1.56,
+   "max_dd_pct": 4.1,
+   "worst_month_pct": -2.34,
+   "pos_months_pct": 14.6,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 0.9804,
+   "cagr_pct": -0.72,
+   "avg_month_pct": -0.06,
+   "median_month_pct": 0.0,
+   "sharpe": -0.33,
+   "max_dd_pct": 3.23,
+   "worst_month_pct": -3.23,
+   "pos_months_pct": 3.0,
+   "months": 33
+  },
+  "ALL": {
+   "final_x": 1.338,
+   "cagr_pct": 4.41,
+   "avg_month_pct": 0.39,
+   "median_month_pct": 0.0,
+   "sharpe": 1.07,
+   "max_dd_pct": 4.1,
+   "worst_month_pct": -3.23,
+   "pos_months_pct": 9.9,
+   "months": 81
+  },
+  "per_year": {
+   "2020": 20.4,
+   "2021": 1.8,
+   "2022": 11.4,
+   "2023": 0.0,
+   "2024": 1.3,
+   "2025": -3.2,
+   "2026": 0.0
+  },
+  "half_years": {
+   "2020H1": 20.38,
+   "2020H2": 0.0,
+   "2021H1": 2.97,
+   "2021H2": -1.17,
+   "2022H1": 5.21,
+   "2022H2": 5.89,
+   "2023H1": 0.0,
+   "2023H2": 0.0,
+   "2024H1": 0.0,
+   "2024H2": 1.31,
+   "2025H1": -3.23,
+   "2025H2": 0.0,
+   "2026H1": 0.0,
+   "2026H2": 0.0
+  },
+  "trades": 45,
+  "trades_by_period": {
+   "IS": {
+    "trades": 41,
+    "win_rate": 0.756,
+    "avg_trade_net_pct": 1.546,
+    "median_trade_net_pct": 2.911,
+    "avg_price_pct": 1.655,
+    "avg_funding_pct": -0.005,
+    "avg_cost_pct": 0.105,
+    "sum_price_pnl_x_w": 0.3393,
+    "sum_funding_pnl_x_w": -0.0009,
+    "sum_cost_x_w": 0.0214,
+    "avg_hold_h": 2.46,
+    "exit_reasons": {
+     "time": 12,
+     "stop": 0,
+     "tp": 29,
+     "delist": 0,
+     "end": 0,
+     "liq": 0
+    },
+    "best_trade_pct": 2.91,
+    "worst_trade_pct": -5.15
+   },
+   "OOS": {
+    "trades": 4,
+    "win_rate": 0.5,
+    "avg_trade_net_pct": -0.958,
+    "median_trade_net_pct": -0.952,
+    "avg_price_pct": -0.818,
+    "avg_funding_pct": 0.0,
+    "avg_cost_pct": 0.141,
+    "sum_price_pnl_x_w": -0.0164,
+    "sum_funding_pnl_x_w": 0.0,
+    "sum_cost_x_w": 0.0028,
+    "avg_hold_h": 4.0,
+    "exit_reasons": {
+     "time": 4,
+     "stop": 0,
+     "tp": 0,
+     "delist": 0,
+     "end": 0,
+     "liq": 0
+    },
+    "best_trade_pct": 1.62,
+    "worst_trade_pct": -3.55
+   }
+  },
+  "avg_gross_exposure": 0.001,
+  "turnover_per_year_x_equity": 6.67,
+  "capacity_per_trade_usd": {
+   "median": 2478221.0,
+   "p10": 186394.0,
+   "p25": 685811.0
+  },
+  "capacity_account_usd_p25": 1371621.0
+ },
+ "perturb": {
+  "Xx0.75": {
+   "cfg": {
+    "w": 2,
+    "X": 0.052500000000000005,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": -0.04,
+    "cagr_pct": -0.73,
+    "max_dd_pct": 15.56,
+    "avg_month_pct": -0.04,
+    "worst_month_pct": -3.91,
+    "pos_months_pct": 14.6,
+    "trades": 104
+   },
+   "OOS": {
+    "sharpe": -0.64,
+    "cagr_pct": -1.57,
+    "max_dd_pct": 5.5,
+    "avg_month_pct": -0.13,
+    "worst_month_pct": -3.23,
+    "pos_months_pct": 6.1,
+    "trades": 10
+   }
+  },
+  "Xx1.25": {
+   "cfg": {
+    "w": 2,
+    "X": 0.08750000000000001,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 0.75,
+    "cagr_pct": 3.46,
+    "max_dd_pct": 0.0,
+    "avg_month_pct": 0.3,
+    "worst_month_pct": 0.0,
+    "pos_months_pct": 6.2,
+    "trades": 14
+   },
+   "OOS": {
+    "sharpe": 0.0,
+    "cagr_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_month_pct": 0.0,
+    "worst_month_pct": 0.0,
+    "pos_months_pct": 0.0,
+    "trades": 0
+   }
+  },
+  "Hx0.75": {
+   "cfg": {
+    "w": 2,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 3,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 1.2,
+    "cagr_pct": 6.34,
+    "max_dd_pct": 5.0,
+    "avg_month_pct": 0.55,
+    "worst_month_pct": -4.26,
+    "pos_months_pct": 12.5,
+    "trades": 41
+   },
+   "OOS": {
+    "sharpe": -0.85,
+    "cagr_pct": -1.62,
+    "max_dd_pct": 4.38,
+    "avg_month_pct": -0.13,
+    "worst_month_pct": -2.29,
+    "pos_months_pct": 0.0,
+    "trades": 4
+   }
+  },
+  "Hx1.25": {
+   "cfg": {
+    "w": 2,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 5,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 1.33,
+    "cagr_pct": 7.41,
+    "max_dd_pct": 7.1,
+    "avg_month_pct": 0.64,
+    "worst_month_pct": -4.0,
+    "pos_months_pct": 14.6,
+    "trades": 41
+   },
+   "OOS": {
+    "sharpe": -0.54,
+    "cagr_pct": -1.17,
+    "max_dd_pct": 3.5,
+    "avg_month_pct": -0.1,
+    "worst_month_pct": -3.5,
+    "pos_months_pct": 3.0,
+    "trades": 4
+   }
+  },
+  "tpx0.75": {
+   "cfg": {
+    "w": 2,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.0225,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 1.49,
+    "cagr_pct": 6.54,
+    "max_dd_pct": 4.1,
+    "avg_month_pct": 0.56,
+    "worst_month_pct": -2.34,
+    "pos_months_pct": 14.6,
+    "trades": 43
+   },
+   "OOS": {
+    "sharpe": -0.33,
+    "cagr_pct": -0.72,
+    "max_dd_pct": 3.23,
+    "avg_month_pct": -0.06,
+    "worst_month_pct": -3.23,
+    "pos_months_pct": 3.0,
+    "trades": 4
+   }
+  },
+  "tpx1.25": {
+   "cfg": {
+    "w": 2,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.0375,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 1.13,
+    "cagr_pct": 6.28,
+    "max_dd_pct": 4.9,
+    "avg_month_pct": 0.53,
+    "worst_month_pct": -2.34,
+    "pos_months_pct": 14.6,
+    "trades": 38
+   },
+   "OOS": {
+    "sharpe": -0.33,
+    "cagr_pct": -0.72,
+    "max_dd_pct": 3.23,
+    "avg_month_pct": -0.06,
+    "worst_month_pct": -3.23,
+    "pos_months_pct": 3.0,
+    "trades": 4
+   }
+  },
+  "wx0.75": {
+   "cfg": {
+    "w": 1,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": 0.92,
+    "cagr_pct": 1.87,
+    "max_dd_pct": 0.14,
+    "avg_month_pct": 0.16,
+    "worst_month_pct": -0.14,
+    "pos_months_pct": 4.2,
+    "trades": 12
+   },
+   "OOS": {
+    "sharpe": 0.0,
+    "cagr_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "avg_month_pct": 0.0,
+    "worst_month_pct": 0.0,
+    "pos_months_pct": 0.0,
+    "trades": 0
+   }
+  },
+  "wx1.25": {
+   "cfg": {
+    "w": 3,
+    "X": 0.07,
+    "V": 0,
+    "inst": "BTC+ETH",
+    "H": 4,
+    "stop": 0.0,
+    "tp": 0.03,
+    "src": "BTC"
+   },
+   "IS": {
+    "sharpe": -0.05,
+    "cagr_pct": -1.13,
+    "max_dd_pct": 17.0,
+    "avg_month_pct": -0.08,
+    "worst_month_pct": -9.18,
+    "pos_months_pct": 12.5,
+    "trades": 52
+   },
+   "OOS": {
+    "sharpe": 0.34,
+    "cagr_pct": 0.63,
+    "max_dd_pct": 1.13,
+    "avg_month_pct": 0.05,
+    "worst_month_pct": -1.13,
+    "pos_months_pct": 3.0,
+    "trades": 4
+   }
+  }
+ },
+ "random_baseline": {
+  "n": 60,
+  "IS_sharpe_median": -0.04,
+  "IS_sharpe_p90": 0.51,
+  "OOS_sharpe_median": -0.15,
+  "OOS_sharpe_p90": 0.7
+ }
+}
