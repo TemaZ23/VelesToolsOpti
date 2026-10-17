@@ -1,0 +1,5793 @@
+{
+ "rounded_windows": {
+  "IS 2021-03-01…2025-04-20": {
+   "LONG_OPT": {
+    "months": 49.6,
+    "profit_pct": 388.92,
+    "avg_month_pct": 7.83,
+    "cmgr_pct": 3.25,
+    "worst_month_pct": -0.25,
+    "neg_months": 3,
+    "max_dd_pct": 46.25,
+    "dd_abs_pct": 85.21,
+    "eff": 0.0919,
+    "mpu_pct": 52.9,
+    "liquidated": 0,
+    "deals": 6614,
+    "tp": 5490,
+    "sl": 1124,
+    "full_grid": 40,
+    "pf": 12.9,
+    "max_conc": 61,
+    "max_notional_x": 3.36,
+    "avg_deal_h": 47.8,
+    "fees_pct": 6.53,
+    "funding_pct": 4.11,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     388.92
+    ]
+   },
+   "LONG_OPT_VELES": {
+    "months": 49.6,
+    "profit_pct": 376.33,
+    "avg_month_pct": 7.58,
+    "cmgr_pct": 3.19,
+    "worst_month_pct": -0.12,
+    "neg_months": 3,
+    "max_dd_pct": 46.16,
+    "dd_abs_pct": 85.31,
+    "eff": 0.0889,
+    "mpu_pct": 56.25,
+    "liquidated": 0,
+    "deals": 6410,
+    "tp": 5288,
+    "sl": 1122,
+    "full_grid": 41,
+    "pf": 12.16,
+    "max_conc": 61,
+    "max_notional_x": 3.36,
+    "avg_deal_h": 47.4,
+    "fees_pct": 6.27,
+    "funding_pct": 3.96,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     376.33
+    ]
+   }
+  },
+  "Окно автора 2023-04-20…2026-04-20": {
+   "LONG_OPT": {
+    "months": 36.0,
+    "profit_pct": 261.91,
+    "avg_month_pct": 7.27,
+    "cmgr_pct": 3.64,
+    "worst_month_pct": -0.86,
+    "neg_months": 3,
+    "max_dd_pct": 25.95,
+    "dd_abs_pct": 33.05,
+    "eff": 0.2201,
+    "mpu_pct": 33.77,
+    "liquidated": 0,
+    "deals": 4717,
+    "tp": 4024,
+    "sl": 693,
+    "full_grid": 7,
+    "pf": 11.91,
+    "max_conc": 61,
+    "max_notional_x": 3.34,
+    "avg_deal_h": 49.7,
+    "fees_pct": 4.45,
+    "funding_pct": 2.96,
+    "open_upnl_pct": -0.0,
+    "open_deals_end": 2,
+    "sleeve_pnl_pct": [
+     261.91
+    ]
+   },
+   "LONG_OPT_VELES": {
+    "months": 36.0,
+    "profit_pct": 254.2,
+    "avg_month_pct": 7.06,
+    "cmgr_pct": 3.57,
+    "worst_month_pct": -0.71,
+    "neg_months": 3,
+    "max_dd_pct": 28.77,
+    "dd_abs_pct": 35.76,
+    "eff": 0.1974,
+    "mpu_pct": 35.53,
+    "liquidated": 0,
+    "deals": 4550,
+    "tp": 3856,
+    "sl": 694,
+    "full_grid": 8,
+    "pf": 11.23,
+    "max_conc": 61,
+    "max_notional_x": 3.26,
+    "avg_deal_h": 49.3,
+    "fees_pct": 4.27,
+    "funding_pct": 2.86,
+    "open_upnl_pct": -0.0,
+    "open_deals_end": 2,
+    "sleeve_pnl_pct": [
+     254.2
+    ]
+   }
+  },
+  "OOS 2025-04-20…2026-10-01": {
+   "LONG_OPT": {
+    "months": 17.4,
+    "profit_pct": 118.84,
+    "avg_month_pct": 6.84,
+    "cmgr_pct": 4.61,
+    "worst_month_pct": -1.51,
+    "neg_months": 3,
+    "max_dd_pct": 29.44,
+    "dd_abs_pct": 32.95,
+    "eff": 0.2075,
+    "mpu_pct": 33.77,
+    "liquidated": 0,
+    "deals": 1879,
+    "tp": 1587,
+    "sl": 288,
+    "full_grid": 5,
+    "pf": 8.98,
+    "max_conc": 59,
+    "max_notional_x": 3.34,
+    "avg_deal_h": 54.5,
+    "fees_pct": 1.83,
+    "funding_pct": 1.53,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     118.84
+    ]
+   },
+   "LONG_OPT_VELES": {
+    "months": 17.4,
+    "profit_pct": 120.73,
+    "avg_month_pct": 6.95,
+    "cmgr_pct": 4.66,
+    "worst_month_pct": -1.2,
+    "neg_months": 2,
+    "max_dd_pct": 26.57,
+    "dd_abs_pct": 31.0,
+    "eff": 0.2241,
+    "mpu_pct": 31.66,
+    "liquidated": 0,
+    "deals": 1801,
+    "tp": 1510,
+    "sl": 287,
+    "full_grid": 5,
+    "pf": 10.11,
+    "max_conc": 59,
+    "max_notional_x": 3.26,
+    "avg_deal_h": 54.1,
+    "fees_pct": 1.76,
+    "funding_pct": 1.44,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     120.73
+    ]
+   }
+  },
+  "Весь период 2021-03-01…2026-10-01": {
+   "LONG_OPT": {
+    "months": 67.0,
+    "profit_pct": 507.76,
+    "avg_month_pct": 7.58,
+    "cmgr_pct": 2.73,
+    "worst_month_pct": -0.51,
+    "neg_months": 6,
+    "max_dd_pct": 46.25,
+    "dd_abs_pct": 85.21,
+    "eff": 0.0889,
+    "mpu_pct": 52.9,
+    "liquidated": 0,
+    "deals": 8493,
+    "tp": 7077,
+    "sl": 1412,
+    "full_grid": 45,
+    "pf": 11.67,
+    "max_conc": 61,
+    "max_notional_x": 3.36,
+    "avg_deal_h": 49.3,
+    "fees_pct": 8.37,
+    "funding_pct": 5.64,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     507.76
+    ]
+   },
+   "LONG_OPT_VELES": {
+    "months": 67.0,
+    "profit_pct": 497.06,
+    "avg_month_pct": 7.42,
+    "cmgr_pct": 2.7,
+    "worst_month_pct": -0.42,
+    "neg_months": 5,
+    "max_dd_pct": 46.16,
+    "dd_abs_pct": 85.31,
+    "eff": 0.0869,
+    "mpu_pct": 56.25,
+    "liquidated": 0,
+    "deals": 8211,
+    "tp": 6798,
+    "sl": 1409,
+    "full_grid": 46,
+    "pf": 11.59,
+    "max_conc": 61,
+    "max_notional_x": 3.36,
+    "avg_deal_h": 48.9,
+    "fees_pct": 8.03,
+    "funding_pct": 5.41,
+    "open_upnl_pct": 0.0,
+    "open_deals_end": 0,
+    "sleeve_pnl_pct": [
+     497.06
+    ]
+   }
+  }
+ },
+ "no_compound_risk": {
+  "AUTHOR_22X": [
+   {
+    "k": 2.0,
+    "bot_share": [
+     1.5
+    ],
+    "starts": 62,
+    "liquidations": 8,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-05-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01"
+    ],
+    "median_cmgr_pct": 4.386121304546398,
+    "median_cmgr_alive_pct": 4.731669967812369,
+    "worst_dd_alive_pct": 94.18038488534862,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5827362057176737,
+      "avg_month_pct": 13.304121426643938,
+      "max_dd_pct": 44.39198246096157
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5789636355018084,
+      "avg_month_pct": 12.963906661373205,
+      "max_dd_pct": 51.62059444792023
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.6249510766809934,
+      "avg_month_pct": 13.054708146128288,
+      "max_dd_pct": 53.531458430112835
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.6797584086990742,
+      "avg_month_pct": 13.212874447341873,
+      "max_dd_pct": 54.504115773261866
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.698687202502615,
+      "avg_month_pct": 13.062135367831099,
+      "max_dd_pct": 61.22707525068467
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7577038575362876,
+      "avg_month_pct": 13.236306639229696,
+      "max_dd_pct": 62.282710041250965
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.809479942086935,
+      "avg_month_pct": 13.348891917923467,
+      "max_dd_pct": 64.67977256496586
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.8175462656010017,
+      "avg_month_pct": 13.07981946444368,
+      "max_dd_pct": 78.0029244570379
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.8600306689522412,
+      "avg_month_pct": 13.089074714887765,
+      "max_dd_pct": 85.82898657546066
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.907378124923788,
+      "avg_month_pct": 13.160984820357932,
+      "max_dd_pct": 91.63336075603493
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.9763526203324018,
+      "avg_month_pct": 13.36045644759085,
+      "max_dd_pct": 93.69510830852404
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.985080253858908,
+      "avg_month_pct": 12.75165153555451,
+      "max_dd_pct": 31.601064764455717
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.016509247703093,
+      "avg_month_pct": 12.656464140243635,
+      "max_dd_pct": 27.432134159026283
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.092104655546991,
+      "avg_month_pct": 12.857992786783887,
+      "max_dd_pct": 27.783160134799108
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.176419109998131,
+      "avg_month_pct": 13.107368297346328,
+      "max_dd_pct": 27.894795287989254
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.2766654557268025,
+      "avg_month_pct": 13.467054979539954,
+      "max_dd_pct": 27.35190454714891
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.36706757815557,
+      "avg_month_pct": 13.728228496124482,
+      "max_dd_pct": 27.53012506167852
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.3962787682083615,
+      "avg_month_pct": 13.555397804261492,
+      "max_dd_pct": 30.77019940584354
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.494906901668716,
+      "avg_month_pct": 13.840701760215289,
+      "max_dd_pct": 30.960867391449355
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.597946658983476,
+      "avg_month_pct": 14.137473846595535,
+      "max_dd_pct": 31.169287488363167
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.687147589606933,
+      "avg_month_pct": 14.36161773955731,
+      "max_dd_pct": 31.854698546654014
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.776192346017805,
+      "avg_month_pct": 14.524005383857682,
+      "max_dd_pct": 33.56995627411021
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.886754989354047,
+      "avg_month_pct": 14.82605837867698,
+      "max_dd_pct": 34.02081024650895
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.011227588307432,
+      "avg_month_pct": 15.183374925697118,
+      "max_dd_pct": 34.21257339905737
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.133564354206865,
+      "avg_month_pct": 15.51700167488983,
+      "max_dd_pct": 34.686633979154315
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.269253444423527,
+      "avg_month_pct": 15.896440953913165,
+      "max_dd_pct": 35.03141562523993
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.409149468911534,
+      "avg_month_pct": 16.273826820367287,
+      "max_dd_pct": 35.60292745161848
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.560902930085332,
+      "avg_month_pct": 16.7169445204694,
+      "max_dd_pct": 35.62483620475531
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.72603179232003,
+      "avg_month_pct": 17.194989616783964,
+      "max_dd_pct": 35.70306332273638
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.893305805895865,
+      "avg_month_pct": 17.67022211164146,
+      "max_dd_pct": 35.91072861903657
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.061745344468261,
+      "avg_month_pct": 18.090972207689674,
+      "max_dd_pct": 37.03654909607858
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.224789953168508,
+      "avg_month_pct": 18.432480481870954,
+      "max_dd_pct": 39.281891820500256
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.401550168187753,
+      "avg_month_pct": 18.866462910359395,
+      "max_dd_pct": 40.62762039994375
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.5300827081284485,
+      "avg_month_pct": 18.898966442727044,
+      "max_dd_pct": 47.92828306169921
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.640617445039054,
+      "avg_month_pct": 18.811236382174393,
+      "max_dd_pct": 49.816754386068965
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.87703824077337,
+      "avg_month_pct": 19.415229032481047,
+      "max_dd_pct": 50.7489169104764
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.089848468397353,
+      "avg_month_pct": 19.843546930678606,
+      "max_dd_pct": 54.15464533648294
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.314846369751771,
+      "avg_month_pct": 20.251619118197016,
+      "max_dd_pct": 56.03198980383735
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.420116914940755,
+      "avg_month_pct": 19.91601680126749,
+      "max_dd_pct": 49.56211442462846
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.72125081465167,
+      "avg_month_pct": 20.649737985613772,
+      "max_dd_pct": 50.24450624034832
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.053936551836905,
+      "avg_month_pct": 21.437928530941885,
+      "max_dd_pct": 51.262139178226676
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.367724543827503,
+      "avg_month_pct": 22.061545884361273,
+      "max_dd_pct": 54.034259261224705
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.522315308575322,
+      "avg_month_pct": 21.72049185677226,
+      "max_dd_pct": 68.90108756109382
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.901731985411798,
+      "avg_month_pct": 22.451034586963054,
+      "max_dd_pct": 74.10025704256721
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.406338040364304,
+      "avg_month_pct": 19.152711310686644,
+      "max_dd_pct": 72.18122036918375
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.687329385892518,
+      "avg_month_pct": 19.3341424904664,
+      "max_dd_pct": 81.0415007295224
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.970284814252638,
+      "avg_month_pct": 19.475680215493234,
+      "max_dd_pct": 92.70671681078981
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.539017726206733,
+      "avg_month_pct": 20.602300065495466,
+      "max_dd_pct": 94.18038488534862
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.7323888507265526,
+      "avg_month_pct": 3.1368395819028634,
+      "max_dd_pct": 64.63013230977778
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.2282460876636767,
+      "avg_month_pct": 2.465135659630008,
+      "max_dd_pct": 70.58056919802844
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.087803500033547,
+      "avg_month_pct": 2.2701810646947784,
+      "max_dd_pct": 73.5224211355044
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.375963840884434,
+      "avg_month_pct": 5.102467179259183,
+      "max_dd_pct": 27.43601750912407
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.3464414743805442,
+      "avg_month_pct": 1.4023590002715227,
+      "max_dd_pct": 20.63921227234824
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.5660513084731598,
+      "avg_month_pct": 1.6288179469762973,
+      "max_dd_pct": 20.652622669666187
+     }
+    ]
+   },
+   {
+    "k": 3.0,
+    "bot_share": [
+     2.25
+    ],
+    "starts": 62,
+    "liquidations": 19,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-01-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2025-01-01",
+     "2025-02-01",
+     "2025-04-01",
+     "2025-05-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 4.797883887752907,
+    "median_cmgr_alive_pct": 5.803928788573209,
+    "worst_dd_alive_pct": 93.06535985030852,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.182987513215819,
+      "avg_month_pct": 19.956182139969517,
+      "max_dd_pct": 51.325974090103884
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.186345502234912,
+      "avg_month_pct": 19.44585999205884,
+      "max_dd_pct": 61.24135392917211
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.24208648491875,
+      "avg_month_pct": 19.582062219191236,
+      "max_dd_pct": 63.94954915423446
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.30730215034163,
+      "avg_month_pct": 19.81931167101144,
+      "max_dd_pct": 65.34256206610725
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.335028863786805,
+      "avg_month_pct": 19.59320305174485,
+      "max_dd_pct": 75.24813448979343
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.405198934563437,
+      "avg_month_pct": 19.854459958842646,
+      "max_dd_pct": 76.84893144716057
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.467815490337057,
+      "avg_month_pct": 20.02333787688347,
+      "max_dd_pct": 80.5314658620826
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.755334486735871,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.708983507740805,
+      "avg_month_pct": 19.127477303331737,
+      "max_dd_pct": 46.74522598376151
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.75247695380312,
+      "avg_month_pct": 18.98469621036484,
+      "max_dd_pct": 33.08465586252636
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.843290821702695,
+      "avg_month_pct": 19.28698918017525,
+      "max_dd_pct": 33.729935808834
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.943782734182456,
+      "avg_month_pct": 19.661052446018893,
+      "max_dd_pct": 33.93694634184652
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.061198042964121,
+      "avg_month_pct": 20.20058246930925,
+      "max_dd_pct": 32.93836265348213
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.169164606313736,
+      "avg_month_pct": 20.592342744186077,
+      "max_dd_pct": 33.2639335406584
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.212676859287613,
+      "avg_month_pct": 20.33309670639169,
+      "max_dd_pct": 38.990517597918554
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.330501858188752,
+      "avg_month_pct": 20.76105264032234,
+      "max_dd_pct": 39.29717587361271
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.453654579680611,
+      "avg_month_pct": 21.206210769892667,
+      "max_dd_pct": 39.633551039996576
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.561411373149228,
+      "avg_month_pct": 21.542426609335283,
+      "max_dd_pct": 40.748421763087464
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.6711531867792875,
+      "avg_month_pct": 21.7860080757858,
+      "max_dd_pct": 43.59801322503234
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.803928788573209,
+      "avg_month_pct": 22.23908756801468,
+      "max_dd_pct": 44.36152124207128
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.9528174198265615,
+      "avg_month_pct": 22.77506238854487,
+      "max_dd_pct": 44.68813420629171
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.099795302269206,
+      "avg_month_pct": 23.27550251233393,
+      "max_dd_pct": 45.50039089099408
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.262503766178207,
+      "avg_month_pct": 23.84466143086889,
+      "max_dd_pct": 46.095501879108525
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.430779761358152,
+      "avg_month_pct": 24.410740230550115,
+      "max_dd_pct": 47.090152292996514
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.6121299366938,
+      "avg_month_pct": 25.07541678070326,
+      "max_dd_pct": 47.128487045986745
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.8096418329254504,
+      "avg_month_pct": 25.792484425175086,
+      "max_dd_pct": 47.2654889575789
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.01007781883165,
+      "avg_month_pct": 26.505333167461334,
+      "max_dd_pct": 47.630125432335404
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.2140582552523425,
+      "avg_month_pct": 27.13645831153374,
+      "max_dd_pct": 49.63114066291303
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.41400933159162,
+      "avg_month_pct": 27.648720722805695,
+      "max_dd_pct": 53.748105402838654
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.628496677923446,
+      "avg_month_pct": 28.2996943655383,
+      "max_dd_pct": 56.29970776243673
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.795438886447537,
+      "avg_month_pct": 28.34844966408857,
+      "max_dd_pct": 71.3633676282018
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.944160284311352,
+      "avg_month_pct": 28.21685457325952,
+      "max_dd_pct": 68.41771053284222
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.230568803001969,
+      "avg_month_pct": 29.122843548719423,
+      "max_dd_pct": 70.18832014420283
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.493281686436415,
+      "avg_month_pct": 29.765320396015472,
+      "max_dd_pct": 76.87478022030301
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.773166638130302,
+      "avg_month_pct": 30.377428677292126,
+      "max_dd_pct": 83.5049398042768
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.9279031761345,
+      "avg_month_pct": 29.87402520189648,
+      "max_dd_pct": 63.765019026531164
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.294933610107115,
+      "avg_month_pct": 30.974606978415707,
+      "max_dd_pct": 64.89902692515878
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.701615831426125,
+      "avg_month_pct": 32.15689279640766,
+      "max_dd_pct": 66.60693092412183
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.091085579708437,
+      "avg_month_pct": 33.09231882653647,
+      "max_dd_pct": 71.36406174617636
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -4.77076802507837,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.014415156507413,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.308984727244441,
+      "avg_month_pct": 28.729066966033407,
+      "max_dd_pct": 93.06535985030852
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.554288321167883,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.87596525096525,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.86651977998258,
+      "avg_month_pct": 4.705259372854158,
+      "max_dd_pct": 90.61274544974194
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.160606063505325,
+      "avg_month_pct": 7.653700768888462,
+      "max_dd_pct": 40.560380138554805
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.9811712679727256,
+      "avg_month_pct": 2.10353850040725,
+      "max_dd_pct": 30.54719565599181
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.305800384280854,
+      "avg_month_pct": 2.443226920464405,
+      "max_dd_pct": 30.576581190066015
+     }
+    ]
+   },
+   {
+    "k": 4.0,
+    "bot_share": [
+     3.0
+    ],
+    "starts": 62,
+    "liquidations": 23,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-01-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-01-01",
+     "2025-02-01",
+     "2025-03-01",
+     "2025-04-01",
+     "2025-05-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-11-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 4.915771428401728,
+    "median_cmgr_alive_pct": 6.333985489927785,
+    "worst_dd_alive_pct": 94.45605393293381,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.622395701521609,
+      "avg_month_pct": 26.608242853287877,
+      "max_dd_pct": 59.938517413017145
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.631454801900836,
+      "avg_month_pct": 25.92781332274641,
+      "max_dd_pct": 67.53472750311433
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.694485303318352,
+      "avg_month_pct": 26.109416292256576,
+      "max_dd_pct": 70.84316396520686
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.767422127623044,
+      "avg_month_pct": 26.425748894683746,
+      "max_dd_pct": 72.5567150538172
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.801966312493899,
+      "avg_month_pct": 26.124270735662197,
+      "max_dd_pct": 84.97817666632936
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.880411035541732,
+      "avg_month_pct": 26.47261327845939,
+      "max_dd_pct": 87.02535603692567
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.951131821261723,
+      "avg_month_pct": 26.697783835846934,
+      "max_dd_pct": 91.77791337210354
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.755334486735871,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.243027604724504,
+      "avg_month_pct": 25.50330307110902,
+      "max_dd_pct": 61.47571217432046
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.295910405046689,
+      "avg_month_pct": 25.31292828048727,
+      "max_dd_pct": 38.20059755848483
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.398102713614894,
+      "avg_month_pct": 25.715985573567774,
+      "max_dd_pct": 40.25824852246048
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.510639614656343,
+      "avg_month_pct": 26.214736594692656,
+      "max_dd_pct": 40.700999312427534
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.640697001293793,
+      "avg_month_pct": 26.93410995907991,
+      "max_dd_pct": 37.12796141624004
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.761760493235535,
+      "avg_month_pct": 27.456456992248963,
+      "max_dd_pct": 37.542142354953164
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.816540346413168,
+      "avg_month_pct": 27.110795608522984,
+      "max_dd_pct": 45.00165744249587
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.948688697294724,
+      "avg_month_pct": 27.681403520430578,
+      "max_dd_pct": 45.41065491400995
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.0868553160566385,
+      "avg_month_pct": 28.27494769319107,
+      "max_dd_pct": 45.8604300963743
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.208548073476816,
+      "avg_month_pct": 28.72323547911462,
+      "max_dd_pct": 47.35976408611426
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.333985489927785,
+      "avg_month_pct": 29.048010767715365,
+      "max_dd_pct": 51.25322517700237
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.483399396723666,
+      "avg_month_pct": 29.65211675735396,
+      "max_dd_pct": 52.31165018255051
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.65053881139579,
+      "avg_month_pct": 30.366749851394236,
+      "max_dd_pct": 52.76641913680816
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.815987164240789,
+      "avg_month_pct": 31.03400334977966,
+      "max_dd_pct": 53.90261552873735
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.998931836760436,
+      "avg_month_pct": 31.79288190782633,
+      "max_dd_pct": 54.73983166502258
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.18850686617607,
+      "avg_month_pct": 32.54765364073457,
+      "max_dd_pct": 56.14821619439585
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.391990423440986,
+      "avg_month_pct": 33.4338890409388,
+      "max_dd_pct": 56.202725721994796
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.613739521461627,
+      "avg_month_pct": 34.38997923356793,
+      "max_dd_pct": 56.39767316305373
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.839029847887491,
+      "avg_month_pct": 35.34044422328292,
+      "max_dd_pct": 56.9175997096498
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.0698156521952,
+      "avg_month_pct": 36.18194441537935,
+      "max_dd_pct": 59.798660662300385
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.297790819119943,
+      "avg_month_pct": 36.86496096374191,
+      "max_dd_pct": 65.87854297936285
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.540787919188443,
+      "avg_month_pct": 37.73292582071879,
+      "max_dd_pct": 69.7533752408997
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.737564967828071,
+      "avg_month_pct": 37.79793288545409,
+      "max_dd_pct": 94.45605393293381
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.91627496456493,
+      "avg_month_pct": 37.622472764348785,
+      "max_dd_pct": 84.12293999991503
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.240489011589869,
+      "avg_month_pct": 38.830458064962095,
+      "max_dd_pct": 86.81572878237657
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.057864904819036,
+      "avg_month_pct": 39.83203360253498,
+      "max_dd_pct": 74.42957813696479
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.475039328198577,
+      "avg_month_pct": 41.299475971227544,
+      "max_dd_pct": 75.97923620466727
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.938165011617285,
+      "avg_month_pct": 42.87585706188377,
+      "max_dd_pct": 78.33066919789057
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.385902439477658,
+      "avg_month_pct": 44.123091768722546,
+      "max_dd_pct": 84.99358119048804
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -4.77076802507837,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.014415156507413,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.256908462867012,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.554288321167883,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.87596525096525,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -9.113023952095809,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.758283938799626,
+      "avg_month_pct": 10.204934358518367,
+      "max_dd_pct": 53.311489526596965
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.592934114220702,
+      "avg_month_pct": 2.8047180005430423,
+      "max_dd_pct": 40.19516666866077
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.0196720889073214,
+      "avg_month_pct": 3.257635893952591,
+      "max_dd_pct": 40.246061131302355
+     }
+    ]
+   },
+   {
+    "k": 4.5,
+    "bot_share": [
+     3.375
+    ],
+    "starts": 62,
+    "liquidations": 24,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-01-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-04-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-01-01",
+     "2025-02-01",
+     "2025-03-01",
+     "2025-04-01",
+     "2025-05-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-11-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 5.0371781682127414,
+    "median_cmgr_alive_pct": 6.544980008238454,
+    "worst_dd_alive_pct": 96.25885398814457,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.804992041981682,
+      "avg_month_pct": 29.934273209954164,
+      "max_dd_pct": 65.81689454867468
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.816514625616097,
+      "avg_month_pct": 29.168789988087212,
+      "max_dd_pct": 69.93014891341467
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.882605194375578,
+      "avg_month_pct": 29.373093328785327,
+      "max_dd_pct": 73.4836192010788
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.958772428293257,
+      "avg_month_pct": 29.728967506515616,
+      "max_dd_pct": 75.32894876917996
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.996224647861669,
+      "avg_month_pct": 29.389804577615575,
+      "max_dd_pct": 88.80589088912143
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.078131688563814,
+      "avg_month_pct": 29.78168993826231,
+      "max_dd_pct": 91.04407676650791
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.1522554007012555,
+      "avg_month_pct": 30.035006815323655,
+      "max_dd_pct": 96.25885398814457
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.755334486735871,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.465782089316384,
+      "avg_month_pct": 28.69121595500019,
+      "max_dd_pct": 68.69108802080383
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.522679988127632,
+      "avg_month_pct": 28.47704431554989,
+      "max_dd_pct": 42.48943760017993
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.629651743322062,
+      "avg_month_pct": 28.93048377026554,
+      "max_dd_pct": 45.05054447467818
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.747238469323235,
+      "avg_month_pct": 29.49157866903105,
+      "max_dd_pct": 45.66226866542225
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.8825687372289215,
+      "avg_month_pct": 30.300873703966676,
+      "max_dd_pct": 39.58091675034878
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.009127186706431,
+      "avg_month_pct": 30.88851411628196,
+      "max_dd_pct": 40.8051929825608
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.068752193501115,
+      "avg_month_pct": 30.4996450595904,
+      "max_dd_pct": 47.43956524163501
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.206912330134817,
+      "avg_month_pct": 31.141578960486488,
+      "max_dd_pct": 47.894300768926016
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.351382187153187,
+      "avg_month_pct": 31.809316154842087,
+      "max_dd_pct": 48.394891678554615
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.478942328441839,
+      "avg_month_pct": 32.313639914006096,
+      "max_dd_pct": 50.06754744828946
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.61101768803507,
+      "avg_month_pct": 32.6790121136819,
+      "max_dd_pct": 54.43950126235143
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.7674287909584185,
+      "avg_month_pct": 33.35863135202538,
+      "max_dd_pct": 55.63515074219077
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.942236537200719,
+      "avg_month_pct": 34.16259358282075,
+      "max_dd_pct": 56.14982499430694
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.115455958172423,
+      "avg_month_pct": 34.91325376850443,
+      "max_dd_pct": 57.43817839776179
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.306911730915555,
+      "avg_month_pct": 35.76699214630699,
+      "max_dd_pct": 58.389794759443014
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.505453924452521,
+      "avg_month_pct": 36.61611034582887,
+      "max_dd_pct": 59.99501238939936
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.718241068657883,
+      "avg_month_pct": 37.613125171058684,
+      "max_dd_pct": 60.057250969014845
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.950182619662782,
+      "avg_month_pct": 38.68872663776651,
+      "max_dd_pct": 60.2799083037436
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.185932264736318,
+      "avg_month_pct": 39.757999751196,
+      "max_dd_pct": 60.87425585437964
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.428032106158124,
+      "avg_month_pct": 40.70468746730476,
+      "max_dd_pct": 64.18143323398138
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.667873434320828,
+      "avg_month_pct": 41.47308108421282,
+      "max_dd_pct": 71.23777285504593
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.922916660811108,
+      "avg_month_pct": 42.44954154831191,
+      "max_dd_pct": 75.7904685165341
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.333789704271632,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.324064506796791,
+      "avg_month_pct": 42.32528185989498,
+      "max_dd_pct": 91.09305183595748
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.66426289804132,
+      "avg_month_pct": 43.684265323084944,
+      "max_dd_pct": 94.2589525692556
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.533073455837826,
+      "avg_month_pct": 44.811037802850436,
+      "max_dd_pct": 78.82395585573768
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.971519420682952,
+      "avg_month_pct": 46.46191046762951,
+      "max_dd_pct": 80.56414080077705
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.45861899055114,
+      "avg_month_pct": 48.23533919461773,
+      "max_dd_pct": 83.21287358399047
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.931215711816701,
+      "avg_month_pct": 49.638478239811306,
+      "max_dd_pct": 90.77232140073231
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -4.77076802507837,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.014415156507413,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.256908462867012,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.554288321167883,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.87596525096525,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -9.113023952095809,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.499201151725355,
+      "avg_month_pct": 11.48055115333265,
+      "max_dd_pct": 59.5520150105264
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.8907505619181872,
+      "avg_month_pct": 3.1553077506108815,
+      "max_dd_pct": 44.92482517134247
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.3675097383487396,
+      "avg_month_pct": 3.6648403806966146,
+      "max_dd_pct": 44.988411004591676
+     }
+    ]
+   }
+  ],
+  "LONG_OPT": [
+   {
+    "k": 2.0,
+    "bot_share": [
+     1.5
+    ],
+    "starts": 62,
+    "liquidations": 1,
+    "liq_starts": [
+     "2022-05-01"
+    ],
+    "median_cmgr_pct": 4.561351608424102,
+    "median_cmgr_alive_pct": 4.611065631813771,
+    "worst_dd_alive_pct": 96.15825512423875,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.664181953218626,
+      "avg_month_pct": 15.1519151523341,
+      "max_dd_pct": 77.57437442636041
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7137914741725453,
+      "avg_month_pct": 15.300211437412308,
+      "max_dd_pct": 81.00467217022067
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.74195343838315,
+      "avg_month_pct": 15.222801888505241,
+      "max_dd_pct": 96.15825512423875
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.433777587800524,
+      "avg_month_pct": 11.996034239732738,
+      "max_dd_pct": 45.22606439532615
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.411730581153427,
+      "avg_month_pct": 11.555245557712365,
+      "max_dd_pct": 53.742161913842935
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.459865892481484,
+      "avg_month_pct": 11.674233723811367,
+      "max_dd_pct": 54.88848144942916
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.513301224181875,
+      "avg_month_pct": 11.826649645755104,
+      "max_dd_pct": 55.589341811203454
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5323710049288914,
+      "avg_month_pct": 11.709958723086148,
+      "max_dd_pct": 61.20597861002264
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.587175248791774,
+      "avg_month_pct": 11.85588014867609,
+      "max_dd_pct": 62.32688691329476
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.6329186104409716,
+      "avg_month_pct": 11.932065711478641,
+      "max_dd_pct": 64.92916945519026
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.652100201110997,
+      "avg_month_pct": 11.791322073080988,
+      "max_dd_pct": 73.43923706263531
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.6553501574634106,
+      "avg_month_pct": 11.534498508297027,
+      "max_dd_pct": 88.63119017604176
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7012276238751696,
+      "avg_month_pct": 11.61032138309829,
+      "max_dd_pct": 93.34403380638204
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.766548309179929,
+      "avg_month_pct": 11.788213764531145,
+      "max_dd_pct": 95.08468411505532
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.805617923268989,
+      "avg_month_pct": 11.490844076367381,
+      "max_dd_pct": 33.34152437431201
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7876019363783042,
+      "avg_month_pct": 11.102440934142484,
+      "max_dd_pct": 36.022565193485796
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.858823156104396,
+      "avg_month_pct": 11.281192987879212,
+      "max_dd_pct": 36.49372657958494
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.9312831448262697,
+      "avg_month_pct": 11.456254574877804,
+      "max_dd_pct": 37.09042568994319
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.005909407171582,
+      "avg_month_pct": 11.6426516114647,
+      "max_dd_pct": 37.58483866303855
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.089825096960098,
+      "avg_month_pct": 11.865453905825504,
+      "max_dd_pct": 37.88428310106086
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.150115622009798,
+      "avg_month_pct": 11.936874058842578,
+      "max_dd_pct": 39.802597081947624
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.2410966183175525,
+      "avg_month_pct": 12.176307197766224,
+      "max_dd_pct": 40.13813383524666
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.33786804780385,
+      "avg_month_pct": 12.436131602711397,
+      "max_dd_pct": 40.3783327308651
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.4254936329922945,
+      "avg_month_pct": 12.657930012274475,
+      "max_dd_pct": 40.85098819869328
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.511637585034434,
+      "avg_month_pct": 12.820343578366055,
+      "max_dd_pct": 42.442265284500735
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.611065631813771,
+      "avg_month_pct": 13.05880105767029,
+      "max_dd_pct": 43.233627693847545
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.727389659706893,
+      "avg_month_pct": 13.36830227219631,
+      "max_dd_pct": 43.493902263728955
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.8251595390407465,
+      "avg_month_pct": 13.558425894393082,
+      "max_dd_pct": 45.20574132200797
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.945777853525413,
+      "avg_month_pct": 13.851004460061047,
+      "max_dd_pct": 46.05206265986374
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.062974492286743,
+      "avg_month_pct": 14.099469539911153,
+      "max_dd_pct": 47.684888567593234
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.207627185070818,
+      "avg_month_pct": 14.50030560415717,
+      "max_dd_pct": 47.50103140911147
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.361372323481572,
+      "avg_month_pct": 14.911557514786756,
+      "max_dd_pct": 47.630637717948154
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.501466727727156,
+      "avg_month_pct": 15.229100568358396,
+      "max_dd_pct": 49.00757280600697
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.660171442417661,
+      "avg_month_pct": 15.606613730585918,
+      "max_dd_pct": 50.14438234209608
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.791256583544624,
+      "avg_month_pct": 15.790243983484832,
+      "max_dd_pct": 54.271367464147716
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.960379571415952,
+      "avg_month_pct": 16.195591544007335,
+      "max_dd_pct": 55.396014596106724
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.070031653127006,
+      "avg_month_pct": 16.19224474183816,
+      "max_dd_pct": 64.34414263808867
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.987245792183882,
+      "avg_month_pct": 15.176480581460435,
+      "max_dd_pct": 53.79893038627651
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.19791737790123,
+      "avg_month_pct": 15.658568212213892,
+      "max_dd_pct": 54.67315615012105
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.4064052757735634,
+      "avg_month_pct": 16.104798822743852,
+      "max_dd_pct": 56.19544656481074
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.537183984175798,
+      "avg_month_pct": 16.101210382278616,
+      "max_dd_pct": 62.710004868348705
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.52440896501254,
+      "avg_month_pct": 15.402953103605983,
+      "max_dd_pct": 34.319680923428336
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.793575650728867,
+      "avg_month_pct": 16.00021809665398,
+      "max_dd_pct": 34.544227973465865
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.085105041215822,
+      "avg_month_pct": 16.618662503842028,
+      "max_dd_pct": 35.10524823237195
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.365551788286329,
+      "avg_month_pct": 17.146226050828844,
+      "max_dd_pct": 36.45852644168019
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.192155388036259,
+      "avg_month_pct": 15.685885346145282,
+      "max_dd_pct": 30.70645021444241
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.481461516291321,
+      "avg_month_pct": 16.124857183123623,
+      "max_dd_pct": 31.821973494790264
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.305626063357118,
+      "avg_month_pct": 14.845563052269888,
+      "max_dd_pct": 39.63096250030615
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.4721518860537905,
+      "avg_month_pct": 14.77321078224534,
+      "max_dd_pct": 44.176169495580226
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.400355276392534,
+      "avg_month_pct": 13.927875514638135,
+      "max_dd_pct": 55.369369918325425
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.8613665253522536,
+      "avg_month_pct": 14.72658123523585,
+      "max_dd_pct": 56.05926940045906
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.24907567565296,
+      "avg_month_pct": 15.234996979801119,
+      "max_dd_pct": 59.69998106309953
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.797089405999214,
+      "avg_month_pct": 16.108683446070046,
+      "max_dd_pct": 61.61217587550117
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.484221033334283,
+      "avg_month_pct": 17.268583148496923,
+      "max_dd_pct": 62.43549734409846
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.26867075646134,
+      "avg_month_pct": 18.588277176903453,
+      "max_dd_pct": 63.18062422410342
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.088488701102633,
+      "avg_month_pct": 5.03278196279487,
+      "max_dd_pct": 53.53560340851278
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.424723354296022,
+      "avg_month_pct": 4.002851477295928,
+      "max_dd_pct": 61.102874656664866
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.563841213563723,
+      "avg_month_pct": 4.1141316818367315,
+      "max_dd_pct": 62.89810410896878
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.79736065366836,
+      "avg_month_pct": 7.109819240874183,
+      "max_dd_pct": 14.993304455216549
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.9481163892094422,
+      "avg_month_pct": 2.0663684183016384,
+      "max_dd_pct": 18.854544075350073
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.244650958473682,
+      "avg_month_pct": 2.374778233621756,
+      "max_dd_pct": 18.900711051956172
+     }
+    ]
+   },
+   {
+    "k": 3.0,
+    "bot_share": [
+     2.25
+    ],
+    "starts": 62,
+    "liquidations": 7,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01"
+    ],
+    "median_cmgr_pct": 5.581383344290957,
+    "median_cmgr_alive_pct": 5.918741024387475,
+    "worst_dd_alive_pct": 95.2470403986954,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.027462215062538,
+      "avg_month_pct": 17.994051359600068,
+      "max_dd_pct": 52.18714486679893
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.011443632400402,
+      "avg_month_pct": 17.332868336569422,
+      "max_dd_pct": 63.865002194523356
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.069368481420366,
+      "avg_month_pct": 17.51135058571797,
+      "max_dd_pct": 65.49036258259406
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.13310688750137,
+      "avg_month_pct": 17.739974468633697,
+      "max_dd_pct": 66.49058433546988
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.1607979179618,
+      "avg_month_pct": 17.564938084630654,
+      "max_dd_pct": 74.68852976483856
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.22650877915054,
+      "avg_month_pct": 17.783820223015553,
+      "max_dd_pct": 76.364420797996
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.282721689503566,
+      "avg_month_pct": 17.89809856721897,
+      "max_dd_pct": 80.30798538986488
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.311575593343364,
+      "avg_month_pct": 17.686983109622354,
+      "max_dd_pct": 93.74388266002552
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.519625708590924,
+      "avg_month_pct": 17.236266114550894,
+      "max_dd_pct": 48.785474933674074
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.510515859703279,
+      "avg_month_pct": 16.653661401214492,
+      "max_dd_pct": 44.01803492567158
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.596626842634954,
+      "avg_month_pct": 16.921789481819626,
+      "max_dd_pct": 44.72361183723865
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.68450999071135,
+      "avg_month_pct": 17.1843818623175,
+      "max_dd_pct": 45.62310331111259
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.7747995500436735,
+      "avg_month_pct": 17.463977417198137,
+      "max_dd_pct": 46.373463362849655
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.875828596966225,
+      "avg_month_pct": 17.798180858739368,
+      "max_dd_pct": 46.83017258095779
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.951912313310225,
+      "avg_month_pct": 17.905311088264995,
+      "max_dd_pct": 49.79689730278009
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.061565928691669,
+      "avg_month_pct": 18.26446079665056,
+      "max_dd_pct": 50.323207897711
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.1780057846554595,
+      "avg_month_pct": 18.65419740406836,
+      "max_dd_pct": 50.701348468165165
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.283992276233507,
+      "avg_month_pct": 18.98689501841298,
+      "max_dd_pct": 51.448809536776544
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.390457947440241,
+      "avg_month_pct": 19.230515367550243,
+      "max_dd_pct": 53.99858782779757
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.5113065855965315,
+      "avg_month_pct": 19.58820158650668,
+      "max_dd_pct": 55.28610666762744
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.651460102985384,
+      "avg_month_pct": 20.052453408295726,
+      "max_dd_pct": 55.71244057657627
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.772181087160555,
+      "avg_month_pct": 20.33763884159103,
+      "max_dd_pct": 58.55257670944298
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.918741024387475,
+      "avg_month_pct": 20.77650669009308,
+      "max_dd_pct": 59.98031080760685
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.062693900001492,
+      "avg_month_pct": 21.149204309868345,
+      "max_dd_pct": 62.78020395589259
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.236403000118118,
+      "avg_month_pct": 21.750458406237428,
+      "max_dd_pct": 62.46190538961886
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.421686431829898,
+      "avg_month_pct": 22.36733627218184,
+      "max_dd_pct": 62.686202612498086
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.593003162103761,
+      "avg_month_pct": 22.84365085253915,
+      "max_dd_pct": 65.09317607220311
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.7863643495386095,
+      "avg_month_pct": 23.409920595880493,
+      "max_dd_pct": 67.11410717348592
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.951787965607803,
+      "avg_month_pct": 23.685365975228937,
+      "max_dd_pct": 74.71883667962375
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.15784871114773,
+      "avg_month_pct": 24.29338731601277,
+      "max_dd_pct": 76.8673548581838
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.303734528000949,
+      "avg_month_pct": 24.288367112759357,
+      "max_dd_pct": 95.2470403986954
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.243312442622996,
+      "avg_month_pct": 22.76472087219181,
+      "max_dd_pct": 73.85896133791093
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.501632957179116,
+      "avg_month_pct": 23.48785231832223,
+      "max_dd_pct": 75.51672321277825
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.758990856606696,
+      "avg_month_pct": 24.157198234117274,
+      "max_dd_pct": 78.51937202484777
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.936063458051779,
+      "avg_month_pct": 24.1518155734191,
+      "max_dd_pct": 93.71642420918576
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.959766709989724,
+      "avg_month_pct": 23.104429655408943,
+      "max_dd_pct": 45.932811436114356
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.291518719182367,
+      "avg_month_pct": 24.000327144980936,
+      "max_dd_pct": 46.33592694336761
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.652714726557488,
+      "avg_month_pct": 24.92799375576285,
+      "max_dd_pct": 47.350953939436366
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.00458302070637,
+      "avg_month_pct": 25.71933907624316,
+      "max_dd_pct": 49.84658312166851
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.86472846615478,
+      "avg_month_pct": 23.528828019217116,
+      "max_dd_pct": 41.22495573542984
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.236982792865911,
+      "avg_month_pct": 24.18728577468425,
+      "max_dd_pct": 45.67349782883011
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.09308406348719,
+      "avg_month_pct": 22.268344578403887,
+      "max_dd_pct": 50.09191660256401
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.33846069646922,
+      "avg_month_pct": 22.159816173367137,
+      "max_dd_pct": 57.579992618577236
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.318880808144069,
+      "avg_month_pct": 20.89181327195758,
+      "max_dd_pct": 78.17977704663342
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.908774779911056,
+      "avg_month_pct": 22.08987185285423,
+      "max_dd_pct": 79.56229420258968
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.423089506709982,
+      "avg_month_pct": 22.852495469702205,
+      "max_dd_pct": 87.10096773102966
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.133756509678339,
+      "avg_month_pct": 24.16302516910562,
+      "max_dd_pct": 91.23202973301797
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 12.01819583806374,
+      "avg_month_pct": 25.902874722745977,
+      "max_dd_pct": 93.04892551925215
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 13.02917480534056,
+      "avg_month_pct": 27.88241576535582,
+      "max_dd_pct": 94.71363561206839
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.653157117890628,
+      "avg_month_pct": 7.549172944192291,
+      "max_dd_pct": 73.41198465214048
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.816269043765953,
+      "avg_month_pct": 6.004277215944008,
+      "max_dd_pct": 88.42954194145497
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.034028243580724,
+      "avg_month_pct": 6.171197522755145,
+      "max_dd_pct": 92.23963623557347
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.029432995632412,
+      "avg_month_pct": 10.664728861311147,
+      "max_dd_pct": 22.255740867780723
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.8437347514069344,
+      "avg_month_pct": 3.09955262745245,
+      "max_dd_pct": 27.944822573877627
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.280357910951226,
+      "avg_month_pct": 3.5621673504326306,
+      "max_dd_pct": 28.046357411152595
+     }
+    ]
+   },
+   {
+    "k": 4.0,
+    "bot_share": [
+     3.0
+    ],
+    "starts": 62,
+    "liquidations": 19,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-01-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-03-01",
+     "2024-04-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 5.193546383605241,
+    "median_cmgr_alive_pct": 6.339052860247207,
+    "worst_dd_alive_pct": 98.46120953494498,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.463183849297558,
+      "avg_month_pct": 23.99206847946548,
+      "max_dd_pct": 62.87193924509995
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.452242783149485,
+      "avg_month_pct": 23.110491115424725,
+      "max_dd_pct": 70.50515591021794
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.517473614584788,
+      "avg_month_pct": 23.348467447622735,
+      "max_dd_pct": 72.4913251944376
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.588870187916938,
+      "avg_month_pct": 23.653299291510205,
+      "max_dd_pct": 73.71883006534877
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.623274443054326,
+      "avg_month_pct": 23.419917446172295,
+      "max_dd_pct": 83.93297494825505
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.697116671306811,
+      "avg_month_pct": 23.71176029735218,
+      "max_dd_pct": 86.0552957102178
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.761219966144337,
+      "avg_month_pct": 23.864131422957282,
+      "max_dd_pct": 91.09630537314376
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.755334486735871,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.048039192555276,
+      "avg_month_pct": 22.981688152734762,
+      "max_dd_pct": 63.48988015383761
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.046508367912428,
+      "avg_month_pct": 22.204881868284968,
+      "max_dd_pct": 49.512909720016786
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.143802037571521,
+      "avg_month_pct": 22.562385975758424,
+      "max_dd_pct": 50.40742927596528
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.243290729638961,
+      "avg_month_pct": 22.912509149755607,
+      "max_dd_pct": 51.55300524656715
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.3453529606734,
+      "avg_month_pct": 23.2853032229294,
+      "max_dd_pct": 52.51315156305022
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.459210234004264,
+      "avg_month_pct": 23.730907811651008,
+      "max_dd_pct": 53.09956448178062
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.547402640603338,
+      "avg_month_pct": 23.873748117685157,
+      "max_dd_pct": 56.946426830686704
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.671068310559679,
+      "avg_month_pct": 24.35261439553245,
+      "max_dd_pct": 57.6357613457985
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.802255498875208,
+      "avg_month_pct": 24.872263205422794,
+      "max_dd_pct": 58.13232528374892
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.922054658374698,
+      "avg_month_pct": 25.31586002454895,
+      "max_dd_pct": 59.1170715542783
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.043985490844728,
+      "avg_month_pct": 25.64068715673211,
+      "max_dd_pct": 62.508615750500574
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.181001886238269,
+      "avg_month_pct": 26.11760211534058,
+      "max_dd_pct": 64.24043899602758
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.339052860247207,
+      "avg_month_pct": 26.73660454439262,
+      "max_dd_pct": 64.8167774806365
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.477249791428541,
+      "avg_month_pct": 27.116851788786164,
+      "max_dd_pct": 68.6933044058823
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.643402899193873,
+      "avg_month_pct": 27.702008920122093,
+      "max_dd_pct": 70.66673586772166
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.80769105264627,
+      "avg_month_pct": 28.198939079822306,
+      "max_dd_pct": 74.58578892317784
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.003198457800419,
+      "avg_month_pct": 29.00061120831434,
+      "max_dd_pct": 74.13695305802817
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.212203428827735,
+      "avg_month_pct": 29.82311502957351,
+      "max_dd_pct": 74.45314769727308
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.4072163319687245,
+      "avg_month_pct": 30.45820113671679,
+      "max_dd_pct": 77.8732182359266
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.6268353896500996,
+      "avg_month_pct": 31.213227461171837,
+      "max_dd_pct": 80.78334691809378
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.818742156538061,
+      "avg_month_pct": 31.580487966969663,
+      "max_dd_pct": 92.06155198288744
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.224311440677966,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.333789704271632,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.187347785712262,
+      "avg_month_pct": 30.35296116292087,
+      "max_dd_pct": 90.78436437251986
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.48201825872874,
+      "avg_month_pct": 31.317136424427783,
+      "max_dd_pct": 93.30191033225303
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.046342353292758,
+      "avg_month_pct": 30.805906207211965,
+      "max_dd_pct": 55.286817856359235
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.426125315272294,
+      "avg_month_pct": 32.00043619330796,
+      "max_dd_pct": 55.87188204509535
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.841009354255913,
+      "avg_month_pct": 33.237325007684056,
+      "max_dd_pct": 57.35436875922141
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.248400048240324,
+      "avg_month_pct": 34.29245210165769,
+      "max_dd_pct": 61.057067468771486
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.14266544858633,
+      "avg_month_pct": 31.371770692290564,
+      "max_dd_pct": 53.17885283655098
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.58064043766036,
+      "avg_month_pct": 32.24971436624725,
+      "max_dd_pct": 60.820403470841015
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.470974057736516,
+      "avg_month_pct": 29.691126104539777,
+      "max_dd_pct": 57.70822250103207
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.782839174539994,
+      "avg_month_pct": 29.54642156449068,
+      "max_dd_pct": 67.8776219651091
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.814395076873007,
+      "avg_month_pct": 27.85575102927627,
+      "max_dd_pct": 98.46120953494498
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.016098035565399,
+      "avg_month_pct": 10.06556392558974,
+      "max_dd_pct": 90.1465166063219
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.980660737781232,
+      "avg_month_pct": 14.219638481748365,
+      "max_dd_pct": 29.368470842080985
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.694648441681503,
+      "avg_month_pct": 4.132736836603277,
+      "max_dd_pct": 36.82102053164994
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.266481557740187,
+      "avg_month_pct": 4.749556467243512,
+      "max_dd_pct": 36.99750460155208
+     }
+    ]
+   },
+   {
+    "k": 4.5,
+    "bot_share": [
+     3.375
+    ],
+    "starts": 62,
+    "liquidations": 24,
+    "liq_starts": [
+     "2021-03-01",
+     "2021-04-01",
+     "2021-05-01",
+     "2022-01-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-02-01",
+     "2024-03-01",
+     "2024-04-01",
+     "2024-05-01",
+     "2024-06-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-05-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-11-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 4.854563655041099,
+    "median_cmgr_alive_pct": 6.253408976784791,
+    "worst_dd_alive_pct": 95.36672653844595,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.4920343137254901,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5150572424091588,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.644463981765146,
+      "avg_month_pct": 26.991077039399812,
+      "max_dd_pct": 69.31677590260577
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.635763466702536,
+      "avg_month_pct": 25.999302504852572,
+      "max_dd_pct": 73.03639564647678
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.704059459443033,
+      "avg_month_pct": 26.26702587857537,
+      "max_dd_pct": 75.16989553372208
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.778663080044754,
+      "avg_month_pct": 26.609961702948937,
+      "max_dd_pct": 76.4906158394469
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.815937475080934,
+      "avg_month_pct": 26.34740712694455,
+      "max_dd_pct": 87.54488097920576
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.893189835001266,
+      "avg_month_pct": 26.675730334521855,
+      "max_dd_pct": 89.85630770390772
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.960618611758472,
+      "avg_month_pct": 26.847147850826964,
+      "max_dd_pct": 95.36672653844595
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.755334486735871,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.268771350011825,
+      "avg_month_pct": 25.854399171825605,
+      "max_dd_pct": 70.58115705284686
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.270603730135948,
+      "avg_month_pct": 24.98049210182031,
+      "max_dd_pct": 51.662632341216785
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.372604578187756,
+      "avg_month_pct": 25.382684222727978,
+      "max_dd_pct": 52.63727809538102
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.476982953876552,
+      "avg_month_pct": 25.776572793474806,
+      "max_dd_pct": 53.88770547367717
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.584002812708877,
+      "avg_month_pct": 26.195966125795426,
+      "max_dd_pct": 54.9376716056492
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.703255710690525,
+      "avg_month_pct": 26.697271288107256,
+      "max_dd_pct": 55.579814721159416
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.7965942401135395,
+      "avg_month_pct": 26.85796663239577,
+      "max_dd_pct": 59.80874989752051
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.926156851304443,
+      "avg_month_pct": 27.39669119497399,
+      "max_dd_pct": 60.56958551918169
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.063548314068368,
+      "avg_month_pct": 27.981296106100586,
+      "max_dd_pct": 61.11822974843505
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.189167738421353,
+      "avg_month_pct": 28.480342527617495,
+      "max_dd_pct": 62.207682821897926
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.317650215148229,
+      "avg_month_pct": 28.845773051323345,
+      "max_dd_pct": 65.97441055874822
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.4614903218159325,
+      "avg_month_pct": 29.38230237975799,
+      "max_dd_pct": 67.90656787024052
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.6270780713425514,
+      "avg_month_pct": 30.07868011244148,
+      "max_dd_pct": 68.5508952654143
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.772681571960115,
+      "avg_month_pct": 30.506458262384346,
+      "max_dd_pct": 72.90193605286531
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.9471079351915765,
+      "avg_month_pct": 31.164760035137352,
+      "max_dd_pct": 75.12850642178418
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.120008110672771,
+      "avg_month_pct": 31.723806464800205,
+      "max_dd_pct": 79.57363118850583
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.324691961399865,
+      "avg_month_pct": 32.62568760935376,
+      "max_dd_pct": 79.06296277804074
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.543695718488319,
+      "avg_month_pct": 33.551004408270316,
+      "max_dd_pct": 79.42267425719517
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.74873932052369,
+      "avg_month_pct": 34.26547627880626,
+      "max_dd_pct": 83.32651037391973
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.979465473140568,
+      "avg_month_pct": 35.1148808938182,
+      "max_dd_pct": 86.66723248093699
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.128211716341213,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.224311440677966,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.333789704271632,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.4470554926387313,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.5724765258215965,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.505505494070698,
+      "avg_month_pct": 34.656644483112224,
+      "max_dd_pct": 59.31309799701139
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.905747255513631,
+      "avg_month_pct": 36.00049071747016,
+      "max_dd_pct": 59.98699941239657
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.343547661148577,
+      "avg_month_pct": 37.39199063364299,
+      "max_dd_pct": 61.699252857310874
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.774738594566479,
+      "avg_month_pct": 38.57900861436416,
+      "max_dd_pct": 66.00525611887453
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.685268159714356,
+      "avg_month_pct": 35.293242028825446,
+      "max_dd_pct": 58.86887266152553
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.151681418445158,
+      "avg_month_pct": 36.280928662026184,
+      "max_dd_pct": 68.37939085092407
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.0586589410288,
+      "avg_month_pct": 33.40251686760545,
+      "max_dd_pct": 60.78915050257747
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.40014674857104,
+      "avg_month_pct": 33.239724260050295,
+      "max_dd_pct": 72.18055527243499
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.87596525096525,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -9.113023952095809,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.872640848551418,
+      "avg_month_pct": 15.997093291966788,
+      "max_dd_pct": 32.8701350697328
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.104796954761714,
+      "avg_month_pct": 4.649328941178669,
+      "max_dd_pct": 41.18118877293575
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.742522999194376,
+      "avg_month_pct": 5.343251025648943,
+      "max_dd_pct": 41.402069685324754
+     }
+    ]
+   }
+  ],
+  "LONG_OPT+BTC_DD_FILTER": [
+   {
+    "k": 2.0,
+    "bot_share": [
+     1.5
+    ],
+    "starts": 62,
+    "liquidations": 0,
+    "liq_starts": [],
+    "median_cmgr_pct": 4.378983907062084,
+    "median_cmgr_alive_pct": 4.378983907062084,
+    "worst_dd_alive_pct": 69.07011132215256,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.4838328130496476,
+      "avg_month_pct": 13.318564538272568,
+      "max_dd_pct": 51.0087178673886
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5295866245659724,
+      "avg_month_pct": 13.438571192173248,
+      "max_dd_pct": 52.37224578658049
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5521153665064586,
+      "avg_month_pct": 13.341077418773942,
+      "max_dd_pct": 57.72697618855484
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.3291996525263823,
+      "avg_month_pct": 11.146056374431621,
+      "max_dd_pct": 34.71408303988347
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.3060876249175974,
+      "avg_month_pct": 10.735480967522822,
+      "max_dd_pct": 38.75274648741798
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.3518469179698807,
+      "avg_month_pct": 10.841001882802797,
+      "max_dd_pct": 39.618896908463284
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.4030635713919066,
+      "avg_month_pct": 10.979500678091876,
+      "max_dd_pct": 40.14931506296651
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.4176099911205293,
+      "avg_month_pct": 10.848891645330307,
+      "max_dd_pct": 44.42358358401771
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.46986994960905,
+      "avg_month_pct": 10.979942274591279,
+      "max_dd_pct": 45.2816396131121
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.512435476002085,
+      "avg_month_pct": 11.041239374944514,
+      "max_dd_pct": 47.2802117628247
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.5438166672301152,
+      "avg_month_pct": 11.008221675000952,
+      "max_dd_pct": 51.37567737525476
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.542811256478906,
+      "avg_month_pct": 10.74893046842545,
+      "max_dd_pct": 61.877720898200174
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.585729866197429,
+      "avg_month_pct": 10.811621459575017,
+      "max_dd_pct": 65.21482403725201
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.648434607878759,
+      "avg_month_pct": 10.97445319768102,
+      "max_dd_pct": 66.44856921624205
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7048994888917886,
+      "avg_month_pct": 11.094577973859954,
+      "max_dd_pct": 69.07011132215256
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7334298377422526,
+      "avg_month_pct": 11.014214617608237,
+      "max_dd_pct": 33.35616041835171
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.714511551816213,
+      "avg_month_pct": 10.641261491603094,
+      "max_dd_pct": 36.1295772711391
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.7839224148964234,
+      "avg_month_pct": 10.810620271543028,
+      "max_dd_pct": 36.60356058630024
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.854429066773468,
+      "avg_month_pct": 10.975897985834395,
+      "max_dd_pct": 37.20388637643728
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.9271371609286954,
+      "avg_month_pct": 11.152431437430705,
+      "max_dd_pct": 37.70134910815839
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.009107539180645,
+      "avg_month_pct": 11.364606581165601,
+      "max_dd_pct": 38.00266038020528
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.068498078611116,
+      "avg_month_pct": 11.437111537368924,
+      "max_dd_pct": 39.802597081947624
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.157376452446626,
+      "avg_month_pct": 11.665227920875708,
+      "max_dd_pct": 40.13813383524666
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.251997233266702,
+      "avg_month_pct": 11.913211176655256,
+      "max_dd_pct": 40.3783327308651
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.337452023578514,
+      "avg_month_pct": 12.12383266108126,
+      "max_dd_pct": 40.85098819869328
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.420515790545654,
+      "avg_month_pct": 12.273300943445713,
+      "max_dd_pct": 42.442265284500735
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.517240993780303,
+      "avg_month_pct": 12.49861888788397,
+      "max_dd_pct": 43.233627693847545
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.63092982661355,
+      "avg_month_pct": 12.793862592341535,
+      "max_dd_pct": 43.493902263728955
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.725250590760166,
+      "avg_month_pct": 12.969480162016723,
+      "max_dd_pct": 45.20574132200797
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.842626613809986,
+      "avg_month_pct": 13.246278850672006,
+      "max_dd_pct": 46.05206265986374
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.956011828672846,
+      "avg_month_pct": 13.478095179286715,
+      "max_dd_pct": 47.684888567593234
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.097683613447779,
+      "avg_month_pct": 13.86192282125287,
+      "max_dd_pct": 47.50103140911147
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.247994608164297,
+      "avg_month_pct": 14.254592697826084,
+      "max_dd_pct": 47.630637717948154
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.383898395391795,
+      "avg_month_pct": 14.553093292935094,
+      "max_dd_pct": 49.00757280600697
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.538177741438166,
+      "avg_month_pct": 14.909733720562897,
+      "max_dd_pct": 50.14438234209608
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.6630933763490265,
+      "avg_month_pct": 15.071161218774536,
+      "max_dd_pct": 54.271367464147716
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.827516834027957,
+      "avg_month_pct": 15.45441831300827,
+      "max_dd_pct": 55.396014596106724
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.928545771535809,
+      "avg_month_pct": 15.425905716577347,
+      "max_dd_pct": 64.34414263808867
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.828518207667677,
+      "avg_month_pct": 14.384105122725519,
+      "max_dd_pct": 53.79893038627651
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.032478294487276,
+      "avg_month_pct": 14.837362191013263,
+      "max_dd_pct": 54.67315615012105
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.233486804185007,
+      "avg_month_pct": 15.253621778871883,
+      "max_dd_pct": 56.19544656481074
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.351422456251354,
+      "avg_month_pct": 15.21667494604228,
+      "max_dd_pct": 62.710004868348705
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.317284307567794,
+      "avg_month_pct": 14.482337932470012,
+      "max_dd_pct": 34.319680923428336
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.577010738022415,
+      "avg_month_pct": 15.041769425334344,
+      "max_dd_pct": 34.544227973465865
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.8573194690002115,
+      "avg_month_pct": 15.617707525210648,
+      "max_dd_pct": 35.10524823237195
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.124488428234943,
+      "avg_month_pct": 16.100385198716225,
+      "max_dd_pct": 36.45852644168019
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.910753630826405,
+      "avg_month_pct": 14.589227775513091,
+      "max_dd_pct": 30.711134517013566
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.179692223003609,
+      "avg_month_pct": 14.972192388950083,
+      "max_dd_pct": 31.827004356034895
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.956484464563095,
+      "avg_month_pct": 13.637156264595728,
+      "max_dd_pct": 39.638765726731606
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.086170130030145,
+      "avg_month_pct": 13.498190466263315,
+      "max_dd_pct": 44.176169495580226
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.9561010609617835,
+      "avg_month_pct": 12.579012323212936,
+      "max_dd_pct": 55.369369918325425
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.384812240701488,
+      "avg_month_pct": 13.291856115814305,
+      "max_dd_pct": 56.05926940045906
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.728450647431262,
+      "avg_month_pct": 13.706088592145958,
+      "max_dd_pct": 59.69998106309953
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.229981274689102,
+      "avg_month_pct": 14.468516466824783,
+      "max_dd_pct": 61.61217587550117
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.866209224219368,
+      "avg_month_pct": 15.499694203791913,
+      "max_dd_pct": 62.43549734409846
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.592649772002959,
+      "avg_month_pct": 16.674000099756952,
+      "max_dd_pct": 63.18062422410342
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.5814888473361775,
+      "avg_month_pct": 2.940832462321423,
+      "max_dd_pct": 51.00942887237652
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.7270367325219027,
+      "avg_month_pct": 1.867425781102458,
+      "max_dd_pct": 57.449921800094074
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.6267003470600727,
+      "avg_month_pct": 1.7362217490791354,
+      "max_dd_pct": 59.137825883618824
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.4886870148769233,
+      "avg_month_pct": 3.9422408861843516,
+      "max_dd_pct": 9.413003398868032
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.3935741406794433,
+      "avg_month_pct": 1.453522591881366,
+      "max_dd_pct": 9.835343579925253
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 1.5931368327131823,
+      "avg_month_pct": 1.6581169939827527,
+      "max_dd_pct": 9.859518532078004
+     }
+    ]
+   },
+   {
+    "k": 3.0,
+    "bot_share": [
+     2.25
+    ],
+    "starts": 62,
+    "liquidations": 1,
+    "liq_starts": [
+     "2022-05-01"
+    ],
+    "median_cmgr_pct": 5.241854885379215,
+    "median_cmgr_alive_pct": 5.293413644854028,
+    "worst_dd_alive_pct": 95.2470403986954,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.058728694536096,
+      "avg_month_pct": 19.977846807406934,
+      "max_dd_pct": 61.5607005160098
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.113323126616897,
+      "avg_month_pct": 20.157856788257746,
+      "max_dd_pct": 65.26843987391973
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.143721284687674,
+      "avg_month_pct": 20.011616128158913,
+      "max_dd_pct": 82.5137566991089
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.9179398299529877,
+      "avg_month_pct": 16.719084561648643,
+      "max_dd_pct": 50.24951231668948
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.900581202818243,
+      "avg_month_pct": 16.103221451285563,
+      "max_dd_pct": 46.461818879395935
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.95597523832516,
+      "avg_month_pct": 16.261502824205287,
+      "max_dd_pct": 47.712411994532374
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.017357033440638,
+      "avg_month_pct": 16.469251017138852,
+      "max_dd_pct": 48.48378736808115
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.040161813149901,
+      "avg_month_pct": 16.27333746799623,
+      "max_dd_pct": 54.85766842879869
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.10316189848452,
+      "avg_month_pct": 16.46991341188771,
+      "max_dd_pct": 56.172099806171374
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.155966754664497,
+      "avg_month_pct": 16.561859062417565,
+      "max_dd_pct": 59.280604720310826
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.197530201776156,
+      "avg_month_pct": 16.512332512502134,
+      "max_dd_pct": 65.86361441816959
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.2051721402375675,
+      "avg_month_pct": 16.123395702637943,
+      "max_dd_pct": 84.1798192909207
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.25860223065706,
+      "avg_month_pct": 16.21743218936227,
+      "max_dd_pct": 90.47838746516769
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.3341404778953985,
+      "avg_month_pct": 16.46167979652126,
+      "max_dd_pct": 92.87069526623482
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.44322496945333,
+      "avg_month_pct": 16.52132192641221,
+      "max_dd_pct": 48.81681660806586
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.432968727893294,
+      "avg_month_pct": 15.961892237405436,
+      "max_dd_pct": 44.17792859881445
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.517132572194571,
+      "avg_month_pct": 16.21593040731539,
+      "max_dd_pct": 44.88868216169773
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.602911287669209,
+      "avg_month_pct": 16.463846978752485,
+      "max_dd_pct": 45.79489302309896
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.6911358215555365,
+      "avg_month_pct": 16.728647156146984,
+      "max_dd_pct": 46.550961363799736
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.790075287277262,
+      "avg_month_pct": 17.046909871749346,
+      "max_dd_pct": 47.01119080100264
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.865129949905245,
+      "avg_month_pct": 17.15566730605435,
+      "max_dd_pct": 49.79689730278009
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.972521981129341,
+      "avg_month_pct": 17.497841881314564,
+      "max_dd_pct": 50.323207897711
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.086650264321579,
+      "avg_month_pct": 17.86981676498389,
+      "max_dd_pct": 50.701348468165165
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.190296125904403,
+      "avg_month_pct": 18.18574899162291,
+      "max_dd_pct": 51.448809536776544
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.293413644854028,
+      "avg_month_pct": 18.40995141516948,
+      "max_dd_pct": 53.99858782779757
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.4113387125084955,
+      "avg_month_pct": 18.747928331826948,
+      "max_dd_pct": 55.28610666762744
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.5486538405097985,
+      "avg_month_pct": 19.190793888513305,
+      "max_dd_pct": 55.71244057657627
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.665620539620164,
+      "avg_month_pct": 19.454220243026217,
+      "max_dd_pct": 58.55257670944298
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.808669156757285,
+      "avg_month_pct": 19.869418276009245,
+      "max_dd_pct": 59.98031080760685
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.948474632587497,
+      "avg_month_pct": 20.21714276893141,
+      "max_dd_pct": 62.78020395589259
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.118976051636049,
+      "avg_month_pct": 20.792884231880684,
+      "max_dd_pct": 62.46190538961886
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.300553174721646,
+      "avg_month_pct": 21.38188904674054,
+      "max_dd_pct": 62.686202612498086
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.467310918428426,
+      "avg_month_pct": 21.829639939403897,
+      "max_dd_pct": 65.09317607220311
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.655862279001745,
+      "avg_month_pct": 22.36460058084564,
+      "max_dd_pct": 67.11410717348592
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.814508407429853,
+      "avg_month_pct": 22.606741828163166,
+      "max_dd_pct": 74.71883667962375
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.015453428281537,
+      "avg_month_pct": 23.18162746951384,
+      "max_dd_pct": 76.8673548581838
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.15178569061401,
+      "avg_month_pct": 23.138858574867797,
+      "max_dd_pct": 95.2470403986954
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.071903002772872,
+      "avg_month_pct": 21.57615768408876,
+      "max_dd_pct": 73.85896133791093
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.322856268691891,
+      "avg_month_pct": 22.256043286520597,
+      "max_dd_pct": 75.51672321277825
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.571970234884429,
+      "avg_month_pct": 22.880432668308277,
+      "max_dd_pct": 78.51937202484777
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.734624210957164,
+      "avg_month_pct": 22.825012419063864,
+      "max_dd_pct": 93.71642420918576
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.733949909060733,
+      "avg_month_pct": 21.723506898705004,
+      "max_dd_pct": 45.932811436114356
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.055249345129734,
+      "avg_month_pct": 22.562654138001495,
+      "max_dd_pct": 46.33592694336761
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.403970505629687,
+      "avg_month_pct": 23.426561287815797,
+      "max_dd_pct": 47.350953939436366
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.74097101941642,
+      "avg_month_pct": 24.150577798074263,
+      "max_dd_pct": 49.84658312166851
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.554146398199624,
+      "avg_month_pct": 21.883841663268853,
+      "max_dd_pct": 41.22495573542984
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.903174071638853,
+      "avg_month_pct": 22.458288583423965,
+      "max_dd_pct": 45.67349782883011
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.703113634900838,
+      "avg_month_pct": 20.455734396892588,
+      "max_dd_pct": 50.10438362780661
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.905068042012765,
+      "avg_month_pct": 20.24728569939412,
+      "max_dd_pct": 57.579992618577236
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.815178485089925,
+      "avg_month_pct": 18.868518484820104,
+      "max_dd_pct": 78.17977704663342
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.367597247012327,
+      "avg_month_pct": 19.937784173722378,
+      "max_dd_pct": 79.56229420258968
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.8297638601327,
+      "avg_month_pct": 20.55913288822034,
+      "max_dd_pct": 87.10096773102966
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.485792297192042,
+      "avg_month_pct": 21.702774700238926,
+      "max_dd_pct": 91.23202973301797
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 11.310571992998097,
+      "avg_month_pct": 23.249541305689753,
+      "max_dd_pct": 93.04892551925215
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 12.253368291301259,
+      "avg_month_pct": 25.011000149637436,
+      "max_dd_pct": 94.71363561206839
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.6631514577542434,
+      "avg_month_pct": 4.411248693482195,
+      "max_dd_pct": 70.29758533992266
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.5005900908221523,
+      "avg_month_pct": 2.8011386716536806,
+      "max_dd_pct": 83.14290117937342
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.3681355872725574,
+      "avg_month_pct": 2.6043326236186815,
+      "max_dd_pct": 86.72521413073659
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.966339494456196,
+      "avg_month_pct": 5.913361329276602,
+      "max_dd_pct": 13.993635288918766
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.049216233966411,
+      "avg_month_pct": 2.180283887822049,
+      "max_dd_pct": 14.604134475630264
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.344965986026293,
+      "avg_month_pct": 2.487175490974133,
+      "max_dd_pct": 14.657499423414166
+     }
+    ]
+   },
+   {
+    "k": 4.0,
+    "bot_share": [
+     3.0
+    ],
+    "starts": 62,
+    "liquidations": 16,
+    "liq_starts": [
+     "2021-05-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-03-01",
+     "2024-04-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 5.015459436209069,
+    "median_cmgr_alive_pct": 5.884309184468572,
+    "worst_dd_alive_pct": 98.46120953494498,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.4790169050351825,
+      "avg_month_pct": 26.637129076545136,
+      "max_dd_pct": 73.96979589882174
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.540168083100671,
+      "avg_month_pct": 26.877142384346495,
+      "max_dd_pct": 79.38875433713221
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.350883490219504,
+      "avg_month_pct": 22.292112748863243,
+      "max_dd_pct": 64.73472481654954
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.338443519007695,
+      "avg_month_pct": 21.470961935045644,
+      "max_dd_pct": 51.593565209838566
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.401053819391332,
+      "avg_month_pct": 21.682003765605593,
+      "max_dd_pct": 53.14027117251684
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.470013481285329,
+      "avg_month_pct": 21.95900135618375,
+      "max_dd_pct": 54.09889904731914
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.499322897863434,
+      "avg_month_pct": 21.697783290660613,
+      "max_dd_pct": 62.157337690786996
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.570357324953456,
+      "avg_month_pct": 21.959884549182558,
+      "max_dd_pct": 63.850251832459456
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.6309189980557885,
+      "avg_month_pct": 22.082478749889027,
+      "max_dd_pct": 67.89725065061765
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.680346516283085,
+      "avg_month_pct": 22.016443350001904,
+      "max_dd_pct": 76.67475139759826
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.96923775381366,
+      "avg_month_pct": 22.028429235216475,
+      "max_dd_pct": 63.542972783716365
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.9664155417209255,
+      "avg_month_pct": 21.28252298320619,
+      "max_dd_pct": 49.715306617646135
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.0616811186044774,
+      "avg_month_pct": 21.621240543086056,
+      "max_dd_pct": 50.617220890885584
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.158975898956841,
+      "avg_month_pct": 21.95179597166879,
+      "max_dd_pct": 51.7724615610236
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.2588859367028284,
+      "avg_month_pct": 22.30486287486141,
+      "max_dd_pct": 52.74087656082385
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.370567698737183,
+      "avg_month_pct": 22.729213162331202,
+      "max_dd_pct": 53.33241515073399
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.457652656213763,
+      "avg_month_pct": 22.87422307473785,
+      "max_dd_pct": 56.946426830686704
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.578961742027233,
+      "avg_month_pct": 23.330455841751416,
+      "max_dd_pct": 57.6357613457985
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.707740934565786,
+      "avg_month_pct": 23.826422353310512,
+      "max_dd_pct": 58.13232528374892
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.825097767502796,
+      "avg_month_pct": 24.24766532216252,
+      "max_dd_pct": 59.1170715542783
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.943520601434349,
+      "avg_month_pct": 24.546601886891427,
+      "max_dd_pct": 62.508615750500574
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.077480964752069,
+      "avg_month_pct": 24.99723777576794,
+      "max_dd_pct": 64.24043899602758
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.232570885088662,
+      "avg_month_pct": 25.58772518468307,
+      "max_dd_pct": 64.8167774806365
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.366830437546334,
+      "avg_month_pct": 25.938960324033445,
+      "max_dd_pct": 68.6933044058823
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.52930973211745,
+      "avg_month_pct": 26.492557701344012,
+      "max_dd_pct": 70.66673586772166
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.689247797601583,
+      "avg_month_pct": 26.95619035857343,
+      "max_dd_pct": 74.58578892317784
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.881408895575314,
+      "avg_month_pct": 27.72384564250574,
+      "max_dd_pct": 74.13695305802817
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.086541235355459,
+      "avg_month_pct": 28.509185395652167,
+      "max_dd_pct": 74.45314769727308
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.276771139319949,
+      "avg_month_pct": 29.106186585870187,
+      "max_dd_pct": 77.8732182359266
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.49134560517839,
+      "avg_month_pct": 29.819467441125795,
+      "max_dd_pct": 80.78334691809378
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.676105752469953,
+      "avg_month_pct": 30.142322437549073,
+      "max_dd_pct": 92.06155198288744
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.224311440677966,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.333789704271632,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.008412775834994,
+      "avg_month_pct": 28.768210245451037,
+      "max_dd_pct": 90.78436437251986
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.295308264469892,
+      "avg_month_pct": 29.674724382026525,
+      "max_dd_pct": 93.30191033225303
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 8.80927349663021,
+      "avg_month_pct": 28.964675864940023,
+      "max_dd_pct": 55.286817856359235
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.177963053569593,
+      "avg_month_pct": 30.08353885066869,
+      "max_dd_pct": 55.87188204509535
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.579576650993538,
+      "avg_month_pct": 31.235415050421285,
+      "max_dd_pct": 57.35436875922141
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.971090110152003,
+      "avg_month_pct": 32.20077039743246,
+      "max_dd_pct": 61.057067468771486
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.814191181915888,
+      "avg_month_pct": 29.178455551026182,
+      "max_dd_pct": 53.17885283655098
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.2270995125187,
+      "avg_month_pct": 29.944384777900165,
+      "max_dd_pct": 60.820403470841015
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.055590325897267,
+      "avg_month_pct": 27.274312529191455,
+      "max_dd_pct": 57.72476950500213
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.319714625881593,
+      "avg_month_pct": 26.99638093252663,
+      "max_dd_pct": 67.8776219651091
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.272959974955098,
+      "avg_month_pct": 25.158024646425872,
+      "max_dd_pct": 98.46120953494498
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.642760459401396,
+      "avg_month_pct": 5.881664924642846,
+      "max_dd_pct": 86.68703695092539
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.312164570375556,
+      "avg_month_pct": 7.884481772368703,
+      "max_dd_pct": 18.493319746333736
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.6803977000500856,
+      "avg_month_pct": 2.907045183762732,
+      "max_dd_pct": 19.27763792059803
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.070090690373628,
+      "avg_month_pct": 3.316233987965509,
+      "max_dd_pct": 19.370731605759158
+     }
+    ]
+   },
+   {
+    "k": 4.5,
+    "bot_share": [
+     3.375
+    ],
+    "starts": 62,
+    "liquidations": 20,
+    "liq_starts": [
+     "2021-05-01",
+     "2022-02-01",
+     "2022-03-01",
+     "2022-04-01",
+     "2022-05-01",
+     "2024-02-01",
+     "2024-03-01",
+     "2024-04-01",
+     "2024-05-01",
+     "2024-06-01",
+     "2024-07-01",
+     "2024-08-01",
+     "2025-05-01",
+     "2025-06-01",
+     "2025-07-01",
+     "2025-08-01",
+     "2025-09-01",
+     "2025-10-01",
+     "2025-12-01",
+     "2026-01-01"
+    ],
+    "median_cmgr_pct": 4.855437985297639,
+    "median_cmgr_alive_pct": 5.900418514590145,
+    "worst_dd_alive_pct": 93.99155551284476,
+    "outcomes": [
+     {
+      "start": "2021-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.653555653769037,
+      "avg_month_pct": 29.966770211109946,
+      "max_dd_pct": 79.29795655026646
+     },
+     {
+      "start": "2021-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.717449426386877,
+      "avg_month_pct": 30.236785182386342,
+      "max_dd_pct": 85.55874164623812
+     },
+     {
+      "start": "2021-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.5380242546740779,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2021-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.531172384713411,
+      "avg_month_pct": 25.07862684247137,
+      "max_dd_pct": 71.61622612198948
+     },
+     {
+      "start": "2021-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.52091595122921,
+      "avg_month_pct": 24.154832176926977,
+      "max_dd_pct": 53.565690139073105
+     },
+     {
+      "start": "2021-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.586558831183352,
+      "avg_month_pct": 24.392254236306556,
+      "max_dd_pct": 55.234811975003936
+     },
+     {
+      "start": "2021-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.658696267678675,
+      "avg_month_pct": 24.70387652570689,
+      "max_dd_pct": 56.271235326012146
+     },
+     {
+      "start": "2021-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.6908007369289795,
+      "avg_month_pct": 24.41000620199319,
+      "max_dd_pct": 65.04230229329421
+     },
+     {
+      "start": "2021-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.765209931000647,
+      "avg_month_pct": 24.70487011783044,
+      "max_dd_pct": 66.89835919029281
+     },
+     {
+      "start": "2021-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.829048627657584,
+      "avg_month_pct": 24.8427885936253,
+      "max_dd_pct": 71.35445843250177
+     },
+     {
+      "start": "2022-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 4.881827342937695,
+      "avg_month_pct": 24.768498768752202,
+      "max_dd_pct": 81.11282048312339
+     },
+     {
+      "start": "2022-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.7872871403405755,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8171641791044777,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8514294403892944,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -1.8858426270136308,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2022-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.189107689365402,
+      "avg_month_pct": 24.78198288961752,
+      "max_dd_pct": 70.64677812713145
+     },
+     {
+      "start": "2022-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.18959590704926,
+      "avg_month_pct": 23.942838356106687,
+      "max_dd_pct": 51.88302498765132
+     },
+     {
+      "start": "2022-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.289538922470038,
+      "avg_month_pct": 24.323895610971555,
+      "max_dd_pct": 52.86608326835921
+     },
+     {
+      "start": "2022-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.391690514929648,
+      "avg_month_pct": 24.69577046812721,
+      "max_dd_pct": 54.1275353169784
+     },
+     {
+      "start": "2022-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.496526100438159,
+      "avg_month_pct": 25.092970734218927,
+      "max_dd_pct": 55.18695996532782
+     },
+     {
+      "start": "2022-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.613571766222569,
+      "avg_month_pct": 25.57036480762249,
+      "max_dd_pct": 55.834978324435156
+     },
+     {
+      "start": "2022-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.705773762039601,
+      "avg_month_pct": 25.733500959080033,
+      "max_dd_pct": 59.80874989752051
+     },
+     {
+      "start": "2023-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.8329446500632764,
+      "avg_month_pct": 26.246762821970314,
+      "max_dd_pct": 60.56958551918169
+     },
+     {
+      "start": "2023-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.967892379117012,
+      "avg_month_pct": 26.804725147474254,
+      "max_dd_pct": 61.11822974843505
+     },
+     {
+      "start": "2023-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.091031832572735,
+      "avg_month_pct": 27.278623487432746,
+      "max_dd_pct": 62.207682821897926
+     },
+     {
+      "start": "2023-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.215947413243339,
+      "avg_month_pct": 27.614927122752565,
+      "max_dd_pct": 65.97441055874822
+     },
+     {
+      "start": "2023-05-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.356682419379123,
+      "avg_month_pct": 28.121892497738752,
+      "max_dd_pct": 67.90656787024052
+     },
+     {
+      "start": "2023-06-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.519263437947931,
+      "avg_month_pct": 28.786190832768224,
+      "max_dd_pct": 68.5508952654143
+     },
+     {
+      "start": "2023-07-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.6608618445062495,
+      "avg_month_pct": 29.181330364537516,
+      "max_dd_pct": 72.90193605286531
+     },
+     {
+      "start": "2023-08-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.831553946997881,
+      "avg_month_pct": 29.804127414012,
+      "max_dd_pct": 75.12850642178418
+     },
+     {
+      "start": "2023-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.00002878074113,
+      "avg_month_pct": 30.32571415339521,
+      "max_dd_pct": 79.57363118850583
+     },
+     {
+      "start": "2023-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.2013142359779625,
+      "avg_month_pct": 31.189326347819062,
+      "max_dd_pct": 79.06296277804074
+     },
+     {
+      "start": "2023-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.4163829286507,
+      "avg_month_pct": 32.072833570108784,
+      "max_dd_pct": 79.42267425719517
+     },
+     {
+      "start": "2023-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.616559888661678,
+      "avg_month_pct": 32.74445990910382,
+      "max_dd_pct": 83.32651037391973
+     },
+     {
+      "start": "2024-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 7.842153521621276,
+      "avg_month_pct": 33.54690087126638,
+      "max_dd_pct": 86.66723248093699
+     },
+     {
+      "start": "2024-02-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.128211716341213,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-03-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.224311440677966,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-04-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.333789704271632,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.4470554926387313,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.5724765258215965,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.7028588807785887,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -3.847977243994943,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2024-09-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.264272800413709,
+      "avg_month_pct": 32.58526034805725,
+      "max_dd_pct": 59.31309799701139
+     },
+     {
+      "start": "2024-10-01",
+      "liquidated": 0,
+      "cmgr_pct": 9.653176309601342,
+      "avg_month_pct": 33.84398120700197,
+      "max_dd_pct": 59.98699941239657
+     },
+     {
+      "start": "2024-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.077402151372961,
+      "avg_month_pct": 35.13984193172339,
+      "max_dd_pct": 61.699252857310874
+     },
+     {
+      "start": "2024-12-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.492330376450365,
+      "avg_month_pct": 36.22586669711109,
+      "max_dd_pct": 66.00525611887453
+     },
+     {
+      "start": "2025-01-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.350110527994328,
+      "avg_month_pct": 32.82576249490311,
+      "max_dd_pct": 58.86887266152553
+     },
+     {
+      "start": "2025-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.790751174641766,
+      "avg_month_pct": 33.68743287513582,
+      "max_dd_pct": 68.37939085092407
+     },
+     {
+      "start": "2025-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.633716339498612,
+      "avg_month_pct": 30.683601595338686,
+      "max_dd_pct": 60.80751177494976
+     },
+     {
+      "start": "2025-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 10.925796992117508,
+      "avg_month_pct": 30.370928549090852,
+      "max_dd_pct": 72.18055527243499
+     },
+     {
+      "start": "2025-05-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -5.87596525096525,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-06-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.25,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-07-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -6.660284463894968,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-08-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.144953051643193,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-09-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -7.705696202531646,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-10-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -8.339041095890412,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2025-11-01",
+      "liquidated": 0,
+      "cmgr_pct": 5.100223943426352,
+      "avg_month_pct": 6.6168730402232105,
+      "max_dd_pct": 93.99155551284476
+     },
+     {
+      "start": "2025-12-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -10.01233552631579,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-01-01",
+      "liquidated": 1,
+      "cmgr_pct": -100.0,
+      "avg_month_pct": -11.149267399267398,
+      "max_dd_pct": 100.0
+     },
+     {
+      "start": "2026-02-01",
+      "liquidated": 0,
+      "cmgr_pct": 6.94303900540032,
+      "avg_month_pct": 8.870041993914864,
+      "max_dd_pct": 20.71347427437814
+     },
+     {
+      "start": "2026-03-01",
+      "liquidated": 0,
+      "cmgr_pct": 2.9874165710157996,
+      "avg_month_pct": 3.2704258317330783,
+      "max_dd_pct": 21.579544905065337
+     },
+     {
+      "start": "2026-04-01",
+      "liquidated": 0,
+      "cmgr_pct": 3.423273406753813,
+      "avg_month_pct": 3.7307632364612036,
+      "max_dd_pct": 21.696265542013123
+     }
+    ]
+   }
+  ]
+ }
+}

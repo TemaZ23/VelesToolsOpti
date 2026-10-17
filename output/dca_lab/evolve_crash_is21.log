@@ -1,0 +1,32 @@
+[crash] gen   0 |    54s | score 0.1318 | 9.79%/мес | DDabs 104.3% | eff 0.094 | сделок 8190
+[crash] gen   1 |    78s | score 0.1318 | 9.79%/мес | DDabs 104.3% | eff 0.094 | сделок 8190
+[crash] gen   2 |   104s | score 0.1318 | 9.79%/мес | DDabs 104.3% | eff 0.094 | сделок 8190
+[crash] gen   3 |   128s | score 0.1318 | 9.79%/мес | DDabs 104.3% | eff 0.094 | сделок 8190
+[crash] gen   4 |   152s | score 0.1328 | 11.37%/мес | DDabs 116.6% | eff 0.098 | сделок 8358
+[crash] gen   5 |   177s | score 0.1393 | 5.20%/мес | DDabs 62.8% | eff 0.083 | сделок 3447
+[crash] gen   6 |   204s | score 0.1492 | 6.29%/мес | DDabs 61.7% | eff 0.102 | сделок 4053
+[crash] gen   7 |   232s | score 0.1492 | 6.29%/мес | DDabs 61.7% | eff 0.102 | сделок 4053
+[crash] gen   8 |   258s | score 0.1492 | 6.29%/мес | DDabs 61.7% | eff 0.102 | сделок 4053
+[crash] gen   9 |   284s | score 0.1575 | 10.45%/мес | DDabs 92.7% | eff 0.113 | сделок 10833
+[crash] gen  10 |   313s | score 0.1575 | 10.45%/мес | DDabs 92.7% | eff 0.113 | сделок 10833
+[crash] gen  11 |   339s | score 0.1575 | 10.45%/мес | DDabs 92.7% | eff 0.113 | сделок 10833
+[crash] gen  12 |   364s | score 0.1575 | 10.45%/мес | DDabs 92.7% | eff 0.113 | сделок 10833
+[crash] gen  13 |   389s | score 0.1651 | 10.82%/мес | DDabs 89.7% | eff 0.121 | сделок 10275
+[crash] gen  14 |   415s | score 0.1651 | 10.82%/мес | DDabs 89.7% | eff 0.121 | сделок 10275
+[crash] gen  15 |   442s | score 0.1741 | 11.29%/мес | DDabs 89.7% | eff 0.126 | сделок 10143
+[crash] gen  16 |   468s | score 0.1755 | 11.16%/мес | DDabs 91.6% | eff 0.122 | сделок 10171
+[crash] gen  17 |   496s | score 0.1758 | 11.34%/мес | DDabs 92.5% | eff 0.123 | сделок 10321
+[crash] gen  18 |   522s | score 0.1774 | 11.57%/мес | DDabs 89.9% | eff 0.129 | сделок 10507
+[crash] gen  19 |   547s | score 0.1774 | 11.57%/мес | DDabs 89.9% | eff 0.129 | сделок 10507
+[crash] gen  20 |   571s | score 0.1776 | 11.37%/мес | DDabs 88.2% | eff 0.129 | сделок 10520
+[crash] gen  21 |   596s | score 0.1776 | 11.37%/мес | DDabs 88.2% | eff 0.129 | сделок 10520
+[crash] gen  22 |   622s | score 0.1784 | 11.68%/мес | DDabs 89.9% | eff 0.130 | сделок 10301
+[crash] gen  23 |   650s | score 0.1795 | 11.44%/мес | DDabs 89.9% | eff 0.127 | сделок 10202
+[crash] gen  24 |   678s | score 0.1795 | 11.44%/мес | DDabs 89.9% | eff 0.127 | сделок 10202
+[crash] gen  25 |   703s | score 0.1862 | 11.39%/мес | DDabs 87.8% | eff 0.130 | сделок 10182
+[crash] gen  26 |   729s | score 0.1862 | 11.39%/мес | DDabs 87.8% | eff 0.130 | сделок 10182
+[crash] gen  27 |   756s | score 0.1862 | 11.39%/мес | DDabs 87.8% | eff 0.130 | сделок 10182
+[crash] gen  28 |   781s | score 0.1884 | 11.80%/мес | DDabs 88.5% | eff 0.133 | сделок 10751
+[crash] gen  29 |   806s | score 0.1884 | 11.80%/мес | DDabs 88.5% | eff 0.133 | сделок 10751
+лучший: {"months": 49.6, "profit_pct": 585.75, "avg_month_pct": 11.8, "cmgr_pct": 3.95, "worst_month_pct": -1.22, "neg_months": 3, "max_dd_pct": 43.84, "dd_abs_pct": 88.53, "eff": 0.1333, "mpu_pct": 77.05, "liquidated": 0, "deals": 10751, "tp": 6364, "sl": 4387, "full_grid": 175, "pf": 7.02, "max_conc": 51, "max_notional_x": 4.42, "avg_deal_h": 66.5, "fees_pct": 10.66, "funding_pct": 8.98, "open_upnl_pct": 0.07, "open_deals_end": 9, "sleeve_pnl_pct": [585.72]}
+лог: /home/user/VelesToolsOpti/output/dca_lab/evolve_crash_is21.json

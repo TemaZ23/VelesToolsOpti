@@ -1,0 +1,811 @@
+{
+ "AUTHOR_22X": {
+  "sleeves": [
+   {
+    "bot": {
+     "name": "LONG_STRATEGY 22.X",
+     "entry": [
+      {
+       "series": "RSI_LEVELS@1m",
+       "op": ">",
+       "value": 0.5
+      },
+      {
+       "series": "CCI@1h",
+       "op": "<",
+       "value": 80
+      },
+      {
+       "series": "CMO@30m",
+       "op": ">",
+       "value": -80
+      },
+      {
+       "series": "WR@30m",
+       "op": "<",
+       "value": -80
+      },
+      {
+       "series": "KCL@30m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "ATRP@5m",
+       "op": ">",
+       "value": 0.5
+      },
+      {
+       "series": "VOL@1h",
+       "op": ">",
+       "value": 100000
+      }
+     ],
+     "orders": [
+      {
+       "indent": 0.3,
+       "volume": 2,
+       "conditions": []
+      },
+      {
+       "indent": 5,
+       "volume": 3,
+       "conditions": [
+        {
+         "series": "ADX@15m",
+         "op": ">",
+         "value": 40
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -90
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 10,
+       "volume": 4,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 19
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 15,
+       "volume": 6,
+       "conditions": [
+        {
+         "series": "STOCH_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "BBL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -90
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 20,
+       "volume": 10,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 19
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 30,
+       "volume": 16,
+       "conditions": [
+        {
+         "series": "KCL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -90
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 40,
+       "volume": 25,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -90
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 65,
+       "volume": 34,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -90
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      }
+     ],
+     "pull_up": 0.4,
+     "tp_mode": 0,
+     "tp_min_pnl": 0.5,
+     "tp_pct": 1.0,
+     "tp_conditions": [
+      {
+       "series": "BBL@1m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "TZU@5m",
+       "op": ">",
+       "value": 0
+      }
+     ],
+     "sl_mode": 1,
+     "sl_indent": 0.0,
+     "sl_pct": 30.0,
+     "sl_conditions": [
+      {
+       "series": "MACD_ZERO_DOWN@4h",
+       "op": ">",
+       "value": 0.5
+      }
+     ],
+     "direction": 1
+    },
+    "bot_share": 0.75,
+    "leverage": 20,
+    "block": 60,
+    "dyn_block_order": 5,
+    "coins": null
+   }
+  ],
+  "portfolio": {
+   "deposit": 1000.0,
+   "bot_share": 0.75,
+   "leverage": 20.0,
+   "block": 60,
+   "dyn_block_order": 5,
+   "maker_fee": 0.02,
+   "taker_fee": 0.055,
+   "funding_8h": 0.01,
+   "mmr": 1.0,
+   "compound": false
+  },
+  "regime": null
+ },
+ "LONG_OPT": {
+  "sleeves": [
+   {
+    "bot": {
+     "name": "LONG_OPT",
+     "entry": [
+      {
+       "series": "RSI_LEVELS@1m",
+       "op": ">",
+       "value": 0.5
+      },
+      {
+       "series": "CCI@1h",
+       "op": "<",
+       "value": 46.3
+      },
+      {
+       "series": "CMO@30m",
+       "op": ">",
+       "value": -100.0
+      },
+      {
+       "series": "WR@30m",
+       "op": "<",
+       "value": -55.7
+      },
+      {
+       "series": "KCL@30m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "ATRP@5m",
+       "op": ">",
+       "value": 0.58
+      },
+      {
+       "series": "VOL@1h",
+       "op": ">",
+       "value": 100000
+      }
+     ],
+     "orders": [
+      {
+       "indent": 0.36,
+       "volume": 1.6,
+       "conditions": []
+      },
+      {
+       "indent": 8.0,
+       "volume": 2.21,
+       "conditions": [
+        {
+         "series": "ADX@15m",
+         "op": ">",
+         "value": 26.7
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 8.34,
+       "volume": 3.04,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 8.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 9.57,
+       "volume": 4.18,
+       "conditions": [
+        {
+         "series": "STOCH_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "BBL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 11.82,
+       "volume": 5.76,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 8.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 15.2,
+       "volume": 7.94,
+       "conditions": [
+        {
+         "series": "KCL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 19.76,
+       "volume": 10.93,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 25.56,
+       "volume": 15.05,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 32.65,
+       "volume": 20.73,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 41.06,
+       "volume": 28.56,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      }
+     ],
+     "pull_up": 0.2,
+     "tp_mode": 0,
+     "tp_min_pnl": 0.3,
+     "tp_pct": 1.91,
+     "tp_conditions": [
+      {
+       "series": "BBL@1m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "TZU@5m",
+       "op": ">",
+       "value": 0
+      }
+     ],
+     "sl_mode": 1,
+     "sl_indent": 2.64,
+     "sl_pct": 32.4,
+     "sl_conditions": [
+      {
+       "series": "MACD_ZERO_DOWN@4h",
+       "op": ">",
+       "value": 0.5
+      }
+     ],
+     "direction": 1
+    },
+    "bot_share": 0.75,
+    "leverage": 20.0,
+    "block": 63,
+    "dyn_block_order": 5,
+    "coins": null
+   }
+  ],
+  "portfolio": {
+   "deposit": 1000.0,
+   "bot_share": 0.75,
+   "leverage": 20.0,
+   "block": 60,
+   "dyn_block_order": 5,
+   "maker_fee": 0.02,
+   "taker_fee": 0.055,
+   "funding_8h": 0.01,
+   "mmr": 1.0,
+   "compound": false
+  },
+  "regime": null
+ },
+ "LONG_OPT+BTC_DD_FILTER": {
+  "sleeves": [
+   {
+    "bot": {
+     "name": "LONG_OPT",
+     "entry": [
+      {
+       "series": "RSI_LEVELS@1m",
+       "op": ">",
+       "value": 0.5
+      },
+      {
+       "series": "CCI@1h",
+       "op": "<",
+       "value": 46.3
+      },
+      {
+       "series": "CMO@30m",
+       "op": ">",
+       "value": -100.0
+      },
+      {
+       "series": "WR@30m",
+       "op": "<",
+       "value": -55.7
+      },
+      {
+       "series": "KCL@30m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "ATRP@5m",
+       "op": ">",
+       "value": 0.58
+      },
+      {
+       "series": "VOL@1h",
+       "op": ">",
+       "value": 100000
+      }
+     ],
+     "orders": [
+      {
+       "indent": 0.36,
+       "volume": 1.6,
+       "conditions": []
+      },
+      {
+       "indent": 8.0,
+       "volume": 2.21,
+       "conditions": [
+        {
+         "series": "ADX@15m",
+         "op": ">",
+         "value": 26.7
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 8.34,
+       "volume": 3.04,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 8.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 9.57,
+       "volume": 4.18,
+       "conditions": [
+        {
+         "series": "STOCH_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "BBL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 11.82,
+       "volume": 5.76,
+       "conditions": [
+        {
+         "series": "MFI@5m",
+         "op": "<",
+         "value": 8.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 15.2,
+       "volume": 7.94,
+       "conditions": [
+        {
+         "series": "KCL@5m",
+         "op": "<",
+         "value": 0
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 19.76,
+       "volume": 10.93,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 25.56,
+       "volume": 15.05,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 32.65,
+       "volume": 20.73,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      },
+      {
+       "indent": 41.06,
+       "volume": 28.56,
+       "conditions": [
+        {
+         "series": "CCI_LEVELS@1m",
+         "op": ">",
+         "value": 0.5
+        },
+        {
+         "series": "CMO@30m",
+         "op": ">",
+         "value": -100.0
+        },
+        {
+         "series": "VOL@1h",
+         "op": ">",
+         "value": 100000
+        }
+       ]
+      }
+     ],
+     "pull_up": 0.2,
+     "tp_mode": 0,
+     "tp_min_pnl": 0.3,
+     "tp_pct": 1.91,
+     "tp_conditions": [
+      {
+       "series": "BBL@1m",
+       "op": "<",
+       "value": 0
+      },
+      {
+       "series": "TZU@5m",
+       "op": ">",
+       "value": 0
+      }
+     ],
+     "sl_mode": 1,
+     "sl_indent": 2.64,
+     "sl_pct": 32.4,
+     "sl_conditions": [
+      {
+       "series": "MACD_ZERO_DOWN@4h",
+       "op": ">",
+       "value": 0.5
+      }
+     ],
+     "direction": 1
+    },
+    "bot_share": 0.75,
+    "leverage": 20.0,
+    "block": 63,
+    "dyn_block_order": 5,
+    "coins": null
+   }
+  ],
+  "portfolio": {
+   "deposit": 1000.0,
+   "bot_share": 0.75,
+   "leverage": 20.0,
+   "block": 60,
+   "dyn_block_order": 5,
+   "maker_fee": 0.02,
+   "taker_fee": 0.055,
+   "funding_8h": 0.01,
+   "mmr": 1.0,
+   "compound": false
+  },
+  "regime": {
+   "kind": "dd",
+   "window": 30,
+   "dd": 20,
+   "low": 0.3
+  }
+ }
+}

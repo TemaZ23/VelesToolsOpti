@@ -1,0 +1,2642 @@
+[
+ {
+  "run": "evolve_fade_s11",
+  "rank": 0,
+  "is_score": 0.3436,
+  "params": {
+   "e_rsi1h": 57.945448172512044,
+   "e_cci1h": 39.606224921600464,
+   "e_band": 0,
+   "e_atrp5": 1.6274568482222644,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 4.2646829670573165,
+   "g_depth": 48.57009398339037,
+   "g_pow": 1.1461058524706054,
+   "g_base_indent": 0.0,
+   "g_mart": 1.238512074108891,
+   "pull_up": 2.0351482747253784,
+   "tp_kind": 1,
+   "tp_pct": 14.578606574553922,
+   "tp_min": 3.5032900191322702,
+   "sl_kind": 1,
+   "sl_pct": 3.022478452153412
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.69,
+   "dd_abs_pct": 5.53,
+   "eff": 0.3059,
+   "worst_month_pct": -2.61,
+   "neg_months": 3,
+   "deals": 823,
+   "tp": 391,
+   "sl": 432,
+   "pf": 1.42,
+   "avg_deal_h": 0.9,
+   "fees_pct": 11.23,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.27,
+   "dd_abs_pct": 5.89,
+   "eff": 0.0464,
+   "worst_month_pct": -1.94,
+   "neg_months": 5,
+   "deals": 147,
+   "tp": 70,
+   "sl": 77,
+   "pf": 1.25,
+   "avg_deal_h": 1.2,
+   "fees_pct": 2.01,
+   "funding_pct": -0.03,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.12,
+   "dd_abs_pct": 4.88,
+   "eff": -0.0248,
+   "worst_month_pct": -2.16,
+   "neg_months": 3,
+   "deals": 44,
+   "tp": 17,
+   "sl": 27,
+   "pf": 0.81,
+   "avg_deal_h": 1.2,
+   "fees_pct": 0.6,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.47,
+    "dd_abs_pct": 5.53,
+    "deals": 376
+   },
+   "2022": {
+    "avg_month_pct": 1.97,
+    "dd_abs_pct": 3.7,
+    "deals": 257
+   },
+   "2023": {
+    "avg_month_pct": 1.16,
+    "dd_abs_pct": 4.48,
+    "deals": 162
+   },
+   "2024": {
+    "avg_month_pct": 0.87,
+    "dd_abs_pct": 3.42,
+    "deals": 86
+   },
+   "2025": {
+    "avg_month_pct": 0.16,
+    "dd_abs_pct": 3.14,
+    "deals": 70
+   },
+   "2026": {
+    "avg_month_pct": -0.12,
+    "dd_abs_pct": 2.97,
+    "deals": 19
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s11",
+  "rank": 1,
+  "is_score": 0.3348,
+  "params": {
+   "e_rsi1h": 57.46075336954184,
+   "e_cci1h": 41.92281744522539,
+   "e_band": 0,
+   "e_atrp5": 1.6577551809782936,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 6.703800279825373,
+   "g_depth": 53.32099673888061,
+   "g_pow": 0.9616437420731907,
+   "g_base_indent": 0.0,
+   "g_mart": 1.0948951670600207,
+   "pull_up": 1.8379902734081575,
+   "tp_kind": 1,
+   "tp_pct": 13.731846069682845,
+   "tp_min": 3.5132341294160843,
+   "sl_kind": 1,
+   "sl_pct": 3.0
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 2.13,
+   "dd_abs_pct": 7.35,
+   "eff": 0.2892,
+   "worst_month_pct": -3.38,
+   "neg_months": 4,
+   "deals": 828,
+   "tp": 389,
+   "sl": 439,
+   "pf": 1.39,
+   "avg_deal_h": 0.9,
+   "fees_pct": 15.02,
+   "funding_pct": -0.14,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.35,
+   "dd_abs_pct": 8.48,
+   "eff": 0.0408,
+   "worst_month_pct": -2.52,
+   "neg_months": 5,
+   "deals": 146,
+   "tp": 69,
+   "sl": 77,
+   "pf": 1.24,
+   "avg_deal_h": 1.2,
+   "fees_pct": 2.65,
+   "funding_pct": -0.05,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.2,
+   "dd_abs_pct": 6.55,
+   "eff": -0.0307,
+   "worst_month_pct": -2.88,
+   "neg_months": 4,
+   "deals": 41,
+   "tp": 15,
+   "sl": 26,
+   "pf": 0.75,
+   "avg_deal_h": 0.9,
+   "fees_pct": 0.75,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 3.1,
+    "dd_abs_pct": 7.35,
+    "deals": 381
+   },
+   "2022": {
+    "avg_month_pct": 2.33,
+    "dd_abs_pct": 4.91,
+    "deals": 260
+   },
+   "2023": {
+    "avg_month_pct": 1.64,
+    "dd_abs_pct": 5.44,
+    "deals": 160
+   },
+   "2024": {
+    "avg_month_pct": 1.01,
+    "dd_abs_pct": 4.54,
+    "deals": 84
+   },
+   "2025": {
+    "avg_month_pct": 0.24,
+    "dd_abs_pct": 4.82,
+    "deals": 70
+   },
+   "2026": {
+    "avg_month_pct": -0.16,
+    "dd_abs_pct": 3.94,
+    "deals": 19
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s11",
+  "rank": 2,
+  "is_score": 0.3338,
+  "params": {
+   "e_rsi1h": 57.945448172512044,
+   "e_cci1h": 39.606224921600464,
+   "e_band": 0,
+   "e_atrp5": 1.6577551809782936,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 4.2646829670573165,
+   "g_depth": 49.32586879329722,
+   "g_pow": 1.1433109520604292,
+   "g_base_indent": 0.0,
+   "g_mart": 1.18101989678334,
+   "pull_up": 2.0351482747253784,
+   "tp_kind": 1,
+   "tp_pct": 14.578606574553922,
+   "tp_min": 3.5032900191322702,
+   "sl_kind": 1,
+   "sl_pct": 3.022478452153412
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.81,
+   "dd_abs_pct": 6.2,
+   "eff": 0.292,
+   "worst_month_pct": -2.9,
+   "neg_months": 4,
+   "deals": 813,
+   "tp": 384,
+   "sl": 429,
+   "pf": 1.41,
+   "avg_deal_h": 0.9,
+   "fees_pct": 12.43,
+   "funding_pct": -0.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.26,
+   "dd_abs_pct": 7.14,
+   "eff": 0.0365,
+   "worst_month_pct": -2.17,
+   "neg_months": 5,
+   "deals": 145,
+   "tp": 68,
+   "sl": 77,
+   "pf": 1.21,
+   "avg_deal_h": 1.2,
+   "fees_pct": 2.22,
+   "funding_pct": -0.04,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.17,
+   "dd_abs_pct": 5.52,
+   "eff": -0.0307,
+   "worst_month_pct": -2.42,
+   "neg_months": 4,
+   "deals": 41,
+   "tp": 15,
+   "sl": 26,
+   "pf": 0.75,
+   "avg_deal_h": 0.9,
+   "fees_pct": 0.63,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.69,
+    "dd_abs_pct": 6.2,
+    "deals": 371
+   },
+   "2022": {
+    "avg_month_pct": 2.03,
+    "dd_abs_pct": 4.14,
+    "deals": 256
+   },
+   "2023": {
+    "avg_month_pct": 1.31,
+    "dd_abs_pct": 4.58,
+    "deals": 159
+   },
+   "2024": {
+    "avg_month_pct": 0.85,
+    "dd_abs_pct": 3.83,
+    "deals": 84
+   },
+   "2025": {
+    "avg_month_pct": 0.14,
+    "dd_abs_pct": 4.06,
+    "deals": 69
+   },
+   "2026": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 3.32,
+    "deals": 19
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s11",
+  "rank": 3,
+  "is_score": 0.3338,
+  "params": {
+   "e_rsi1h": 57.945448172512044,
+   "e_cci1h": 39.606224921600464,
+   "e_band": 0,
+   "e_atrp5": 1.6577551809782936,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 4.8423340116363836,
+   "g_depth": 49.32586879329722,
+   "g_pow": 1.1677831712376692,
+   "g_base_indent": 0.0,
+   "g_mart": 1.18101989678334,
+   "pull_up": 2.0351482747253784,
+   "tp_kind": 1,
+   "tp_pct": 14.578606574553922,
+   "tp_min": 3.5032900191322702,
+   "sl_kind": 1,
+   "sl_pct": 3.022478452153412
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.81,
+   "dd_abs_pct": 6.2,
+   "eff": 0.292,
+   "worst_month_pct": -2.9,
+   "neg_months": 4,
+   "deals": 813,
+   "tp": 384,
+   "sl": 429,
+   "pf": 1.41,
+   "avg_deal_h": 0.9,
+   "fees_pct": 12.43,
+   "funding_pct": -0.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.26,
+   "dd_abs_pct": 7.14,
+   "eff": 0.0365,
+   "worst_month_pct": -2.17,
+   "neg_months": 5,
+   "deals": 145,
+   "tp": 68,
+   "sl": 77,
+   "pf": 1.21,
+   "avg_deal_h": 1.2,
+   "fees_pct": 2.22,
+   "funding_pct": -0.04,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.17,
+   "dd_abs_pct": 5.52,
+   "eff": -0.0307,
+   "worst_month_pct": -2.42,
+   "neg_months": 4,
+   "deals": 41,
+   "tp": 15,
+   "sl": 26,
+   "pf": 0.75,
+   "avg_deal_h": 0.9,
+   "fees_pct": 0.63,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.69,
+    "dd_abs_pct": 6.2,
+    "deals": 371
+   },
+   "2022": {
+    "avg_month_pct": 2.03,
+    "dd_abs_pct": 4.14,
+    "deals": 256
+   },
+   "2023": {
+    "avg_month_pct": 1.31,
+    "dd_abs_pct": 4.58,
+    "deals": 159
+   },
+   "2024": {
+    "avg_month_pct": 0.85,
+    "dd_abs_pct": 3.83,
+    "deals": 84
+   },
+   "2025": {
+    "avg_month_pct": 0.14,
+    "dd_abs_pct": 4.06,
+    "deals": 69
+   },
+   "2026": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 3.32,
+    "deals": 19
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s11",
+  "rank": 4,
+  "is_score": 0.3302,
+  "params": {
+   "e_rsi1h": 57.46075336954184,
+   "e_cci1h": 48.39077836459403,
+   "e_band": 0,
+   "e_atrp5": 1.6057361587328416,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 5.9582652728421355,
+   "g_depth": 54.79801438521068,
+   "g_pow": 1.1301581504742577,
+   "g_base_indent": 0.0,
+   "g_mart": 1.235476708638731,
+   "pull_up": 1.8379902734081575,
+   "tp_kind": 1,
+   "tp_pct": 14.709619855076282,
+   "tp_min": 3.5132341294160843,
+   "sl_kind": 1,
+   "sl_pct": 3.0
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.67,
+   "dd_abs_pct": 5.84,
+   "eff": 0.2858,
+   "worst_month_pct": -2.69,
+   "neg_months": 3,
+   "deals": 844,
+   "tp": 398,
+   "sl": 446,
+   "pf": 1.4,
+   "avg_deal_h": 0.9,
+   "fees_pct": 11.6,
+   "funding_pct": -0.11,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.32,
+   "dd_abs_pct": 5.93,
+   "eff": 0.0541,
+   "worst_month_pct": -1.93,
+   "neg_months": 5,
+   "deals": 151,
+   "tp": 73,
+   "sl": 78,
+   "pf": 1.28,
+   "avg_deal_h": 1.3,
+   "fees_pct": 2.08,
+   "funding_pct": -0.03,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.19,
+   "dd_abs_pct": 5.58,
+   "eff": -0.0333,
+   "worst_month_pct": -2.2,
+   "neg_months": 4,
+   "deals": 47,
+   "tp": 17,
+   "sl": 30,
+   "pf": 0.74,
+   "avg_deal_h": 1.3,
+   "fees_pct": 0.65,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.29,
+    "dd_abs_pct": 5.84,
+    "deals": 385
+   },
+   "2022": {
+    "avg_month_pct": 1.97,
+    "dd_abs_pct": 3.72,
+    "deals": 262
+   },
+   "2023": {
+    "avg_month_pct": 1.25,
+    "dd_abs_pct": 4.51,
+    "deals": 167
+   },
+   "2024": {
+    "avg_month_pct": 0.95,
+    "dd_abs_pct": 3.83,
+    "deals": 90
+   },
+   "2025": {
+    "avg_month_pct": 0.15,
+    "dd_abs_pct": 3.16,
+    "deals": 71
+   },
+   "2026": {
+    "avg_month_pct": -0.07,
+    "dd_abs_pct": 2.93,
+    "deals": 20
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s11",
+  "rank": 5,
+  "is_score": 0.3302,
+  "params": {
+   "e_rsi1h": 57.46075336954184,
+   "e_cci1h": 48.39077836459403,
+   "e_band": 0,
+   "e_atrp5": 1.6057361587328416,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 80.0,
+   "o_signal": 0,
+   "n_orders": 5,
+   "g_first": 5.9582652728421355,
+   "g_depth": 55.32428464556475,
+   "g_pow": 1.1301581504742577,
+   "g_base_indent": 0.0,
+   "g_mart": 1.235476708638731,
+   "pull_up": 1.8640714410461083,
+   "tp_kind": 1,
+   "tp_pct": 14.709619855076282,
+   "tp_min": 3.5132341294160843,
+   "sl_kind": 1,
+   "sl_pct": 3.0
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.67,
+   "dd_abs_pct": 5.84,
+   "eff": 0.2858,
+   "worst_month_pct": -2.69,
+   "neg_months": 3,
+   "deals": 844,
+   "tp": 398,
+   "sl": 446,
+   "pf": 1.4,
+   "avg_deal_h": 0.9,
+   "fees_pct": 11.6,
+   "funding_pct": -0.11,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.32,
+   "dd_abs_pct": 5.93,
+   "eff": 0.0541,
+   "worst_month_pct": -1.93,
+   "neg_months": 5,
+   "deals": 151,
+   "tp": 73,
+   "sl": 78,
+   "pf": 1.28,
+   "avg_deal_h": 1.3,
+   "fees_pct": 2.08,
+   "funding_pct": -0.03,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.19,
+   "dd_abs_pct": 5.58,
+   "eff": -0.0333,
+   "worst_month_pct": -2.2,
+   "neg_months": 4,
+   "deals": 47,
+   "tp": 17,
+   "sl": 30,
+   "pf": 0.74,
+   "avg_deal_h": 1.3,
+   "fees_pct": 0.65,
+   "funding_pct": -0.01,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.29,
+    "dd_abs_pct": 5.84,
+    "deals": 385
+   },
+   "2022": {
+    "avg_month_pct": 1.97,
+    "dd_abs_pct": 3.72,
+    "deals": 262
+   },
+   "2023": {
+    "avg_month_pct": 1.25,
+    "dd_abs_pct": 4.51,
+    "deals": 167
+   },
+   "2024": {
+    "avg_month_pct": 0.95,
+    "dd_abs_pct": 3.83,
+    "deals": 90
+   },
+   "2025": {
+    "avg_month_pct": 0.15,
+    "dd_abs_pct": 3.16,
+    "deals": 71
+   },
+   "2026": {
+    "avg_month_pct": -0.07,
+    "dd_abs_pct": 2.93,
+    "deals": 20
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 0,
+  "is_score": 0.2638,
+  "params": {
+   "e_rsi1h": 50.0,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 1.5110335166337705,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 65.86054877288895,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.759372544603073,
+   "g_depth": 5.5091202349324515,
+   "g_pow": 1.857016616739069,
+   "g_base_indent": 1.1995116539630308,
+   "g_mart": 1.2736028912776336,
+   "pull_up": 1.1604871815967714,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 27.63158099892715
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 5.31,
+   "dd_abs_pct": 20.98,
+   "eff": 0.2532,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 152,
+   "tp": 146,
+   "sl": 6,
+   "pf": 17.02,
+   "avg_deal_h": 2.5,
+   "fees_pct": 3.71,
+   "funding_pct": -0.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.57,
+   "dd_abs_pct": 31.2,
+   "eff": 0.0181,
+   "worst_month_pct": -15.04,
+   "neg_months": 1,
+   "deals": 27,
+   "tp": 26,
+   "sl": 1,
+   "pf": 1.55,
+   "avg_deal_h": 5.8,
+   "fees_pct": 0.9,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 1.35,
+   "dd_abs_pct": 17.1,
+   "eff": 0.0792,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 8,
+   "tp": 8,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 23.7,
+   "fees_pct": 0.44,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 7.39,
+    "dd_abs_pct": 20.6,
+    "deals": 70
+   },
+   "2022": {
+    "avg_month_pct": 7.39,
+    "dd_abs_pct": 20.98,
+    "deals": 54
+   },
+   "2023": {
+    "avg_month_pct": 3.65,
+    "dd_abs_pct": 15.05,
+    "deals": 25
+   },
+   "2024": {
+    "avg_month_pct": -0.57,
+    "dd_abs_pct": 31.2,
+    "deals": 16
+   },
+   "2025": {
+    "avg_month_pct": 1.51,
+    "dd_abs_pct": 18.25,
+    "deals": 12
+   },
+   "2026": {
+    "avg_month_pct": 0.67,
+    "dd_abs_pct": 18.96,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 1,
+  "is_score": 0.2554,
+  "params": {
+   "e_rsi1h": 51.16185700489673,
+   "e_cci1h": 28.79632020534865,
+   "e_band": 0,
+   "e_atrp5": 1.555839331673892,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 65.77040703772042,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.164441375597716,
+   "g_depth": 9.266522953004252,
+   "g_pow": 1.9154907291932672,
+   "g_base_indent": 1.1963308098060172,
+   "g_mart": 1.2161505663245176,
+   "pull_up": 1.0290327259443988,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 30.388240445564506
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 4.22,
+   "dd_abs_pct": 18.99,
+   "eff": 0.2223,
+   "worst_month_pct": -0.76,
+   "neg_months": 1,
+   "deals": 116,
+   "tp": 111,
+   "sl": 5,
+   "pf": 8.8,
+   "avg_deal_h": 2.3,
+   "fees_pct": 3.1,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.32,
+   "dd_abs_pct": 36.35,
+   "eff": 0.0089,
+   "worst_month_pct": -20.72,
+   "neg_months": 1,
+   "deals": 22,
+   "tp": 21,
+   "sl": 1,
+   "pf": 1.29,
+   "avg_deal_h": 6.5,
+   "fees_pct": 0.81,
+   "funding_pct": -0.09,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 0.69,
+   "dd_abs_pct": 18.2,
+   "eff": 0.0378,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 5,
+   "tp": 5,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 14.6,
+   "fees_pct": 0.22,
+   "funding_pct": -0.07,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 6.61,
+    "dd_abs_pct": 18.99,
+    "deals": 57
+   },
+   "2022": {
+    "avg_month_pct": 4.91,
+    "dd_abs_pct": 16.26,
+    "deals": 41
+   },
+   "2023": {
+    "avg_month_pct": 3.11,
+    "dd_abs_pct": 15.09,
+    "deals": 16
+   },
+   "2024": {
+    "avg_month_pct": -1.02,
+    "dd_abs_pct": 36.35,
+    "deals": 13
+   },
+   "2025": {
+    "avg_month_pct": 1.37,
+    "dd_abs_pct": 16.43,
+    "deals": 9
+   },
+   "2026": {
+    "avg_month_pct": 0.69,
+    "dd_abs_pct": 18.1,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 2,
+  "is_score": 0.2518,
+  "params": {
+   "e_rsi1h": 50.0,
+   "e_cci1h": 28.79632020534865,
+   "e_band": 0,
+   "e_atrp5": 1.555839331673892,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 66.38477117645803,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.164441375597716,
+   "g_depth": 6.392563980581141,
+   "g_pow": 1.9154907291932672,
+   "g_base_indent": 1.1995116539630308,
+   "g_mart": 1.1988093146857628,
+   "pull_up": 1.1604871815967714,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 29.697706041307306
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 4.74,
+   "dd_abs_pct": 19.33,
+   "eff": 0.2453,
+   "worst_month_pct": -3.7,
+   "neg_months": 1,
+   "deals": 123,
+   "tp": 117,
+   "sl": 6,
+   "pf": 8.65,
+   "avg_deal_h": 2.6,
+   "fees_pct": 3.49,
+   "funding_pct": -0.13,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.52,
+   "dd_abs_pct": 35.75,
+   "eff": 0.0145,
+   "worst_month_pct": -16.7,
+   "neg_months": 1,
+   "deals": 22,
+   "tp": 21,
+   "sl": 1,
+   "pf": 1.47,
+   "avg_deal_h": 6.6,
+   "fees_pct": 0.91,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 0.85,
+   "dd_abs_pct": 19.29,
+   "eff": 0.044,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 6,
+   "tp": 6,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 12.6,
+   "fees_pct": 0.25,
+   "funding_pct": -0.07,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 7.39,
+    "dd_abs_pct": 19.33,
+    "deals": 60
+   },
+   "2022": {
+    "avg_month_pct": 5.37,
+    "dd_abs_pct": 18.02,
+    "deals": 43
+   },
+   "2023": {
+    "avg_month_pct": 3.7,
+    "dd_abs_pct": 15.1,
+    "deals": 18
+   },
+   "2024": {
+    "avg_month_pct": -0.68,
+    "dd_abs_pct": 35.75,
+    "deals": 13
+   },
+   "2025": {
+    "avg_month_pct": 1.47,
+    "dd_abs_pct": 19.01,
+    "deals": 9
+   },
+   "2026": {
+    "avg_month_pct": 0.69,
+    "dd_abs_pct": 20.07,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 3,
+  "is_score": 0.2502,
+  "params": {
+   "e_rsi1h": 50.0,
+   "e_cci1h": 28.79632020534865,
+   "e_band": 0,
+   "e_atrp5": 1.555839331673892,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 66.38477117645803,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.164441375597716,
+   "g_depth": 6.392563980581141,
+   "g_pow": 1.9154907291932672,
+   "g_base_indent": 1.1995116539630308,
+   "g_mart": 1.2291794834262086,
+   "pull_up": 1.1604871815967714,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 29.697706041307306
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 4.66,
+   "dd_abs_pct": 19.19,
+   "eff": 0.2426,
+   "worst_month_pct": -3.37,
+   "neg_months": 1,
+   "deals": 123,
+   "tp": 117,
+   "sl": 6,
+   "pf": 9.01,
+   "avg_deal_h": 2.6,
+   "fees_pct": 3.41,
+   "funding_pct": -0.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.51,
+   "dd_abs_pct": 35.57,
+   "eff": 0.0142,
+   "worst_month_pct": -16.78,
+   "neg_months": 1,
+   "deals": 22,
+   "tp": 21,
+   "sl": 1,
+   "pf": 1.46,
+   "avg_deal_h": 6.6,
+   "fees_pct": 0.9,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 0.84,
+   "dd_abs_pct": 19.23,
+   "eff": 0.0436,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 6,
+   "tp": 6,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 12.6,
+   "fees_pct": 0.25,
+   "funding_pct": -0.07,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 7.32,
+    "dd_abs_pct": 19.19,
+    "deals": 60
+   },
+   "2022": {
+    "avg_month_pct": 5.27,
+    "dd_abs_pct": 17.89,
+    "deals": 43
+   },
+   "2023": {
+    "avg_month_pct": 3.57,
+    "dd_abs_pct": 15.08,
+    "deals": 18
+   },
+   "2024": {
+    "avg_month_pct": -0.69,
+    "dd_abs_pct": 35.57,
+    "deals": 13
+   },
+   "2025": {
+    "avg_month_pct": 1.45,
+    "dd_abs_pct": 18.84,
+    "deals": 9
+   },
+   "2026": {
+    "avg_month_pct": 0.69,
+    "dd_abs_pct": 20.05,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 4,
+  "is_score": 0.2487,
+  "params": {
+   "e_rsi1h": 50.0,
+   "e_cci1h": 16.43931159564774,
+   "e_band": 0,
+   "e_atrp5": 1.555839331673892,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 66.38477117645803,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.164441375597716,
+   "g_depth": 6.392563980581141,
+   "g_pow": 1.8208460069395929,
+   "g_base_indent": 1.234086303226025,
+   "g_mart": 1.2291794834262086,
+   "pull_up": 1.1604871815967714,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 29.697706041307306
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 4.59,
+   "dd_abs_pct": 19.19,
+   "eff": 0.2392,
+   "worst_month_pct": -3.35,
+   "neg_months": 1,
+   "deals": 120,
+   "tp": 114,
+   "sl": 6,
+   "pf": 8.9,
+   "avg_deal_h": 2.6,
+   "fees_pct": 3.39,
+   "funding_pct": -0.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.48,
+   "dd_abs_pct": 35.57,
+   "eff": 0.0136,
+   "worst_month_pct": -17.44,
+   "neg_months": 1,
+   "deals": 23,
+   "tp": 22,
+   "sl": 1,
+   "pf": 1.44,
+   "avg_deal_h": 6.5,
+   "fees_pct": 0.88,
+   "funding_pct": -0.09,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 0.84,
+   "dd_abs_pct": 19.22,
+   "eff": 0.0436,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 6,
+   "tp": 6,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 12.6,
+   "fees_pct": 0.25,
+   "funding_pct": -0.07,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 7.17,
+    "dd_abs_pct": 19.19,
+    "deals": 58
+   },
+   "2022": {
+    "avg_month_pct": 5.19,
+    "dd_abs_pct": 17.89,
+    "deals": 42
+   },
+   "2023": {
+    "avg_month_pct": 3.58,
+    "dd_abs_pct": 15.08,
+    "deals": 18
+   },
+   "2024": {
+    "avg_month_pct": -0.75,
+    "dd_abs_pct": 35.57,
+    "deals": 14
+   },
+   "2025": {
+    "avg_month_pct": 1.45,
+    "dd_abs_pct": 18.83,
+    "deals": 9
+   },
+   "2026": {
+    "avg_month_pct": 0.69,
+    "dd_abs_pct": 20.05,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_fade_s7",
+  "rank": 5,
+  "is_score": 0.2466,
+  "params": {
+   "e_rsi1h": 50.904548081715255,
+   "e_cci1h": 28.79632020534865,
+   "e_band": 0,
+   "e_atrp5": 1.555839331673892,
+   "e_trigger": 1,
+   "e_trend": 1,
+   "e_trend_lvl": 65.77040703772042,
+   "o_signal": 1,
+   "n_orders": 6,
+   "g_first": 3.164441375597716,
+   "g_depth": 4.883749198631203,
+   "g_pow": 1.9154907291932672,
+   "g_base_indent": 1.1995116539630308,
+   "g_mart": 1.2470319825450453,
+   "pull_up": 1.1604871815967714,
+   "tp_kind": 1,
+   "tp_pct": 15.0,
+   "tp_min": 4.8879627725032515,
+   "sl_kind": 1,
+   "sl_pct": 29.697706041307306
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 4.49,
+   "dd_abs_pct": 18.95,
+   "eff": 0.2367,
+   "worst_month_pct": -3.19,
+   "neg_months": 1,
+   "deals": 121,
+   "tp": 115,
+   "sl": 6,
+   "pf": 9.02,
+   "avg_deal_h": 2.3,
+   "fees_pct": 3.29,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.54,
+   "dd_abs_pct": 35.47,
+   "eff": 0.0152,
+   "worst_month_pct": -16.85,
+   "neg_months": 1,
+   "deals": 22,
+   "tp": 21,
+   "sl": 1,
+   "pf": 1.49,
+   "avg_deal_h": 6.6,
+   "fees_pct": 0.93,
+   "funding_pct": -0.1,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": 0.8,
+   "dd_abs_pct": 19.19,
+   "eff": 0.0415,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 5,
+   "tp": 5,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 14.6,
+   "fees_pct": 0.27,
+   "funding_pct": -0.07,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 6.88,
+    "dd_abs_pct": 18.95,
+    "deals": 59
+   },
+   "2022": {
+    "avg_month_pct": 5.29,
+    "dd_abs_pct": 17.82,
+    "deals": 43
+   },
+   "2023": {
+    "avg_month_pct": 3.4,
+    "dd_abs_pct": 15.07,
+    "deals": 17
+   },
+   "2024": {
+    "avg_month_pct": -0.7,
+    "dd_abs_pct": 35.47,
+    "deals": 13
+   },
+   "2025": {
+    "avg_month_pct": 1.53,
+    "dd_abs_pct": 19.93,
+    "deals": 9
+   },
+   "2026": {
+    "avg_month_pct": 0.69,
+    "dd_abs_pct": 20.04,
+    "deals": 2
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 0,
+  "is_score": 0.4232,
+  "params": {
+   "e_rsi1h": 57.72700706348675,
+   "e_cci1h": 20.76806321109059,
+   "e_band": 0,
+   "e_atrp5": 0.0,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 48.558046614336305,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 6.23170864948323,
+   "g_depth": 34.340075520103056,
+   "g_pow": 0.992111473705429,
+   "g_base_indent": 0.0052166656463193805,
+   "g_mart": 1.5592425823608396,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.2395959361728575,
+   "tp_min": 1.9745800239103146,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.75,
+   "dd_abs_pct": 4.54,
+   "eff": 0.3855,
+   "worst_month_pct": -0.83,
+   "neg_months": 6,
+   "deals": 558,
+   "tp": 437,
+   "sl": 121,
+   "pf": 1.62,
+   "avg_deal_h": 8.3,
+   "fees_pct": 5.3,
+   "funding_pct": 1.13,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.15,
+   "dd_abs_pct": 12.1,
+   "eff": 0.0121,
+   "worst_month_pct": -4.91,
+   "neg_months": 10,
+   "deals": 262,
+   "tp": 184,
+   "sl": 78,
+   "pf": 1.05,
+   "avg_deal_h": 15.3,
+   "fees_pct": 2.62,
+   "funding_pct": 1.0,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.11,
+   "dd_abs_pct": 11.56,
+   "eff": -0.0093,
+   "worst_month_pct": -5.82,
+   "neg_months": 7,
+   "deals": 155,
+   "tp": 106,
+   "sl": 49,
+   "pf": 0.96,
+   "avg_deal_h": 17.4,
+   "fees_pct": 1.57,
+   "funding_pct": 0.67,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.39,
+    "dd_abs_pct": 4.54,
+    "deals": 223
+   },
+   "2022": {
+    "avg_month_pct": 1.05,
+    "dd_abs_pct": 2.95,
+    "deals": 132
+   },
+   "2023": {
+    "avg_month_pct": 1.59,
+    "dd_abs_pct": 3.15,
+    "deals": 134
+   },
+   "2024": {
+    "avg_month_pct": 1.45,
+    "dd_abs_pct": 4.17,
+    "deals": 137
+   },
+   "2025": {
+    "avg_month_pct": -0.09,
+    "dd_abs_pct": 9.65,
+    "deals": 127
+   },
+   "2026": {
+    "avg_month_pct": 0.08,
+    "dd_abs_pct": 3.92,
+    "deals": 67
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 1,
+  "is_score": 0.4161,
+  "params": {
+   "e_rsi1h": 57.839186765739676,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.0,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 52.054114035061374,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 5.752891343186073,
+   "g_depth": 35.34037400596818,
+   "g_pow": 1.015001516873502,
+   "g_base_indent": 0.04762705538743515,
+   "g_mart": 1.6167347596863908,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.3706092166952186,
+   "tp_min": 2.0,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.65,
+   "dd_abs_pct": 4.24,
+   "eff": 0.3892,
+   "worst_month_pct": -1.04,
+   "neg_months": 6,
+   "deals": 526,
+   "tp": 407,
+   "sl": 119,
+   "pf": 1.62,
+   "avg_deal_h": 9.1,
+   "fees_pct": 4.8,
+   "funding_pct": 1.12,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.18,
+   "dd_abs_pct": 12.04,
+   "eff": 0.0148,
+   "worst_month_pct": -4.39,
+   "neg_months": 10,
+   "deals": 251,
+   "tp": 174,
+   "sl": 77,
+   "pf": 1.07,
+   "avg_deal_h": 15.9,
+   "fees_pct": 2.41,
+   "funding_pct": 0.95,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.14,
+   "dd_abs_pct": 11.57,
+   "eff": -0.0118,
+   "worst_month_pct": -6.59,
+   "neg_months": 7,
+   "deals": 151,
+   "tp": 101,
+   "sl": 50,
+   "pf": 0.95,
+   "avg_deal_h": 19.1,
+   "fees_pct": 1.47,
+   "funding_pct": 0.68,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.27,
+    "dd_abs_pct": 4.24,
+    "deals": 213
+   },
+   "2022": {
+    "avg_month_pct": 1.06,
+    "dd_abs_pct": 3.58,
+    "deals": 125
+   },
+   "2023": {
+    "avg_month_pct": 1.32,
+    "dd_abs_pct": 3.3,
+    "deals": 126
+   },
+   "2024": {
+    "avg_month_pct": 1.5,
+    "dd_abs_pct": 3.95,
+    "deals": 128
+   },
+   "2025": {
+    "avg_month_pct": -0.13,
+    "dd_abs_pct": 9.2,
+    "deals": 121
+   },
+   "2026": {
+    "avg_month_pct": 0.22,
+    "dd_abs_pct": 3.72,
+    "deals": 64
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 2,
+  "is_score": 0.4161,
+  "params": {
+   "e_rsi1h": 57.839186765739676,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.0,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 52.054114035061374,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 5.752891343186073,
+   "g_depth": 36.096148815875026,
+   "g_pow": 1.0122066164633259,
+   "g_base_indent": 0.04762705538743515,
+   "g_mart": 1.5592425823608396,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.3706092166952186,
+   "tp_min": 2.0,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.73,
+   "dd_abs_pct": 4.45,
+   "eff": 0.3892,
+   "worst_month_pct": -1.07,
+   "neg_months": 6,
+   "deals": 526,
+   "tp": 407,
+   "sl": 119,
+   "pf": 1.62,
+   "avg_deal_h": 9.1,
+   "fees_pct": 5.03,
+   "funding_pct": 1.17,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.19,
+   "dd_abs_pct": 12.62,
+   "eff": 0.0148,
+   "worst_month_pct": -4.58,
+   "neg_months": 10,
+   "deals": 251,
+   "tp": 174,
+   "sl": 77,
+   "pf": 1.07,
+   "avg_deal_h": 15.9,
+   "fees_pct": 2.53,
+   "funding_pct": 0.99,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.14,
+   "dd_abs_pct": 12.13,
+   "eff": -0.0118,
+   "worst_month_pct": -6.9,
+   "neg_months": 7,
+   "deals": 151,
+   "tp": 101,
+   "sl": 50,
+   "pf": 0.95,
+   "avg_deal_h": 19.1,
+   "fees_pct": 1.54,
+   "funding_pct": 0.71,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.37,
+    "dd_abs_pct": 4.45,
+    "deals": 213
+   },
+   "2022": {
+    "avg_month_pct": 1.11,
+    "dd_abs_pct": 3.76,
+    "deals": 125
+   },
+   "2023": {
+    "avg_month_pct": 1.38,
+    "dd_abs_pct": 3.45,
+    "deals": 126
+   },
+   "2024": {
+    "avg_month_pct": 1.58,
+    "dd_abs_pct": 4.14,
+    "deals": 128
+   },
+   "2025": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 9.64,
+    "deals": 121
+   },
+   "2026": {
+    "avg_month_pct": 0.23,
+    "dd_abs_pct": 3.89,
+    "deals": 64
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 3,
+  "is_score": 0.4161,
+  "params": {
+   "e_rsi1h": 57.839186765739676,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.0,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 52.054114035061374,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 5.752891343186073,
+   "g_depth": 36.096148815875026,
+   "g_pow": 1.0122066164633259,
+   "g_base_indent": 0.04762705538743515,
+   "g_mart": 1.5592425823608396,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.3706092166952186,
+   "tp_min": 1.9281296515543747,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.73,
+   "dd_abs_pct": 4.45,
+   "eff": 0.3892,
+   "worst_month_pct": -1.07,
+   "neg_months": 6,
+   "deals": 526,
+   "tp": 407,
+   "sl": 119,
+   "pf": 1.62,
+   "avg_deal_h": 9.1,
+   "fees_pct": 5.03,
+   "funding_pct": 1.17,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.19,
+   "dd_abs_pct": 12.62,
+   "eff": 0.0148,
+   "worst_month_pct": -4.58,
+   "neg_months": 10,
+   "deals": 251,
+   "tp": 174,
+   "sl": 77,
+   "pf": 1.07,
+   "avg_deal_h": 15.9,
+   "fees_pct": 2.53,
+   "funding_pct": 0.99,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.14,
+   "dd_abs_pct": 12.13,
+   "eff": -0.0118,
+   "worst_month_pct": -6.9,
+   "neg_months": 7,
+   "deals": 151,
+   "tp": 101,
+   "sl": 50,
+   "pf": 0.95,
+   "avg_deal_h": 19.1,
+   "fees_pct": 1.54,
+   "funding_pct": 0.71,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.37,
+    "dd_abs_pct": 4.45,
+    "deals": 213
+   },
+   "2022": {
+    "avg_month_pct": 1.11,
+    "dd_abs_pct": 3.76,
+    "deals": 125
+   },
+   "2023": {
+    "avg_month_pct": 1.38,
+    "dd_abs_pct": 3.45,
+    "deals": 126
+   },
+   "2024": {
+    "avg_month_pct": 1.58,
+    "dd_abs_pct": 4.14,
+    "deals": 128
+   },
+   "2025": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 9.64,
+    "deals": 121
+   },
+   "2026": {
+    "avg_month_pct": 0.23,
+    "dd_abs_pct": 3.89,
+    "deals": 64
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 4,
+  "is_score": 0.4161,
+  "params": {
+   "e_rsi1h": 57.839186765739676,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.0,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 52.054114035061374,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 6.3305423877651394,
+   "g_depth": 36.096148815875026,
+   "g_pow": 1.0366788356405656,
+   "g_base_indent": 0.04762705538743515,
+   "g_mart": 1.5592425823608396,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.3706092166952186,
+   "tp_min": 1.9281296515543747,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.73,
+   "dd_abs_pct": 4.45,
+   "eff": 0.3892,
+   "worst_month_pct": -1.07,
+   "neg_months": 6,
+   "deals": 526,
+   "tp": 407,
+   "sl": 119,
+   "pf": 1.62,
+   "avg_deal_h": 9.1,
+   "fees_pct": 5.03,
+   "funding_pct": 1.17,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.19,
+   "dd_abs_pct": 12.62,
+   "eff": 0.0148,
+   "worst_month_pct": -4.58,
+   "neg_months": 10,
+   "deals": 251,
+   "tp": 174,
+   "sl": 77,
+   "pf": 1.07,
+   "avg_deal_h": 15.9,
+   "fees_pct": 2.53,
+   "funding_pct": 0.99,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.14,
+   "dd_abs_pct": 12.13,
+   "eff": -0.0118,
+   "worst_month_pct": -6.9,
+   "neg_months": 7,
+   "deals": 151,
+   "tp": 101,
+   "sl": 50,
+   "pf": 0.95,
+   "avg_deal_h": 19.1,
+   "fees_pct": 1.54,
+   "funding_pct": 0.71,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.37,
+    "dd_abs_pct": 4.45,
+    "deals": 213
+   },
+   "2022": {
+    "avg_month_pct": 1.11,
+    "dd_abs_pct": 3.76,
+    "deals": 125
+   },
+   "2023": {
+    "avg_month_pct": 1.38,
+    "dd_abs_pct": 3.45,
+    "deals": 126
+   },
+   "2024": {
+    "avg_month_pct": 1.58,
+    "dd_abs_pct": 4.14,
+    "deals": 128
+   },
+   "2025": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 9.64,
+    "deals": 121
+   },
+   "2026": {
+    "avg_month_pct": 0.23,
+    "dd_abs_pct": 3.89,
+    "deals": 64
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s11",
+  "rank": 5,
+  "is_score": 0.4161,
+  "params": {
+   "e_rsi1h": 57.839186765739676,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.08094427823138446,
+   "e_trigger": 2,
+   "e_trend": 2,
+   "e_trend_lvl": 52.054114035061374,
+   "o_signal": 0,
+   "n_orders": 3,
+   "g_first": 5.752891343186073,
+   "g_depth": 36.096148815875026,
+   "g_pow": 0.9719248544891506,
+   "g_base_indent": 0.04762705538743515,
+   "g_mart": 1.5592425823608396,
+   "pull_up": 1.853806462022643,
+   "tp_kind": 0,
+   "tp_pct": 2.3706092166952186,
+   "tp_min": 2.0,
+   "sl_kind": 1,
+   "sl_pct": 4.84012020703701
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.73,
+   "dd_abs_pct": 4.45,
+   "eff": 0.3892,
+   "worst_month_pct": -1.07,
+   "neg_months": 6,
+   "deals": 526,
+   "tp": 407,
+   "sl": 119,
+   "pf": 1.62,
+   "avg_deal_h": 9.1,
+   "fees_pct": 5.03,
+   "funding_pct": 1.17,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": 0.22,
+   "dd_abs_pct": 12.62,
+   "eff": 0.0177,
+   "worst_month_pct": -4.58,
+   "neg_months": 10,
+   "deals": 250,
+   "tp": 174,
+   "sl": 76,
+   "pf": 1.08,
+   "avg_deal_h": 15.9,
+   "fees_pct": 2.51,
+   "funding_pct": 0.98,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.14,
+   "dd_abs_pct": 12.13,
+   "eff": -0.0118,
+   "worst_month_pct": -6.9,
+   "neg_months": 7,
+   "deals": 151,
+   "tp": 101,
+   "sl": 50,
+   "pf": 0.95,
+   "avg_deal_h": 19.1,
+   "fees_pct": 1.54,
+   "funding_pct": 0.71,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.37,
+    "dd_abs_pct": 4.45,
+    "deals": 213
+   },
+   "2022": {
+    "avg_month_pct": 1.11,
+    "dd_abs_pct": 3.76,
+    "deals": 125
+   },
+   "2023": {
+    "avg_month_pct": 1.38,
+    "dd_abs_pct": 3.45,
+    "deals": 126
+   },
+   "2024": {
+    "avg_month_pct": 1.58,
+    "dd_abs_pct": 4.14,
+    "deals": 128
+   },
+   "2025": {
+    "avg_month_pct": -0.14,
+    "dd_abs_pct": 9.64,
+    "deals": 121
+   },
+   "2026": {
+    "avg_month_pct": 0.33,
+    "dd_abs_pct": 3.89,
+    "deals": 63
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 0,
+  "is_score": 0.3942,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.4792868215164016,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 60.30528499412136,
+   "o_signal": 1,
+   "n_orders": 5,
+   "g_first": 1.2978737602025032,
+   "g_depth": 48.28396419054255,
+   "g_pow": 1.1400205308721314,
+   "g_base_indent": 0.48312674515468884,
+   "g_mart": 1.813671755098605,
+   "pull_up": 0.6917574837627446,
+   "tp_kind": 1,
+   "tp_pct": 1.290482053730614,
+   "tp_min": 0.6759222786898693,
+   "sl_kind": 1,
+   "sl_pct": 16.596024274920815
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.99,
+   "dd_abs_pct": 5.98,
+   "eff": 0.3325,
+   "worst_month_pct": 0.02,
+   "neg_months": 0,
+   "deals": 1152,
+   "tp": 1147,
+   "sl": 5,
+   "pf": 8.36,
+   "avg_deal_h": 4.3,
+   "fees_pct": 7.66,
+   "funding_pct": 0.67,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -0.06,
+   "dd_abs_pct": 14.56,
+   "eff": -0.0041,
+   "worst_month_pct": -4.23,
+   "neg_months": 8,
+   "deals": 346,
+   "tp": 337,
+   "sl": 9,
+   "pf": 0.94,
+   "avg_deal_h": 5.3,
+   "fees_pct": 2.1,
+   "funding_pct": 0.25,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.41,
+   "dd_abs_pct": 11.32,
+   "eff": -0.0362,
+   "worst_month_pct": -4.63,
+   "neg_months": 5,
+   "deals": 163,
+   "tp": 157,
+   "sl": 6,
+   "pf": 0.63,
+   "avg_deal_h": 6.2,
+   "fees_pct": 1.02,
+   "funding_pct": 0.2,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 3.46,
+    "dd_abs_pct": 5.98,
+    "deals": 606
+   },
+   "2022": {
+    "avg_month_pct": 1.89,
+    "dd_abs_pct": 2.82,
+    "deals": 271
+   },
+   "2023": {
+    "avg_month_pct": 1.1,
+    "dd_abs_pct": 2.37,
+    "deals": 196
+   },
+   "2024": {
+    "avg_month_pct": 1.2,
+    "dd_abs_pct": 2.37,
+    "deals": 204
+   },
+   "2025": {
+    "avg_month_pct": -0.27,
+    "dd_abs_pct": 6.03,
+    "deals": 180
+   },
+   "2026": {
+    "avg_month_pct": -0.89,
+    "dd_abs_pct": 8.97,
+    "deals": 40
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 1,
+  "is_score": 0.3691,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 80.93039767076635,
+   "e_band": 0,
+   "e_atrp5": 0.571211876786803,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 57.14870562820563,
+   "o_signal": 1,
+   "n_orders": 1,
+   "g_first": 1.2978737602025032,
+   "g_depth": 52.2330032929301,
+   "g_pow": 1.039161523005099,
+   "g_base_indent": 0.42219791337200024,
+   "g_mart": 1.8701400343929004,
+   "pull_up": 1.1197737187595724,
+   "tp_kind": 1,
+   "tp_pct": 4.0,
+   "tp_min": 0.5,
+   "sl_kind": 1,
+   "sl_pct": 31.696845069042336
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 12.62,
+   "dd_abs_pct": 35.58,
+   "eff": 0.3548,
+   "worst_month_pct": -6.57,
+   "neg_months": 1,
+   "deals": 570,
+   "tp": 568,
+   "sl": 2,
+   "pf": 9.33,
+   "avg_deal_h": 5.9,
+   "fees_pct": 43.07,
+   "funding_pct": 3.86,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -2.48,
+   "dd_abs_pct": 102.1,
+   "eff": -0.0243,
+   "worst_month_pct": -33.03,
+   "neg_months": 10,
+   "deals": 118,
+   "tp": 113,
+   "sl": 5,
+   "pf": 0.58,
+   "avg_deal_h": 32.4,
+   "fees_pct": 8.82,
+   "funding_pct": 4.16,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -4.44,
+   "dd_abs_pct": 81.8,
+   "eff": -0.0543,
+   "worst_month_pct": -34.34,
+   "neg_months": 7,
+   "deals": 63,
+   "tp": 59,
+   "sl": 4,
+   "pf": 0.43,
+   "avg_deal_h": 41.7,
+   "fees_pct": 4.69,
+   "funding_pct": 2.9,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 24.4,
+    "dd_abs_pct": 35.58,
+    "deals": 312
+   },
+   "2022": {
+    "avg_month_pct": 8.47,
+    "dd_abs_pct": 25.15,
+    "deals": 120
+   },
+   "2023": {
+    "avg_month_pct": 8.96,
+    "dd_abs_pct": 17.85,
+    "deals": 102
+   },
+   "2024": {
+    "avg_month_pct": 3.07,
+    "dd_abs_pct": 26.48,
+    "deals": 72
+   },
+   "2025": {
+    "avg_month_pct": -0.29,
+    "dd_abs_pct": 66.51,
+    "deals": 69
+   },
+   "2026": {
+    "avg_month_pct": -6.51,
+    "dd_abs_pct": 67.83,
+    "deals": 12
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 2,
+  "is_score": 0.368,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 80.93039767076635,
+   "e_band": 0,
+   "e_atrp5": 0.571211876786803,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 57.70986198012707,
+   "o_signal": 1,
+   "n_orders": 1,
+   "g_first": 1.0,
+   "g_depth": 52.2330032929301,
+   "g_pow": 1.1423668436795795,
+   "g_base_indent": 0.48312674515468884,
+   "g_mart": 1.871730250113149,
+   "pull_up": 0.8137443820455796,
+   "tp_kind": 1,
+   "tp_pct": 1.290482053730614,
+   "tp_min": 0.852175703912902,
+   "sl_kind": 1,
+   "sl_pct": 32.892565474463204
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 13.8,
+   "dd_abs_pct": 37.42,
+   "eff": 0.3688,
+   "worst_month_pct": -6.18,
+   "neg_months": 2,
+   "deals": 469,
+   "tp": 467,
+   "sl": 2,
+   "pf": 9.77,
+   "avg_deal_h": 10.0,
+   "fees_pct": 35.52,
+   "funding_pct": 5.3,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -1.6,
+   "dd_abs_pct": 94.96,
+   "eff": -0.0169,
+   "worst_month_pct": -24.72,
+   "neg_months": 10,
+   "deals": 106,
+   "tp": 101,
+   "sl": 5,
+   "pf": 0.74,
+   "avg_deal_h": 46.5,
+   "fees_pct": 7.93,
+   "funding_pct": 5.32,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -3.64,
+   "dd_abs_pct": 71.84,
+   "eff": -0.0506,
+   "worst_month_pct": -27.43,
+   "neg_months": 6,
+   "deals": 57,
+   "tp": 53,
+   "sl": 4,
+   "pf": 0.55,
+   "avg_deal_h": 45.1,
+   "fees_pct": 4.25,
+   "funding_pct": 2.91,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 24.63,
+    "dd_abs_pct": 37.42,
+    "deals": 255
+   },
+   "2022": {
+    "avg_month_pct": 10.64,
+    "dd_abs_pct": 25.17,
+    "deals": 102
+   },
+   "2023": {
+    "avg_month_pct": 7.81,
+    "dd_abs_pct": 19.35,
+    "deals": 79
+   },
+   "2024": {
+    "avg_month_pct": 4.92,
+    "dd_abs_pct": 26.5,
+    "deals": 69
+   },
+   "2025": {
+    "avg_month_pct": 0.42,
+    "dd_abs_pct": 62.58,
+    "deals": 58
+   },
+   "2026": {
+    "avg_month_pct": -6.38,
+    "dd_abs_pct": 68.79,
+    "deals": 12
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 3,
+  "is_score": 0.3673,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 0.0,
+   "e_band": 0,
+   "e_atrp5": 0.4792868215164016,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 54.23145903118057,
+   "o_signal": 1,
+   "n_orders": 5,
+   "g_first": 1.2978737602025032,
+   "g_depth": 48.28396419054255,
+   "g_pow": 1.1400205308721314,
+   "g_base_indent": 0.48312674515468884,
+   "g_mart": 1.813671755098605,
+   "pull_up": 0.6917574837627446,
+   "tp_kind": 1,
+   "tp_pct": 1.290482053730614,
+   "tp_min": 0.5,
+   "sl_kind": 1,
+   "sl_pct": 18.950525901573013
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 1.38,
+   "dd_abs_pct": 3.29,
+   "eff": 0.4203,
+   "worst_month_pct": 0.0,
+   "neg_months": 0,
+   "deals": 886,
+   "tp": 886,
+   "sl": 0,
+   "pf": Infinity,
+   "avg_deal_h": 2.7,
+   "fees_pct": 5.58,
+   "funding_pct": 0.29,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -0.11,
+   "dd_abs_pct": 12.53,
+   "eff": -0.0091,
+   "worst_month_pct": -3.75,
+   "neg_months": 7,
+   "deals": 261,
+   "tp": 256,
+   "sl": 5,
+   "pf": 0.83,
+   "avg_deal_h": 6.6,
+   "fees_pct": 1.5,
+   "funding_pct": 0.33,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -0.28,
+   "dd_abs_pct": 8.29,
+   "eff": -0.0341,
+   "worst_month_pct": -3.79,
+   "neg_months": 4,
+   "deals": 130,
+   "tp": 127,
+   "sl": 3,
+   "pf": 0.63,
+   "avg_deal_h": 6.6,
+   "fees_pct": 0.77,
+   "funding_pct": 0.19,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 2.51,
+    "dd_abs_pct": 3.29,
+    "deals": 448
+   },
+   "2022": {
+    "avg_month_pct": 1.17,
+    "dd_abs_pct": 2.82,
+    "deals": 215
+   },
+   "2023": {
+    "avg_month_pct": 0.81,
+    "dd_abs_pct": 2.37,
+    "deals": 167
+   },
+   "2024": {
+    "avg_month_pct": 0.73,
+    "dd_abs_pct": 2.1,
+    "deals": 154
+   },
+   "2025": {
+    "avg_month_pct": -0.36,
+    "dd_abs_pct": 7.53,
+    "deals": 130
+   },
+   "2026": {
+    "avg_month_pct": -0.5,
+    "dd_abs_pct": 5.9,
+    "deals": 32
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 4,
+  "is_score": 0.3645,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 80.93039767076635,
+   "e_band": 0,
+   "e_atrp5": 0.571211876786803,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 57.14870562820563,
+   "o_signal": 1,
+   "n_orders": 1,
+   "g_first": 1.2978737602025032,
+   "g_depth": 52.2330032929301,
+   "g_pow": 1.039161523005099,
+   "g_base_indent": 0.46154629222891974,
+   "g_mart": 1.8701400343929004,
+   "pull_up": 1.1197737187595724,
+   "tp_kind": 1,
+   "tp_pct": 1.1424039564540582,
+   "tp_min": 0.5,
+   "sl_kind": 1,
+   "sl_pct": 31.087326396186565
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 12.55,
+   "dd_abs_pct": 35.92,
+   "eff": 0.3494,
+   "worst_month_pct": -6.51,
+   "neg_months": 1,
+   "deals": 560,
+   "tp": 558,
+   "sl": 2,
+   "pf": 9.44,
+   "avg_deal_h": 5.9,
+   "fees_pct": 42.31,
+   "funding_pct": 3.76,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -2.33,
+   "dd_abs_pct": 98.05,
+   "eff": -0.0237,
+   "worst_month_pct": -31.6,
+   "neg_months": 9,
+   "deals": 118,
+   "tp": 113,
+   "sl": 5,
+   "pf": 0.6,
+   "avg_deal_h": 31.6,
+   "fees_pct": 8.82,
+   "funding_pct": 4.04,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -4.07,
+   "dd_abs_pct": 75.25,
+   "eff": -0.0541,
+   "worst_month_pct": -33.83,
+   "neg_months": 7,
+   "deals": 65,
+   "tp": 61,
+   "sl": 4,
+   "pf": 0.46,
+   "avg_deal_h": 33.5,
+   "fees_pct": 4.84,
+   "funding_pct": 2.38,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 24.44,
+    "dd_abs_pct": 35.92,
+    "deals": 310
+   },
+   "2022": {
+    "avg_month_pct": 8.26,
+    "dd_abs_pct": 25.16,
+    "deals": 116
+   },
+   "2023": {
+    "avg_month_pct": 8.95,
+    "dd_abs_pct": 17.84,
+    "deals": 100
+   },
+   "2024": {
+    "avg_month_pct": 3.0,
+    "dd_abs_pct": 26.49,
+    "deals": 70
+   },
+   "2025": {
+    "avg_month_pct": -0.08,
+    "dd_abs_pct": 64.74,
+    "deals": 69
+   },
+   "2026": {
+    "avg_month_pct": -6.4,
+    "dd_abs_pct": 66.95,
+    "deals": 12
+   }
+  }
+ },
+ {
+  "run": "evolve_long_s7",
+  "rank": 5,
+  "is_score": 0.3645,
+  "params": {
+   "e_rsi1h": 53.36046158316726,
+   "e_cci1h": 80.93039767076635,
+   "e_band": 0,
+   "e_atrp5": 0.571211876786803,
+   "e_trigger": 2,
+   "e_trend": 1,
+   "e_trend_lvl": 57.14870562820563,
+   "o_signal": 0,
+   "n_orders": 1,
+   "g_first": 1.2978737602025032,
+   "g_depth": 52.2330032929301,
+   "g_pow": 1.039161523005099,
+   "g_base_indent": 0.46154629222891974,
+   "g_mart": 1.8701400343929004,
+   "pull_up": 1.1197737187595724,
+   "tp_kind": 1,
+   "tp_pct": 1.1424039564540582,
+   "tp_min": 0.5,
+   "sl_kind": 1,
+   "sl_pct": 31.087326396186565
+  },
+  "is_spot": {
+   "months": 42.0,
+   "avg_month_pct": 12.55,
+   "dd_abs_pct": 35.92,
+   "eff": 0.3494,
+   "worst_month_pct": -6.51,
+   "neg_months": 1,
+   "deals": 560,
+   "tp": 558,
+   "sl": 2,
+   "pf": 9.44,
+   "avg_deal_h": 5.9,
+   "fees_pct": 42.31,
+   "funding_pct": 3.76,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "oos_spot": {
+   "months": 27.0,
+   "avg_month_pct": -2.33,
+   "dd_abs_pct": 98.05,
+   "eff": -0.0237,
+   "worst_month_pct": -31.6,
+   "neg_months": 9,
+   "deals": 118,
+   "tp": 113,
+   "sl": 5,
+   "pf": 0.6,
+   "avg_deal_h": 31.6,
+   "fees_pct": 8.82,
+   "funding_pct": 4.04,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "futures": {
+   "months": 16.6,
+   "avg_month_pct": -4.07,
+   "dd_abs_pct": 75.25,
+   "eff": -0.0541,
+   "worst_month_pct": -33.83,
+   "neg_months": 7,
+   "deals": 65,
+   "tp": 61,
+   "sl": 4,
+   "pf": 0.46,
+   "avg_deal_h": 33.5,
+   "fees_pct": 4.84,
+   "funding_pct": 2.38,
+   "open_upnl_pct": 0.0,
+   "liquidated": 0
+  },
+  "years_spot": {
+   "2021": {
+    "avg_month_pct": 24.44,
+    "dd_abs_pct": 35.92,
+    "deals": 310
+   },
+   "2022": {
+    "avg_month_pct": 8.26,
+    "dd_abs_pct": 25.16,
+    "deals": 116
+   },
+   "2023": {
+    "avg_month_pct": 8.95,
+    "dd_abs_pct": 17.84,
+    "deals": 100
+   },
+   "2024": {
+    "avg_month_pct": 3.0,
+    "dd_abs_pct": 26.49,
+    "deals": 70
+   },
+   "2025": {
+    "avg_month_pct": -0.08,
+    "dd_abs_pct": 64.74,
+    "deals": 69
+   },
+   "2026": {
+    "avg_month_pct": -6.4,
+    "dd_abs_pct": 66.95,
+    "deals": 12
+   }
+  }
+ }
+]
