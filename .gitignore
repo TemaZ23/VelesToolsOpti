@@ -9,4 +9,6 @@ extension-build/app/.bundle.test.js
 
 # DCA Lab market data cache
 cache/dca_lab/
+cache/cycle_lab/
+output/cycle_lab/grid.json
 __pycache__/

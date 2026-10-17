@@ -1,0 +1,2606 @@
+{
+ "by_leverage": {
+  "1": {
+   "best_is_all_coins": {
+    "name": "ema20_50 x1 стоп 20% повторный вход без шорта",
+    "is": {
+     "median_cagr": 95.7,
+     "median_dd": 75.2,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 7.2569,
+      "cagr_pct": 46.0,
+      "geo_month_pct": 3.2,
+      "avg_month_pct": 4.62,
+      "max_dd_pct": 70.6,
+      "worst_month_pct": -22.7,
+      "neg_months_pct": 37.0,
+      "trades": 15,
+      "win_pct": 33.0,
+      "stops": 2,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.082,
+      "funding_x": 5.162,
+      "years": 5.24
+     }
+    },
+    "oos": {
+     "median_cagr": 20.8,
+     "median_dd": 65.6,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 2.3425,
+      "cagr_pct": 25.5,
+      "geo_month_pct": 1.91,
+      "avg_month_pct": 2.53,
+      "max_dd_pct": 45.4,
+      "worst_month_pct": -18.7,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.023,
+      "funding_x": 0.468,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 2.3425,
+      "cagr_pct": 25.5,
+      "geo_month_pct": 1.91,
+      "avg_month_pct": 2.53,
+      "max_dd_pct": 45.4,
+      "worst_month_pct": -18.7,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.023,
+      "funding_x": 0.468,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 2.3662,
+      "cagr_pct": 25.9,
+      "geo_month_pct": 1.93,
+      "avg_month_pct": 2.7,
+      "max_dd_pct": 51.3,
+      "worst_month_pct": -20.2,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.017,
+      "funding_x": 0.352,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 4.071,
+      "cagr_pct": 45.5,
+      "geo_month_pct": 3.17,
+      "avg_month_pct": 3.79,
+      "max_dd_pct": 40.7,
+      "worst_month_pct": -19.3,
+      "neg_months_pct": 31.0,
+      "trades": 8,
+      "win_pct": 38.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.021,
+      "funding_x": -0.054,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.8311,
+      "cagr_pct": -4.8,
+      "geo_month_pct": -0.41,
+      "avg_month_pct": 2.49,
+      "max_dd_pct": 72.3,
+      "worst_month_pct": -28.3,
+      "neg_months_pct": 51.0,
+      "trades": 17,
+      "win_pct": 24.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.012,
+      "funding_x": 0.127,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 1.575,
+      "cagr_pct": 12.9,
+      "geo_month_pct": 1.01,
+      "avg_month_pct": 2.93,
+      "max_dd_pct": 65.1,
+      "worst_month_pct": -23.3,
+      "neg_months_pct": 40.0,
+      "trades": 10,
+      "win_pct": 30.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.015,
+      "funding_x": 0.324,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 1.2714,
+      "cagr_pct": 6.6,
+      "geo_month_pct": 0.54,
+      "avg_month_pct": 3.43,
+      "max_dd_pct": 66.3,
+      "worst_month_pct": -36.9,
+      "neg_months_pct": 38.0,
+      "trades": 14,
+      "win_pct": 36.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.016,
+      "funding_x": 0.274,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 1.1263,
+      "cagr_pct": 3.2,
+      "geo_month_pct": 0.26,
+      "avg_month_pct": 1.67,
+      "max_dd_pct": 65.6,
+      "worst_month_pct": -42.2,
+      "neg_months_pct": 38.0,
+      "trades": 14,
+      "win_pct": 21.0,
+      "stops": 2,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.013,
+      "funding_x": 0.29,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 2.0295,
+      "cagr_pct": 20.8,
+      "geo_month_pct": 1.59,
+      "avg_month_pct": 3.6,
+      "max_dd_pct": 70.6,
+      "worst_month_pct": -31.9,
+      "neg_months_pct": 44.0,
+      "trades": 19,
+      "win_pct": 21.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.034,
+      "funding_x": 0.507,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 2.0326,
+      "cagr_pct": 20.9,
+      "geo_month_pct": 1.59,
+      "avg_month_pct": 3.67,
+      "max_dd_pct": 67.9,
+      "worst_month_pct": -34.4,
+      "neg_months_pct": 38.0,
+      "trades": 11,
+      "win_pct": 27.0,
+      "stops": 2,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.018,
+      "funding_x": 0.473,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x1 стоп 3% повторный вход",
+    "is": {
+     "final_x": 23.9153,
+     "cagr_pct": 83.3,
+     "geo_month_pct": 5.17,
+     "avg_month_pct": 6.76,
+     "max_dd_pct": 72.1,
+     "worst_month_pct": -28.4,
+     "neg_months_pct": 38.0,
+     "trades": 76,
+     "win_pct": 25.0,
+     "stops": 52,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.638,
+     "funding_x": 6.262,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 1.565,
+     "cagr_pct": 12.7,
+     "geo_month_pct": 1.0,
+     "avg_month_pct": 1.75,
+     "max_dd_pct": 56.1,
+     "worst_month_pct": -19.0,
+     "neg_months_pct": 53.0,
+     "trades": 61,
+     "win_pct": 18.0,
+     "stops": 45,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.08,
+     "funding_x": 0.284,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x1 стоп 30% трейл повторный вход",
+    "full": {
+     "final_x": 3344.5824,
+     "cagr_pct": 143.5,
+     "geo_month_pct": 7.66,
+     "avg_month_pct": 9.53,
+     "max_dd_pct": 67.3,
+     "worst_month_pct": -48.4,
+     "neg_months_pct": 35.0,
+     "trades": 32,
+     "win_pct": 66.0,
+     "stops": 26,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 8.069,
+     "funding_x": 299.969,
+     "years": 9.12
+    }
+   }
+  },
+  "2": {
+   "best_is_all_coins": {
+    "name": "ema20_50 x2 стоп 30% без шорта",
+    "is": {
+     "median_cagr": 125.0,
+     "median_dd": 91.7,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 8.5101,
+      "cagr_pct": 50.5,
+      "geo_month_pct": 3.46,
+      "avg_month_pct": 7.22,
+      "max_dd_pct": 87.8,
+      "worst_month_pct": -45.0,
+      "neg_months_pct": 37.0,
+      "trades": 14,
+      "win_pct": 36.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.284,
+      "funding_x": 14.468,
+      "years": 5.24
+     }
+    },
+    "oos": {
+     "median_cagr": -6.8,
+     "median_dd": 92.4,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 3.3533,
+      "cagr_pct": 38.1,
+      "geo_month_pct": 2.73,
+      "avg_month_pct": 4.5,
+      "max_dd_pct": 64.4,
+      "worst_month_pct": -34.1,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.065,
+      "funding_x": 1.119,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 3.3533,
+      "cagr_pct": 38.1,
+      "geo_month_pct": 2.73,
+      "avg_month_pct": 4.5,
+      "max_dd_pct": 64.4,
+      "worst_month_pct": -34.1,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.065,
+      "funding_x": 1.119,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 3.6637,
+      "cagr_pct": 41.4,
+      "geo_month_pct": 2.93,
+      "avg_month_pct": 5.35,
+      "max_dd_pct": 72.1,
+      "worst_month_pct": -27.4,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.043,
+      "funding_x": 0.778,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 8.093,
+      "cagr_pct": 74.8,
+      "geo_month_pct": 4.76,
+      "avg_month_pct": 6.49,
+      "max_dd_pct": 60.3,
+      "worst_month_pct": -36.3,
+      "neg_months_pct": 31.0,
+      "trades": 8,
+      "win_pct": 38.0,
+      "stops": 0,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.069,
+      "funding_x": 0.005,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.1474,
+      "cagr_pct": -40.0,
+      "geo_month_pct": -4.17,
+      "avg_month_pct": 4.33,
+      "max_dd_pct": 96.4,
+      "worst_month_pct": -60.4,
+      "neg_months_pct": 49.0,
+      "trades": 14,
+      "win_pct": 14.0,
+      "stops": 2,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.009,
+      "funding_x": 0.101,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 0.9605,
+      "cagr_pct": -1.1,
+      "geo_month_pct": -0.09,
+      "avg_month_pct": 5.79,
+      "max_dd_pct": 90.5,
+      "worst_month_pct": -60.8,
+      "neg_months_pct": 40.0,
+      "trades": 10,
+      "win_pct": 30.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.031,
+      "funding_x": 0.663,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 0.3199,
+      "cagr_pct": -26.2,
+      "geo_month_pct": -2.5,
+      "avg_month_pct": 5.59,
+      "max_dd_pct": 94.9,
+      "worst_month_pct": -72.8,
+      "neg_months_pct": 38.0,
+      "trades": 10,
+      "win_pct": 30.0,
+      "stops": 2,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.019,
+      "funding_x": 0.404,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 0.4064,
+      "cagr_pct": -21.4,
+      "geo_month_pct": -1.98,
+      "avg_month_pct": 2.88,
+      "max_dd_pct": 92.4,
+      "worst_month_pct": -79.3,
+      "neg_months_pct": 38.0,
+      "trades": 13,
+      "win_pct": 15.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.018,
+      "funding_x": 0.402,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 0.3792,
+      "cagr_pct": -22.8,
+      "geo_month_pct": -2.13,
+      "avg_month_pct": 3.43,
+      "max_dd_pct": 94.4,
+      "worst_month_pct": -62.1,
+      "neg_months_pct": 44.0,
+      "trades": 15,
+      "win_pct": 20.0,
+      "stops": 3,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.02,
+      "funding_x": 0.432,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 0.7667,
+      "cagr_pct": -6.8,
+      "geo_month_pct": -0.59,
+      "avg_month_pct": 5.83,
+      "max_dd_pct": 93.6,
+      "worst_month_pct": -77.7,
+      "neg_months_pct": 38.0,
+      "trades": 10,
+      "win_pct": 20.0,
+      "stops": 1,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.031,
+      "funding_x": 0.765,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x2 стоп 3% повторный вход",
+    "is": {
+     "final_x": 81.9404,
+     "cagr_pct": 131.9,
+     "geo_month_pct": 7.24,
+     "avg_month_pct": 11.29,
+     "max_dd_pct": 88.2,
+     "worst_month_pct": -44.4,
+     "neg_months_pct": 38.0,
+     "trades": 76,
+     "win_pct": 25.0,
+     "stops": 52,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 3.661,
+     "funding_x": 20.504,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 1.3543,
+     "cagr_pct": 8.4,
+     "geo_month_pct": 0.68,
+     "avg_month_pct": 2.82,
+     "max_dd_pct": 77.2,
+     "worst_month_pct": -35.0,
+     "neg_months_pct": 56.0,
+     "trades": 61,
+     "win_pct": 18.0,
+     "stops": 45,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.146,
+     "funding_x": 0.471,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x2 стоп 30% трейл повторный вход",
+    "full": {
+     "final_x": 90435.4648,
+     "cagr_pct": 249.5,
+     "geo_month_pct": 10.93,
+     "avg_month_pct": 15.94,
+     "max_dd_pct": 90.3,
+     "worst_month_pct": -75.8,
+     "neg_months_pct": 35.0,
+     "trades": 32,
+     "win_pct": 66.0,
+     "stops": 26,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 206.953,
+     "funding_x": 4957.461,
+     "years": 9.12
+    }
+   }
+  },
+  "3": {
+   "best_is_all_coins": {
+    "name": "ema20_50 x3 стоп 3% повторный вход без шорта",
+    "is": {
+     "median_cagr": 65.5,
+     "median_dd": 94.4,
+     "ruined": 1,
+     "coins": 9,
+     "btc": {
+      "final_x": 38.3825,
+      "cagr_pct": 100.7,
+      "geo_month_pct": 5.96,
+      "avg_month_pct": 11.08,
+      "max_dd_pct": 89.0,
+      "worst_month_pct": -34.1,
+      "neg_months_pct": 37.0,
+      "trades": 35,
+      "win_pct": 26.0,
+      "stops": 24,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 2.085,
+      "funding_x": 40.512,
+      "years": 5.24
+     }
+    },
+    "oos": {
+     "median_cagr": -21.5,
+     "median_dd": 93.5,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 4.5597,
+      "cagr_pct": 49.9,
+      "geo_month_pct": 3.43,
+      "avg_month_pct": 6.11,
+      "max_dd_pct": 72.9,
+      "worst_month_pct": -30.2,
+      "neg_months_pct": 40.0,
+      "trades": 25,
+      "win_pct": 16.0,
+      "stops": 19,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.291,
+      "funding_x": 2.041,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 4.5597,
+      "cagr_pct": 49.9,
+      "geo_month_pct": 3.43,
+      "avg_month_pct": 6.11,
+      "max_dd_pct": 72.9,
+      "worst_month_pct": -30.2,
+      "neg_months_pct": 40.0,
+      "trades": 25,
+      "win_pct": 16.0,
+      "stops": 19,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.291,
+      "funding_x": 2.041,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 1.4277,
+      "cagr_pct": 10.0,
+      "geo_month_pct": 0.79,
+      "avg_month_pct": 5.41,
+      "max_dd_pct": 93.5,
+      "worst_month_pct": -61.0,
+      "neg_months_pct": 42.0,
+      "trades": 42,
+      "win_pct": 14.0,
+      "stops": 32,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.162,
+      "funding_x": 0.992,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 7.5086,
+      "cagr_pct": 71.3,
+      "geo_month_pct": 4.58,
+      "avg_month_pct": 7.51,
+      "max_dd_pct": 72.4,
+      "worst_month_pct": -45.0,
+      "neg_months_pct": 36.0,
+      "trades": 26,
+      "win_pct": 23.0,
+      "stops": 20,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.299,
+      "funding_x": 0.069,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.0298,
+      "cagr_pct": -60.9,
+      "geo_month_pct": -7.51,
+      "avg_month_pct": 2.24,
+      "max_dd_pct": 99.0,
+      "worst_month_pct": -61.0,
+      "neg_months_pct": 51.0,
+      "trades": 70,
+      "win_pct": 13.0,
+      "stops": 60,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.038,
+      "funding_x": 0.063,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 0.3315,
+      "cagr_pct": -25.5,
+      "geo_month_pct": -2.42,
+      "avg_month_pct": 5.04,
+      "max_dd_pct": 96.0,
+      "worst_month_pct": -52.3,
+      "neg_months_pct": 40.0,
+      "trades": 47,
+      "win_pct": 9.0,
+      "stops": 40,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.11,
+      "funding_x": 0.601,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 0.4035,
+      "cagr_pct": -21.5,
+      "geo_month_pct": -2.0,
+      "avg_month_pct": 6.77,
+      "max_dd_pct": 91.1,
+      "worst_month_pct": -56.8,
+      "neg_months_pct": 38.0,
+      "trades": 59,
+      "win_pct": 14.0,
+      "stops": 50,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.11,
+      "funding_x": 0.339,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 0.1743,
+      "cagr_pct": -37.3,
+      "geo_month_pct": -3.81,
+      "avg_month_pct": 2.27,
+      "max_dd_pct": 97.3,
+      "worst_month_pct": -58.3,
+      "neg_months_pct": 40.0,
+      "trades": 60,
+      "win_pct": 10.0,
+      "stops": 50,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.078,
+      "funding_x": 0.363,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 0.1454,
+      "cagr_pct": -40.2,
+      "geo_month_pct": -4.19,
+      "avg_month_pct": 2.73,
+      "max_dd_pct": 97.6,
+      "worst_month_pct": -48.9,
+      "neg_months_pct": 44.0,
+      "trades": 75,
+      "win_pct": 11.0,
+      "stops": 66,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.109,
+      "funding_x": 0.353,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 1.1274,
+      "cagr_pct": 3.3,
+      "geo_month_pct": 0.27,
+      "avg_month_pct": 8.33,
+      "max_dd_pct": 91.8,
+      "worst_month_pct": -45.1,
+      "neg_months_pct": 38.0,
+      "trades": 39,
+      "win_pct": 10.0,
+      "stops": 33,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.135,
+      "funding_x": 0.767,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x3 стоп 3% повторный вход",
+    "is": {
+     "final_x": 127.4043,
+     "cagr_pct": 152.3,
+     "geo_month_pct": 8.0,
+     "avg_month_pct": 14.81,
+     "max_dd_pct": 95.0,
+     "worst_month_pct": -59.3,
+     "neg_months_pct": 38.0,
+     "trades": 76,
+     "win_pct": 25.0,
+     "stops": 52,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 8.358,
+     "funding_x": 31.46,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 0.8369,
+     "cagr_pct": -4.6,
+     "geo_month_pct": -0.39,
+     "avg_month_pct": 3.48,
+     "max_dd_pct": 88.6,
+     "worst_month_pct": -48.5,
+     "neg_months_pct": 56.0,
+     "trades": 61,
+     "win_pct": 18.0,
+     "stops": 45,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.169,
+     "funding_x": 0.539,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x3 стоп 12% повторный вход",
+    "full": {
+     "final_x": 304264.0968,
+     "cagr_pct": 299.3,
+     "geo_month_pct": 12.16,
+     "avg_month_pct": 16.87,
+     "max_dd_pct": 89.1,
+     "worst_month_pct": -51.0,
+     "neg_months_pct": 34.0,
+     "trades": 8,
+     "win_pct": 75.0,
+     "stops": 2,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 385.085,
+     "funding_x": 15473.574,
+     "years": 9.12
+    }
+   }
+  },
+  "5": {
+   "best_is_all_coins": {
+    "name": "ema20_50 x5 стоп 8% без шорта",
+    "is": {
+     "median_cagr": 3.6,
+     "median_dd": 97.6,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 1.204,
+      "cagr_pct": 3.6,
+      "geo_month_pct": 0.3,
+      "avg_month_pct": 8.72,
+      "max_dd_pct": 98.3,
+      "worst_month_pct": -51.3,
+      "neg_months_pct": 32.0,
+      "trades": 14,
+      "win_pct": 29.0,
+      "stops": 8,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.229,
+      "funding_x": 5.904,
+      "years": 5.24
+     }
+    },
+    "oos": {
+     "median_cagr": -36.7,
+     "median_dd": 97.8,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 6.6273,
+      "cagr_pct": 65.7,
+      "geo_month_pct": 4.29,
+      "avg_month_pct": 10.03,
+      "max_dd_pct": 84.4,
+      "worst_month_pct": -42.4,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 3,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.368,
+      "funding_x": 4.536,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 6.6273,
+      "cagr_pct": 65.7,
+      "geo_month_pct": 4.29,
+      "avg_month_pct": 10.03,
+      "max_dd_pct": 84.4,
+      "worst_month_pct": -42.4,
+      "neg_months_pct": 40.0,
+      "trades": 11,
+      "win_pct": 36.0,
+      "stops": 3,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.368,
+      "funding_x": 4.536,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 0.6301,
+      "cagr_pct": -11.6,
+      "geo_month_pct": -1.02,
+      "avg_month_pct": 6.18,
+      "max_dd_pct": 97.8,
+      "worst_month_pct": -57.4,
+      "neg_months_pct": 33.0,
+      "trades": 11,
+      "win_pct": 27.0,
+      "stops": 6,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.081,
+      "funding_x": 1.391,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 3.0943,
+      "cagr_pct": 35.2,
+      "geo_month_pct": 2.54,
+      "avg_month_pct": 7.83,
+      "max_dd_pct": 85.6,
+      "worst_month_pct": -57.1,
+      "neg_months_pct": 31.0,
+      "trades": 8,
+      "win_pct": 25.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.123,
+      "funding_x": 0.015,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.0202,
+      "cagr_pct": -64.7,
+      "geo_month_pct": -8.3,
+      "avg_month_pct": 16.06,
+      "max_dd_pct": 99.2,
+      "worst_month_pct": -73.3,
+      "neg_months_pct": 42.0,
+      "trades": 15,
+      "win_pct": 13.0,
+      "stops": 11,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.014,
+      "funding_x": 0.084,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 0.1805,
+      "cagr_pct": -36.7,
+      "geo_month_pct": -3.73,
+      "avg_month_pct": 13.22,
+      "max_dd_pct": 96.9,
+      "worst_month_pct": -53.1,
+      "neg_months_pct": 38.0,
+      "trades": 11,
+      "win_pct": 18.0,
+      "stops": 8,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.054,
+      "funding_x": 0.871,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 0.0019,
+      "cagr_pct": -81.1,
+      "geo_month_pct": -12.96,
+      "avg_month_pct": -8.72,
+      "max_dd_pct": 99.9,
+      "worst_month_pct": -72.4,
+      "neg_months_pct": 27.0,
+      "trades": 11,
+      "win_pct": 0.0,
+      "stops": 11,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.011,
+      "funding_x": 0.048,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 0.0321,
+      "cagr_pct": -60.1,
+      "geo_month_pct": -7.36,
+      "avg_month_pct": 3.01,
+      "max_dd_pct": 98.2,
+      "worst_month_pct": -82.7,
+      "neg_months_pct": 36.0,
+      "trades": 14,
+      "win_pct": 14.0,
+      "stops": 10,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.028,
+      "funding_x": 0.414,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 0.0302,
+      "cagr_pct": -60.7,
+      "geo_month_pct": -7.49,
+      "avg_month_pct": -1.46,
+      "max_dd_pct": 99.0,
+      "worst_month_pct": -61.5,
+      "neg_months_pct": 33.0,
+      "trades": 15,
+      "win_pct": 13.0,
+      "stops": 9,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.012,
+      "funding_x": 0.03,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 1.1783,
+      "cagr_pct": 4.5,
+      "geo_month_pct": 0.37,
+      "avg_month_pct": 14.72,
+      "max_dd_pct": 96.5,
+      "worst_month_pct": -48.2,
+      "neg_months_pct": 33.0,
+      "trades": 10,
+      "win_pct": 20.0,
+      "stops": 7,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.069,
+      "funding_x": 0.918,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x5 стоп 3% повторный вход",
+    "is": {
+     "final_x": 78.3938,
+     "cagr_pct": 130.0,
+     "geo_month_pct": 7.17,
+     "avg_month_pct": 20.02,
+     "max_dd_pct": 99.2,
+     "worst_month_pct": -79.2,
+     "neg_months_pct": 38.0,
+     "trades": 76,
+     "win_pct": 25.0,
+     "stops": 52,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 9.966,
+     "funding_x": 23.82,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 0.1626,
+     "cagr_pct": -38.4,
+     "geo_month_pct": -3.96,
+     "avg_month_pct": 4.11,
+     "max_dd_pct": 98.1,
+     "worst_month_pct": -68.8,
+     "neg_months_pct": 56.0,
+     "trades": 61,
+     "win_pct": 18.0,
+     "stops": 45,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.145,
+     "funding_x": 0.462,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x5 стоп 12% повторный вход",
+    "full": {
+     "final_x": 1914181.6087,
+     "cagr_pct": 388.5,
+     "geo_month_pct": 14.05,
+     "avg_month_pct": 21.41,
+     "max_dd_pct": 92.9,
+     "worst_month_pct": -51.5,
+     "neg_months_pct": 34.0,
+     "trades": 8,
+     "win_pct": 75.0,
+     "stops": 2,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 2511.992,
+     "funding_x": 83731.389,
+     "years": 9.12
+    }
+   }
+  },
+  "10": {
+   "best_is_all_coins": {
+    "name": "ema20_50 x10 стоп 3% трейл без шорта",
+    "is": {
+     "median_cagr": -15.4,
+     "median_dd": 75.9,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 1.8318,
+      "cagr_pct": 12.3,
+      "geo_month_pct": 0.97,
+      "avg_month_pct": 3.49,
+      "max_dd_pct": 84.2,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 14.0,
+      "trades": 14,
+      "win_pct": 43.0,
+      "stops": 14,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.171,
+      "funding_x": 0.05,
+      "years": 5.24
+     }
+    },
+    "oos": {
+     "median_cagr": -27.8,
+     "median_dd": 82.9,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 1.1526,
+      "cagr_pct": 3.9,
+      "geo_month_pct": 0.32,
+      "avg_month_pct": 1.18,
+      "max_dd_pct": 63.0,
+      "worst_month_pct": -29.7,
+      "neg_months_pct": 13.0,
+      "trades": 12,
+      "win_pct": 50.0,
+      "stops": 12,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.126,
+      "funding_x": 0.043,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 1.1526,
+      "cagr_pct": 3.9,
+      "geo_month_pct": 0.32,
+      "avg_month_pct": 1.18,
+      "max_dd_pct": 63.0,
+      "worst_month_pct": -29.7,
+      "neg_months_pct": 13.0,
+      "trades": 12,
+      "win_pct": 50.0,
+      "stops": 12,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.126,
+      "funding_x": 0.043,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 0.2217,
+      "cagr_pct": -33.1,
+      "geo_month_pct": -3.29,
+      "avg_month_pct": -0.78,
+      "max_dd_pct": 89.7,
+      "worst_month_pct": -54.3,
+      "neg_months_pct": 18.0,
+      "trades": 12,
+      "win_pct": 25.0,
+      "stops": 12,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.105,
+      "funding_x": 0.036,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 0.2945,
+      "cagr_pct": -27.8,
+      "geo_month_pct": -2.68,
+      "avg_month_pct": -2.03,
+      "max_dd_pct": 71.0,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 16.0,
+      "trades": 9,
+      "win_pct": 22.0,
+      "stops": 9,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.051,
+      "funding_x": -0.009,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.363,
+      "cagr_pct": -23.7,
+      "geo_month_pct": -2.23,
+      "avg_month_pct": 0.79,
+      "max_dd_pct": 82.9,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 22.0,
+      "trades": 15,
+      "win_pct": 40.0,
+      "stops": 15,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.069,
+      "funding_x": 0.025,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 0.2263,
+      "cagr_pct": -32.7,
+      "geo_month_pct": -3.25,
+      "avg_month_pct": -2.29,
+      "max_dd_pct": 77.4,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 18.0,
+      "trades": 11,
+      "win_pct": 27.0,
+      "stops": 11,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.053,
+      "funding_x": 0.008,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 0.1667,
+      "cagr_pct": -38.0,
+      "geo_month_pct": -3.9,
+      "avg_month_pct": -2.42,
+      "max_dd_pct": 88.2,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 18.0,
+      "trades": 11,
+      "win_pct": 27.0,
+      "stops": 11,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.044,
+      "funding_x": 0.007,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 0.3276,
+      "cagr_pct": -25.8,
+      "geo_month_pct": -2.45,
+      "avg_month_pct": -0.93,
+      "max_dd_pct": 83.5,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 18.0,
+      "trades": 14,
+      "win_pct": 43.0,
+      "stops": 14,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.061,
+      "funding_x": 0.012,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 0.1347,
+      "cagr_pct": -41.4,
+      "geo_month_pct": -4.36,
+      "avg_month_pct": -2.03,
+      "max_dd_pct": 92.3,
+      "worst_month_pct": -53.6,
+      "neg_months_pct": 22.0,
+      "trades": 16,
+      "win_pct": 25.0,
+      "stops": 16,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.062,
+      "funding_x": 0.006,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 2.4445,
+      "cagr_pct": 27.0,
+      "geo_month_pct": 2.01,
+      "avg_month_pct": 3.2,
+      "max_dd_pct": 37.8,
+      "worst_month_pct": -32.9,
+      "neg_months_pct": 11.0,
+      "trades": 11,
+      "win_pct": 55.0,
+      "stops": 11,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.135,
+      "funding_x": 0.034,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x10 стоп 3% трейл без шорта",
+    "is": {
+     "final_x": 1.8318,
+     "cagr_pct": 12.3,
+     "geo_month_pct": 0.97,
+     "avg_month_pct": 3.49,
+     "max_dd_pct": 84.2,
+     "worst_month_pct": -32.9,
+     "neg_months_pct": 14.0,
+     "trades": 14,
+     "win_pct": 43.0,
+     "stops": 14,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.171,
+     "funding_x": 0.05,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 1.1526,
+     "cagr_pct": 3.9,
+     "geo_month_pct": 0.32,
+     "avg_month_pct": 1.18,
+     "max_dd_pct": 63.0,
+     "worst_month_pct": -29.7,
+     "neg_months_pct": 13.0,
+     "trades": 12,
+     "win_pct": 50.0,
+     "stops": 12,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.126,
+     "funding_x": 0.043,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x10 стоп 5%",
+    "full": {
+     "final_x": 9694530.2991,
+     "cagr_pct": 483.6,
+     "geo_month_pct": 15.75,
+     "avg_month_pct": 24.84,
+     "max_dd_pct": 95.9,
+     "worst_month_pct": -52.9,
+     "neg_months_pct": 33.0,
+     "trades": 6,
+     "win_pct": 83.0,
+     "stops": 1,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 12997.043,
+     "funding_x": 409555.484,
+     "years": 9.12
+    }
+   }
+  },
+  "20": {
+   "best_is_all_coins": {
+    "name": "cross50_200 x20 стоп 3% трейл без шорта",
+    "is": {
+     "median_cagr": -44.2,
+     "median_dd": 73.7,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 0.0321,
+      "cagr_pct": -50.9,
+      "geo_month_pct": -5.76,
+      "avg_month_pct": -4.0,
+      "max_dd_pct": 96.8,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 9.0,
+      "trades": 5,
+      "win_pct": 0.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.04,
+      "funding_x": 0.006,
+      "years": 4.83
+     }
+    },
+    "oos": {
+     "median_cagr": -16.6,
+     "median_dd": 80.1,
+     "ruined": 0,
+     "coins": 9,
+     "btc": {
+      "final_x": 0.1394,
+      "cagr_pct": -40.9,
+      "geo_month_pct": -4.28,
+      "avg_month_pct": -2.73,
+      "max_dd_pct": 86.1,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 9.0,
+      "trades": 5,
+      "win_pct": 20.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.056,
+      "funding_x": 0.019,
+      "years": 3.75
+     }
+    },
+    "oos_coins": {
+     "BTC": {
+      "final_x": 0.1394,
+      "cagr_pct": -40.9,
+      "geo_month_pct": -4.28,
+      "avg_month_pct": -2.73,
+      "max_dd_pct": 86.1,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 9.0,
+      "trades": 5,
+      "win_pct": 20.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.056,
+      "funding_x": 0.019,
+      "years": 3.75
+     },
+     "ETH": {
+      "final_x": 1.0857,
+      "cagr_pct": 2.2,
+      "geo_month_pct": 0.18,
+      "avg_month_pct": 4.48,
+      "max_dd_pct": 70.5,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 7.0,
+      "trades": 5,
+      "win_pct": 60.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.136,
+      "funding_x": 0.042,
+      "years": 3.75
+     },
+     "BNB": {
+      "final_x": 0.5056,
+      "cagr_pct": -16.6,
+      "geo_month_pct": -1.5,
+      "avg_month_pct": 0.26,
+      "max_dd_pct": 83.2,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 4.0,
+      "trades": 5,
+      "win_pct": 60.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.071,
+      "funding_x": -0.021,
+      "years": 3.75
+     },
+     "XRP": {
+      "final_x": 0.0461,
+      "cagr_pct": -56.0,
+      "geo_month_pct": -6.61,
+      "avg_month_pct": -3.72,
+      "max_dd_pct": 95.8,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 9.0,
+      "trades": 6,
+      "win_pct": 33.0,
+      "stops": 6,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.071,
+      "funding_x": 0.013,
+      "years": 3.75
+     },
+     "ADA": {
+      "final_x": 0.9106,
+      "cagr_pct": -2.5,
+      "geo_month_pct": -0.21,
+      "avg_month_pct": 0.89,
+      "max_dd_pct": 66.2,
+      "worst_month_pct": -49.6,
+      "neg_months_pct": 4.0,
+      "trades": 5,
+      "win_pct": 60.0,
+      "stops": 5,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.057,
+      "funding_x": 0.013,
+      "years": 3.75
+     },
+     "DOGE": {
+      "final_x": 0.7757,
+      "cagr_pct": -6.6,
+      "geo_month_pct": -0.56,
+      "avg_month_pct": 0.69,
+      "max_dd_pct": 77.8,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 2.0,
+      "trades": 4,
+      "win_pct": 75.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.085,
+      "funding_x": 0.031,
+      "years": 3.75
+     },
+     "LINK": {
+      "final_x": 0.1987,
+      "cagr_pct": -35.0,
+      "geo_month_pct": -3.53,
+      "avg_month_pct": -1.16,
+      "max_dd_pct": 80.1,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 13.0,
+      "trades": 6,
+      "win_pct": 33.0,
+      "stops": 6,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.064,
+      "funding_x": 0.017,
+      "years": 3.75
+     },
+     "SOL": {
+      "final_x": 1.2368,
+      "cagr_pct": 5.8,
+      "geo_month_pct": 0.47,
+      "avg_month_pct": 5.65,
+      "max_dd_pct": 67.3,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 4.0,
+      "trades": 6,
+      "win_pct": 67.0,
+      "stops": 6,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.079,
+      "funding_x": 0.007,
+      "years": 3.75
+     },
+     "AVAX": {
+      "final_x": 0.0395,
+      "cagr_pct": -57.8,
+      "geo_month_pct": -6.93,
+      "avg_month_pct": -4.41,
+      "max_dd_pct": 96.1,
+      "worst_month_pct": -65.8,
+      "neg_months_pct": 9.0,
+      "trades": 4,
+      "win_pct": 25.0,
+      "stops": 4,
+      "liquidated": false,
+      "ruined_at": null,
+      "fees_x": 0.03,
+      "funding_x": 0.0,
+      "years": 3.75
+     }
+    }
+   },
+   "best_is_btc": {
+    "name": "ema20_50 x20 стоп 3% трейл без шорта",
+    "is": {
+     "final_x": 0.2563,
+     "cagr_pct": -22.9,
+     "geo_month_pct": -2.14,
+     "avg_month_pct": 6.98,
+     "max_dd_pct": 99.1,
+     "worst_month_pct": -65.8,
+     "neg_months_pct": 14.0,
+     "trades": 14,
+     "win_pct": 43.0,
+     "stops": 14,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.171,
+     "funding_x": 0.046,
+     "years": 5.24
+    },
+    "oos": {
+     "final_x": 0.5883,
+     "cagr_pct": -13.2,
+     "geo_month_pct": -1.17,
+     "avg_month_pct": 2.37,
+     "max_dd_pct": 90.6,
+     "worst_month_pct": -59.4,
+     "neg_months_pct": 13.0,
+     "trades": 12,
+     "win_pct": 50.0,
+     "stops": 12,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 0.218,
+     "funding_x": 0.075,
+     "years": 3.75
+    }
+   },
+   "oracle_btc_full": {
+    "name": "oracle x20 стоп 3%",
+    "full": {
+     "final_x": 6576702.1291,
+     "cagr_pct": 459.3,
+     "geo_month_pct": 15.34,
+     "avg_month_pct": 31.36,
+     "max_dd_pct": 97.5,
+     "worst_month_pct": -65.8,
+     "neg_months_pct": 30.0,
+     "trades": 6,
+     "win_pct": 67.0,
+     "stops": 2,
+     "liquidated": false,
+     "ruined_at": null,
+     "fees_x": 8896.292,
+     "funding_x": 294725.088,
+     "years": 9.12
+    }
+   }
+  }
+ },
+ "years": {
+  "oracle x1": {
+   "2018": {
+    "year_pct": 181.0,
+    "max_dd_pct": 36.3,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": 58.0,
+    "max_dd_pct": 53.4,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 279.0,
+    "max_dd_pct": 38.1,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": 54.0,
+    "max_dd_pct": 56.5,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": 61.0,
+    "max_dd_pct": 27.4,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 128.0,
+    "max_dd_pct": 21.2,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": 51.0,
+    "max_dd_pct": 39.1,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": 3.0,
+    "max_dd_pct": 46.2,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 67.0,
+    "max_dd_pct": 26.9,
+    "ruined_at": null
+   }
+  },
+  "oracle x3": {
+   "2018": {
+    "year_pct": 436.0,
+    "max_dd_pct": 80.9,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": 11.0,
+    "max_dd_pct": 93.7,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 2165.0,
+    "max_dd_pct": 77.4,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -10.0,
+    "max_dd_pct": 95.2,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": 90.0,
+    "max_dd_pct": 69.3,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 552.0,
+    "max_dd_pct": 51.3,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": 43.0,
+    "max_dd_pct": 81.9,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -28.0,
+    "max_dd_pct": 86.3,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 191.0,
+    "max_dd_pct": 63.5,
+    "ruined_at": null
+   }
+  },
+  "oracle x5": {
+   "2018": {
+    "year_pct": 99.0,
+    "max_dd_pct": 98.1,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": -78.0,
+    "max_dd_pct": 99.6,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 5756.0,
+    "max_dd_pct": 92.8,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -90.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": -10.0,
+    "max_dd_pct": 90.5,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 1003.0,
+    "max_dd_pct": 73.0,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -43.0,
+    "max_dd_pct": 96.3,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -70.0,
+    "max_dd_pct": 97.3,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 215.0,
+    "max_dd_pct": 83.8,
+    "ruined_at": null
+   }
+  },
+  "oracle x10": {
+   "2018": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2018-02-20"
+   },
+   "2019": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2019-12-02"
+   },
+   "2020": {
+    "year_pct": 10.0,
+    "max_dd_pct": 99.9,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2021-05-21"
+   },
+   "2022": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 18.0,
+    "max_dd_pct": 99.2,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2024-09-01"
+   },
+   "2025": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2025-08-24"
+   },
+   "2026": {
+    "year_pct": 214.0,
+    "max_dd_pct": 98.0,
+    "ruined_at": null
+   }
+  },
+  "sma200 x1": {
+   "2018": {
+    "year_pct": -12.0,
+    "max_dd_pct": 52.1,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": 15.0,
+    "max_dd_pct": 44.0,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 75.0,
+    "max_dd_pct": 42.8,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -75.0,
+    "max_dd_pct": 82.7,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": 46.0,
+    "max_dd_pct": 29.5,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 33.0,
+    "max_dd_pct": 25.7,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": 16.0,
+    "max_dd_pct": 43.7,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -51.0,
+    "max_dd_pct": 60.2,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 31.0,
+    "max_dd_pct": 26.9,
+    "ruined_at": null
+   }
+  },
+  "sma200 x3": {
+   "2018": {
+    "year_pct": -73.0,
+    "max_dd_pct": 93.8,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": -50.0,
+    "max_dd_pct": 87.1,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 97.0,
+    "max_dd_pct": 88.0,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": 38.0,
+    "max_dd_pct": 73.3,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 50.0,
+    "max_dd_pct": 62.0,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -31.0,
+    "max_dd_pct": 85.9,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -92.0,
+    "max_dd_pct": 95.1,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 53.0,
+    "max_dd_pct": 63.5,
+    "ruined_at": null
+   }
+  },
+  "sma200 x5": {
+   "2018": {
+    "year_pct": -98.0,
+    "max_dd_pct": 99.7,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": -93.0,
+    "max_dd_pct": 98.2,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": -17.0,
+    "max_dd_pct": 98.5,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2021-10-01"
+   },
+   "2022": {
+    "year_pct": -49.0,
+    "max_dd_pct": 93.2,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": 3.0,
+    "max_dd_pct": 82.7,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -82.0,
+    "max_dd_pct": 97.6,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -99.0,
+    "max_dd_pct": 99.6,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 18.0,
+    "max_dd_pct": 83.8,
+    "ruined_at": null
+   }
+  },
+  "sma200 x10": {
+   "2018": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2018-04-23"
+   },
+   "2019": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2020-05-11"
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2021-05-21"
+   },
+   "2022": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": -99.0,
+    "max_dd_pct": 99.9,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2024-09-30"
+   },
+   "2025": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2025-04-21"
+   },
+   "2026": {
+    "year_pct": -66.0,
+    "max_dd_pct": 98.3,
+    "ruined_at": null
+   }
+  },
+  "cross50_200 x1": {
+   "2018": {
+    "year_pct": -25.0,
+    "max_dd_pct": 58.9,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": 12.0,
+    "max_dd_pct": 46.9,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": 16.0,
+    "max_dd_pct": 61.5,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -52.0,
+    "max_dd_pct": 66.7,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": 16.0,
+    "max_dd_pct": 29.5,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": -37.0,
+    "max_dd_pct": 46.0,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": 28.0,
+    "max_dd_pct": 38.0,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -57.0,
+    "max_dd_pct": 63.5,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": 7.0,
+    "max_dd_pct": 26.9,
+    "ruined_at": null
+   }
+  },
+  "cross50_200 x3": {
+   "2018": {
+    "year_pct": -83.0,
+    "max_dd_pct": 96.0,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": -58.0,
+    "max_dd_pct": 86.6,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": -41.0,
+    "max_dd_pct": 96.3,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -97.0,
+    "max_dd_pct": 98.5,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": -32.0,
+    "max_dd_pct": 73.3,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": -84.0,
+    "max_dd_pct": 89.5,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -13.0,
+    "max_dd_pct": 82.1,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -94.0,
+    "max_dd_pct": 96.4,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": -18.0,
+    "max_dd_pct": 65.8,
+    "ruined_at": null
+   }
+  },
+  "cross50_200 x5": {
+   "2018": {
+    "year_pct": -99.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   },
+   "2019": {
+    "year_pct": -95.0,
+    "max_dd_pct": 98.1,
+    "ruined_at": null
+   },
+   "2020": {
+    "year_pct": -90.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": null
+   },
+   "2022": {
+    "year_pct": -86.0,
+    "max_dd_pct": 93.2,
+    "ruined_at": null
+   },
+   "2023": {
+    "year_pct": -98.0,
+    "max_dd_pct": 98.9,
+    "ruined_at": null
+   },
+   "2024": {
+    "year_pct": -75.0,
+    "max_dd_pct": 96.7,
+    "ruined_at": null
+   },
+   "2025": {
+    "year_pct": -100.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   },
+   "2026": {
+    "year_pct": -59.0,
+    "max_dd_pct": 88.1,
+    "ruined_at": null
+   }
+  },
+  "cross50_200 x10": {
+   "2018": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2018-04-14"
+   },
+   "2019": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2019-09-26"
+   },
+   "2020": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2020-04-02"
+   },
+   "2021": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2021-05-21"
+   },
+   "2022": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2022-09-22"
+   },
+   "2023": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2023-09-18"
+   },
+   "2024": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2024-09-12"
+   },
+   "2025": {
+    "year_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "ruined_at": "2025-04-22"
+   },
+   "2026": {
+    "year_pct": -97.0,
+    "max_dd_pct": 99.8,
+    "ruined_at": null
+   }
+  }
+ },
+ "lev_curve": {
+  "sma200 стоп 5%": {
+   "1": {
+    "cagr_pct": 4.3,
+    "geo_month_pct": 0.35,
+    "max_dd_pct": 89.4,
+    "worst_month_pct": -56.1,
+    "ruined_at": null,
+    "trades": 88,
+    "win_pct": 11.0
+   },
+   "2": {
+    "cagr_pct": -9.3,
+    "geo_month_pct": -0.81,
+    "max_dd_pct": 97.9,
+    "worst_month_pct": -66.9,
+    "ruined_at": null,
+    "trades": 88,
+    "win_pct": 11.0
+   },
+   "3": {
+    "cagr_pct": -28.5,
+    "geo_month_pct": -2.76,
+    "max_dd_pct": 99.7,
+    "worst_month_pct": -75.0,
+    "ruined_at": null,
+    "trades": 88,
+    "win_pct": 11.0
+   },
+   "5": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2021-12-04",
+    "trades": 50,
+    "win_pct": 6.0
+   },
+   "10": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2020-01-29",
+    "trades": 20,
+    "win_pct": 10.0
+   }
+  },
+  "sma200 стоп 12% трейл": {
+   "1": {
+    "cagr_pct": -0.1,
+    "geo_month_pct": -0.01,
+    "max_dd_pct": 85.5,
+    "worst_month_pct": -42.7,
+    "ruined_at": null,
+    "trades": 222,
+    "win_pct": 32.0
+   },
+   "2": {
+    "cagr_pct": -27.4,
+    "geo_month_pct": -2.63,
+    "max_dd_pct": 98.8,
+    "worst_month_pct": -69.3,
+    "ruined_at": null,
+    "trades": 222,
+    "win_pct": 32.0
+   },
+   "3": {
+    "cagr_pct": -59.3,
+    "geo_month_pct": -7.22,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -85.0,
+    "ruined_at": null,
+    "trades": 222,
+    "win_pct": 32.0
+   },
+   "5": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2020-04-06",
+    "trades": 63,
+    "win_pct": 35.0
+   }
+  },
+  "sma200 стоп 20% трейл": {
+   "1": {
+    "cagr_pct": 1.4,
+    "geo_month_pct": 0.11,
+    "max_dd_pct": 87.2,
+    "worst_month_pct": -43.8,
+    "ruined_at": null,
+    "trades": 124,
+    "win_pct": 27.0
+   },
+   "2": {
+    "cagr_pct": -24.3,
+    "geo_month_pct": -2.29,
+    "max_dd_pct": 99.3,
+    "worst_month_pct": -71.9,
+    "ruined_at": null,
+    "trades": 124,
+    "win_pct": 27.0
+   },
+   "3": {
+    "cagr_pct": -55.5,
+    "geo_month_pct": -6.52,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -88.3,
+    "ruined_at": null,
+    "trades": 124,
+    "win_pct": 27.0
+   }
+  },
+  "cross50_200 стоп 5%": {
+   "1": {
+    "cagr_pct": 0.8,
+    "geo_month_pct": 0.07,
+    "max_dd_pct": 75.3,
+    "worst_month_pct": -47.6,
+    "ruined_at": null,
+    "trades": 83,
+    "win_pct": 16.0
+   },
+   "2": {
+    "cagr_pct": -13.2,
+    "geo_month_pct": -1.17,
+    "max_dd_pct": 90.8,
+    "worst_month_pct": -73.6,
+    "ruined_at": null,
+    "trades": 83,
+    "win_pct": 16.0
+   },
+   "3": {
+    "cagr_pct": -31.8,
+    "geo_month_pct": -3.14,
+    "max_dd_pct": 98.1,
+    "worst_month_pct": -87.3,
+    "ruined_at": null,
+    "trades": 83,
+    "win_pct": 16.0
+   },
+   "5": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2025-05-29",
+    "trades": 79,
+    "win_pct": 15.0
+   },
+   "10": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2018-04-02",
+    "trades": 13,
+    "win_pct": 8.0
+   }
+  },
+  "cross50_200 стоп 12% трейл": {
+   "1": {
+    "cagr_pct": -8.9,
+    "geo_month_pct": -0.77,
+    "max_dd_pct": 84.2,
+    "worst_month_pct": -41.7,
+    "ruined_at": null,
+    "trades": 201,
+    "win_pct": 36.0
+   },
+   "2": {
+    "cagr_pct": -39.4,
+    "geo_month_pct": -4.08,
+    "max_dd_pct": 99.2,
+    "worst_month_pct": -68.0,
+    "ruined_at": null,
+    "trades": 201,
+    "win_pct": 36.0
+   },
+   "3": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2025-06-05",
+    "trades": 182,
+    "win_pct": 36.0
+   },
+   "5": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2020-03-12",
+    "trades": 56,
+    "win_pct": 34.0
+   }
+  },
+  "cross50_200 стоп 20% трейл": {
+   "1": {
+    "cagr_pct": -11.9,
+    "geo_month_pct": -1.05,
+    "max_dd_pct": 82.0,
+    "worst_month_pct": -40.4,
+    "ruined_at": null,
+    "trades": 93,
+    "win_pct": 34.0
+   },
+   "2": {
+    "cagr_pct": -44.8,
+    "geo_month_pct": -4.83,
+    "max_dd_pct": 99.6,
+    "worst_month_pct": -68.0,
+    "ruined_at": null,
+    "trades": 93,
+    "win_pct": 34.0
+   },
+   "3": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2021-09-21",
+    "trades": 51,
+    "win_pct": 33.0
+   }
+  },
+  "donchian55 стоп 5%": {
+   "1": {
+    "cagr_pct": 22.6,
+    "geo_month_pct": 1.7,
+    "max_dd_pct": 80.0,
+    "worst_month_pct": -51.2,
+    "ruined_at": null,
+    "trades": 72,
+    "win_pct": 24.0
+   },
+   "2": {
+    "cagr_pct": 22.2,
+    "geo_month_pct": 1.68,
+    "max_dd_pct": 92.9,
+    "worst_month_pct": -71.8,
+    "ruined_at": null,
+    "trades": 72,
+    "win_pct": 24.0
+   },
+   "3": {
+    "cagr_pct": 10.1,
+    "geo_month_pct": 0.8,
+    "max_dd_pct": 97.3,
+    "worst_month_pct": -82.9,
+    "ruined_at": null,
+    "trades": 72,
+    "win_pct": 24.0
+   },
+   "5": {
+    "cagr_pct": -27.8,
+    "geo_month_pct": -2.67,
+    "max_dd_pct": 99.9,
+    "worst_month_pct": -93.6,
+    "ruined_at": null,
+    "trades": 72,
+    "win_pct": 24.0
+   },
+   "10": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2018-11-14",
+    "trades": 17,
+    "win_pct": 12.0
+   }
+  },
+  "donchian55 стоп 12% трейл": {
+   "1": {
+    "cagr_pct": -5.6,
+    "geo_month_pct": -0.48,
+    "max_dd_pct": 91.3,
+    "worst_month_pct": -52.9,
+    "ruined_at": null,
+    "trades": 235,
+    "win_pct": 37.0
+   },
+   "2": {
+    "cagr_pct": -39.0,
+    "geo_month_pct": -4.02,
+    "max_dd_pct": 99.7,
+    "worst_month_pct": -80.0,
+    "ruined_at": null,
+    "trades": 235,
+    "win_pct": 37.0
+   },
+   "3": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2020-05-10",
+    "trades": 106,
+    "win_pct": 32.0
+   },
+   "5": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2018-02-01",
+    "trades": 31,
+    "win_pct": 26.0
+   }
+  },
+  "donchian55 стоп 20% трейл": {
+   "1": {
+    "cagr_pct": 1.8,
+    "geo_month_pct": 0.15,
+    "max_dd_pct": 88.9,
+    "worst_month_pct": -59.9,
+    "ruined_at": null,
+    "trades": 102,
+    "win_pct": 39.0
+   },
+   "2": {
+    "cagr_pct": -29.6,
+    "geo_month_pct": -2.87,
+    "max_dd_pct": 99.7,
+    "worst_month_pct": -87.1,
+    "ruined_at": null,
+    "trades": 102,
+    "win_pct": 39.0
+   },
+   "3": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2023-10-23",
+    "trades": 83,
+    "win_pct": 37.0
+   }
+  },
+  "oracle стоп 5%": {
+   "1": {
+    "cagr_pct": 127.2,
+    "geo_month_pct": 7.04,
+    "max_dd_pct": 74.1,
+    "worst_month_pct": -48.5,
+    "ruined_at": null,
+    "trades": 19,
+    "win_pct": 32.0
+   },
+   "2": {
+    "cagr_pct": 195.3,
+    "geo_month_pct": 9.39,
+    "max_dd_pct": 84.8,
+    "worst_month_pct": -61.4,
+    "ruined_at": null,
+    "trades": 19,
+    "win_pct": 32.0
+   },
+   "3": {
+    "cagr_pct": 240.6,
+    "geo_month_pct": 10.69,
+    "max_dd_pct": 89.7,
+    "worst_month_pct": -77.4,
+    "ruined_at": null,
+    "trades": 19,
+    "win_pct": 32.0
+   },
+   "5": {
+    "cagr_pct": 285.1,
+    "geo_month_pct": 11.83,
+    "max_dd_pct": 98.2,
+    "worst_month_pct": -93.2,
+    "ruined_at": null,
+    "trades": 19,
+    "win_pct": 32.0
+   },
+   "10": {
+    "cagr_pct": -100.0,
+    "geo_month_pct": -100.0,
+    "max_dd_pct": 100.0,
+    "worst_month_pct": -100.0,
+    "ruined_at": "2017-09-21",
+    "trades": 12,
+    "win_pct": 0.0
+   }
+  },
+  "oracle стоп 12% трейл": {
+   "1": {
+    "cagr_pct": 110.6,
+    "geo_month_pct": 6.37,
+    "max_dd_pct": 58.4,
+    "worst_month_pct": -29.1,
+    "ruined_at": null,
+    "trades": 199,
+    "win_pct": 47.0
+   },
+   "2": {
+    "cagr_pct": 191.7,
+    "geo_month_pct": 9.28,
+    "max_dd_pct": 83.8,
+    "worst_month_pct": -53.1,
+    "ruined_at": null,
+    "trades": 199,
+    "win_pct": 47.0
+   },
+   "3": {
+    "cagr_pct": 195.1,
+    "geo_month_pct": 9.39,
+    "max_dd_pct": 95.3,
+    "worst_month_pct": -72.3,
+    "ruined_at": null,
+    "trades": 199,
+    "win_pct": 47.0
+   },
+   "5": {
+    "cagr_pct": 21.9,
+    "geo_month_pct": 1.66,
+    "max_dd_pct": 99.9,
+    "worst_month_pct": -93.7,
+    "ruined_at": null,
+    "trades": 199,
+    "win_pct": 47.0
+   }
+  },
+  "oracle стоп 20% трейл": {
+   "1": {
+    "cagr_pct": 124.8,
+    "geo_month_pct": 6.95,
+    "max_dd_pct": 74.0,
+    "worst_month_pct": -39.1,
+    "ruined_at": null,
+    "trades": 81,
+    "win_pct": 51.0
+   },
+   "2": {
+    "cagr_pct": 209.7,
+    "geo_month_pct": 9.83,
+    "max_dd_pct": 94.2,
+    "worst_month_pct": -66.4,
+    "ruined_at": null,
+    "trades": 81,
+    "win_pct": 51.0
+   },
+   "3": {
+    "cagr_pct": 202.4,
+    "geo_month_pct": 9.61,
+    "max_dd_pct": 99.2,
+    "worst_month_pct": -84.3,
+    "ruined_at": null,
+    "trades": 81,
+    "win_pct": 51.0
+   }
+  }
+ }
+}
