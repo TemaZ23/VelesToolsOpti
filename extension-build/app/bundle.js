@@ -136215,6 +136215,20 @@ const { Text: ru } = cr,
     },
   },
   Mb = new Map(),
+  // The in-memory mirror of the cache is bounded (least recently used out): results with hundreds of
+  // thousands of deals otherwise filled the page's memory on long runs (2000+ backtests) and crashed
+  // it. Evicted results stay in IndexedDB and are read back on demand. Without IndexedDB the mirror is
+  // the only copy and is kept whole.
+  vtMbState = { deals: 0, limit: 3e5 },
+  vtMbCount = (e) => 1 + (e && Array.isArray(e.deals) ? e.deals.length : 0),
+  vtMbSet = (e, t) => {
+    const r = Mb.get(e);
+    if ((r && ((vtMbState.deals -= vtMbCount(r)), Mb.delete(e)), Mb.set(e, t), (vtMbState.deals += vtMbCount(t)), OE()))
+      for (const [n, a] of Mb) {
+        if (vtMbState.deals <= vtMbState.limit || Mb.size <= 1) break;
+        Mb.delete(n), (vtMbState.deals -= vtMbCount(a));
+      }
+  },
   HX = (e, t = Date.now()) => t - e.savedAt <= (e.periodOpen ? hft : fft),
   $B = async (e, t) => {
     if (!OE()) return null;
@@ -136231,16 +136245,16 @@ const { Text: ru } = cr,
   },
   pft = async (e) => {
     const t = Mb.get(e);
-    if (t) return HX(t) ? t : null;
+    if (t) return HX(t) ? (vtMbSet(e, t), t) : null;
     const r = await $B("readonly", (n) => n.get(e));
-    return r && HX(r) ? (Mb.set(e, r), r) : null;
+    return r && HX(r) ? (vtMbSet(e, r), r) : null;
   },
   gft = async (e) => {
-    Mb.set(e.key, e), await $B("readwrite", (t) => t.put(e));
+    vtMbSet(e.key, e), await $B("readwrite", (t) => t.put(e));
   },
   VX = async () => (await $B("readonly", (t) => t.count())) ?? Mb.size,
   mft = async () => {
-    Mb.clear(), await M4(Ehe);
+    Mb.clear(), (vtMbState.deals = 0), await M4(Ehe);
   },
   yft = (e) => {
     const t = Date.parse(e);
