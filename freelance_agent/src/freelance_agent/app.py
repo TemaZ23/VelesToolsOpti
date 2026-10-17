@@ -6,11 +6,13 @@ from dataclasses import dataclass
 
 import anthropic
 import httpx2 as httpx
+from claude_agent_sdk import query
 
 from . import fx
 from .agents.brain import Brain
 from .agents.executor import Executor, QueryFn
 from .budget import BudgetGuard
+from .claude_client import make_client
 from .config import Secrets, Settings
 from .db import Store
 from .llm import LLM
@@ -63,11 +65,12 @@ def build(
 ) -> App:
     store = store or Store(settings.db_path)
     http = http or make_http()
-    client = anthropic_client or anthropic.AsyncAnthropic(api_key=secrets.anthropic_api_key)
+    client = anthropic_client or make_client(secrets.anthropic_api_key, secrets.anthropic_workspace_id)
     guard = BudgetGuard(store, settings.budget)
     llm = LLM(client, store, guard, settings.models.server_side_fallback)
     brain = Brain(llm, settings)
-    executor = Executor(settings, store, guard, query_fn) if query_fn else Executor(settings, store, guard)
+    executor = Executor(settings, store, guard, query_fn or query,
+                        workspace_id=secrets.anthropic_workspace_id)
     freelancer = FreelancerClient(http, secrets.freelancer_oauth_token)
     telegram = None
     if settings.telegram.enabled and secrets.telegram_bot_token:

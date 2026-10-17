@@ -187,6 +187,8 @@ class Settings(BaseModel):
 
 class Secrets(BaseModel):
     anthropic_api_key: str | None = None
+    # Needed when the API key is not scoped to a workspace (organization-level key).
+    anthropic_workspace_id: str | None = None
     telegram_bot_token: str | None = None
     freelancer_oauth_token: str | None = None
 
@@ -194,6 +196,7 @@ class Secrets(BaseModel):
     def from_env(cls) -> Secrets:
         return cls(
             anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY") or None,
+            anthropic_workspace_id=os.environ.get("ANTHROPIC_WORKSPACE_ID") or None,
             telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN") or None,
             freelancer_oauth_token=os.environ.get("FREELANCER_OAUTH_TOKEN") or None,
         )

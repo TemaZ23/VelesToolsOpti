@@ -92,3 +92,20 @@ def test_auth_and_outage_errors_are_not_blamed_on_the_job(tmp_path, fake_claude)
     with pytest.raises(LLMUnavailable, match="401"):
         asyncio.run(brain.assess(JOB, 1))
     assert store.llm_spend() == 0
+
+
+def test_unscoped_key_is_a_setup_problem_not_a_job_failure(tmp_path, fake_claude):
+    import httpx2 as httpx
+
+    from freelance_agent.llm import LLMUnavailable
+
+    def not_scoped(request):
+        return httpx.Response(400, json={"type": "error", "error": {
+            "type": "invalid_request_error",
+            "message": "This API key is not scoped to a workspace, so this request must include "
+                       "the anthropic-workspace-id header with the ID of the workspace to use."}})
+
+    fake_claude.handler = not_scoped
+    _, _, brain = setup(tmp_path, fake_claude)
+    with pytest.raises(LLMUnavailable, match="workspace"):
+        asyncio.run(brain.assess(JOB, 1))

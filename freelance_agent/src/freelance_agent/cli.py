@@ -17,10 +17,12 @@ import anthropic
 from . import prefilter
 from .agents.executor import sandbox_problem
 from .app import build, build_sources
-from .budget import BudgetGuard, format_report
+from .budget import BudgetExceeded, BudgetGuard, format_report
+from .claude_client import WORKSPACE_HELP, make_client, needs_workspace
 from .config import Secrets, Settings, default_home, load_dotenv, load_settings
 from .db import Store
 from .economics import income_tax, platform_fee, record_payment, to_usd
+from .llm import LLMError
 from .models import Job, JobStatus
 from .setup_wizard import Answers, render_config, run_setup
 from .sources.base import make_http
@@ -86,13 +88,16 @@ async def cmd_check(args: argparse.Namespace) -> None:
 
     report(bool(secrets.anthropic_api_key), "ANTHROPIC_API_KEY is set")
     if secrets.anthropic_api_key:
-        client = anthropic.AsyncAnthropic(api_key=secrets.anthropic_api_key)
+        client = make_client(secrets.anthropic_api_key, secrets.anthropic_workspace_id)
         for model in sorted({settings.models.triage, settings.models.writer, settings.models.executor}):
             try:
                 await client.models.retrieve(model)  # free call
                 report(True, f"model {model} available")
             except anthropic.APIStatusError as e:
                 report(False, f"model {model}: {e.status_code} {e.message}")
+                if needs_workspace(str(e.message)):
+                    print("     -> " + WORKSPACE_HELP)
+                    break
         await client.close()
 
     http = make_http()
@@ -243,9 +248,15 @@ async def cmd_smoke_llm(args: argparse.Namespace) -> None:
                               "из каталога (около 500 позиций, 20 страниц) и сохраняет в CSV.",
                   budget_max=5000, currency="RUB")
         job_id, _ = store.upsert_job(job)
-        a = await app.brain.assess(job, job_id)
+        try:
+            a = await app.brain.assess(job, job_id)
+        except (LLMError, BudgetExceeded) as e:
+            print(f"FAIL {e}")
+            if needs_workspace(str(e)):
+                print("     -> " + WORKSPACE_HELP)
+            sys.exit(1)
         print(a.model_dump_json(indent=2))
-        print(f"cost: ${store.llm_spend():.5f}")
+        print(f"OK   cost: ${store.llm_spend():.5f}")
     finally:
         await app.aclose()
 

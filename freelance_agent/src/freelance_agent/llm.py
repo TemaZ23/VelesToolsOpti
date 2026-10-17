@@ -75,7 +75,8 @@ class LLM:
                 anthropic.RateLimitError, anthropic.InternalServerError) as e:
             raise LLMUnavailable(f"Claude API {e.status_code}: {e.message}") from e
         except anthropic.APIStatusError as e:
-            if e.status_code >= 500 or e.status_code in (402, 529):
+            # Billing, overload and workspace misconfiguration are not the job's fault.
+            if e.status_code >= 500 or e.status_code in (402, 529) or "workspace" in str(e.message):
                 raise LLMUnavailable(f"Claude API {e.status_code}: {e.message}") from e
             raise LLMError(f"{purpose}: Claude API {e.status_code}: {e.message}") from e
         except anthropic.APIConnectionError as e:

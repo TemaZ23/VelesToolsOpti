@@ -13,6 +13,7 @@ import httpx2 as httpx
 import yaml
 
 from . import fx
+from .claude_client import make_client, needs_workspace
 from .config import Settings
 from .notify.telegram import Telegram, TelegramError
 
@@ -22,7 +23,7 @@ PCHEL = {"name": "pchel", "url": "https://pchel.net/rss/"}
 Ask = Callable[[str, str], str]
 AskSecret = Callable[[str], str]
 Print = Callable[[str], None]
-KeyCheck = Callable[[str], Awaitable[str | None]]
+KeyCheck = Callable[[str, str | None], Awaitable[str | None]]
 
 
 @dataclass
@@ -85,9 +86,9 @@ def write_env(path: Path, values: dict[str, str]) -> None:
     path.chmod(0o600)
 
 
-async def check_anthropic_key(key: str) -> str | None:
+async def check_anthropic_key(key: str, workspace_id: str | None = None) -> str | None:
     """None if the key works (free Models API call), else the error."""
-    client = anthropic.AsyncAnthropic(api_key=key, max_retries=1)
+    client = make_client(key, workspace_id, max_retries=1)
     try:
         await client.models.retrieve("claude-haiku-5-5")
         return None
@@ -135,10 +136,18 @@ async def run_setup(home: Path, ask: Ask, ask_secret: AskSecret, out: Print,
         key = ask_secret("ANTHROPIC_API_KEY (Enter — пропустить и вписать позже в .env): ").strip()
         if not key:
             break
-        problem = await check_key(key)
+        workspace = os.environ.get("ANTHROPIC_WORKSPACE_ID") or None
+        problem = await check_key(key, workspace)
+        if problem and needs_workspace(problem):
+            out("  этот ключ создан на уровне организации, нужен ID workspace "
+                "(консоль Anthropic: Settings -> Workspaces, начинается с wrkspc_)")
+            workspace = ask_secret("ANTHROPIC_WORKSPACE_ID: ").strip() or None
+            problem = await check_key(key, workspace) if workspace else problem
         if problem is None:
             out("  ключ работает")
             env["ANTHROPIC_API_KEY"] = key
+            if workspace:
+                env["ANTHROPIC_WORKSPACE_ID"] = workspace
             break
         out(f"  ключ не принят: {problem}")
 

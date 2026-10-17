@@ -93,11 +93,12 @@ def sandbox_problem() -> str | None:
 
 class Executor:
     def __init__(self, settings: Settings, store: Store, guard: BudgetGuard,
-                 query_fn: QueryFn = query) -> None:
+                 query_fn: QueryFn = query, workspace_id: str | None = None) -> None:
         self.s = settings
         self.store = store
         self.guard = guard
         self.query_fn = query_fn
+        self.workspace_id = workspace_id
 
     def workspace(self, job_id: int) -> Path:
         ws = self.s.workspaces_dir / f"job-{job_id}"
@@ -129,6 +130,10 @@ class Executor:
                 "network": {"allowedDomains": list(ex.allowed_domains)},
                 "enableWeakerNestedSandbox": ex.weaker_nested_sandbox,
             }
+        # Platform credentials stay out of the agent's process environment.
+        env = {"TELEGRAM_BOT_TOKEN": "", "FREELANCER_OAUTH_TOKEN": ""}
+        if self.workspace_id:
+            env["ANTHROPIC_CUSTOM_HEADERS"] = f"anthropic-workspace-id: {self.workspace_id}"
         return ClaudeAgentOptions(
             cwd=str(ws),
             model=self.s.models.executor,
@@ -141,8 +146,7 @@ class Executor:
             setting_sources=[],
             system_prompt={"type": "preset", "preset": "claude_code", "append": EXECUTOR_APPEND},
             sandbox=sandbox,  # type: ignore[arg-type]
-            # Platform credentials stay out of the agent's process environment.
-            env={"TELEGRAM_BOT_TOKEN": "", "FREELANCER_OAUTH_TOKEN": ""},
+            env=env,
             resume=resume,
         )
 

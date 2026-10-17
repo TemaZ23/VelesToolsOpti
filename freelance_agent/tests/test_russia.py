@@ -136,11 +136,14 @@ def test_setup_wizard_end_to_end(tmp_path):
 
     answers = iter(["Артём", "Python-разработчик", "Python, парсинг", "Делаю парсеры.",
                     "3000", "1500", "д", "н", "д", "н", "д"])
-    secrets = iter(["sk-ant-test", "123:tok"])
+    secrets = iter(["sk-ant-test", "wrkspc_01abc", "123:tok"])
     checked = []
 
-    async def check_key(key: str) -> str | None:
-        checked.append(key)
+    async def check_key(key: str, workspace: str | None) -> str | None:
+        checked.append((key, workspace))
+        if workspace is None:  # an organization-level key, as the real API answers it
+            return ("400: This API key is not scoped to a workspace, so this request must include "
+                    "the anthropic-workspace-id header")
         return None
 
     async def run():
@@ -150,10 +153,46 @@ def test_setup_wizard_end_to_end(tmp_path):
 
     config = asyncio.run(run())
     s = Settings.model_validate(yaml.safe_load(config.read_text()))
-    assert checked == ["sk-ant-test"]
+    assert checked == [("sk-ant-test", None), ("sk-ant-test", "wrkspc_01abc")]
     assert s.telegram.chat_id == 555 and s.profile.name == "Артём"
     assert s.profile.min_project_usd == pytest.approx(3000 / 83.6177, abs=0.01)
     assert s.economics.tax_percent == 6 and s.sources.flru.enabled and not s.sources.freelancer.enabled
     env = (tmp_path / ".env").read_text()
     assert "ANTHROPIC_API_KEY=sk-ant-test" in env and "TELEGRAM_BOT_TOKEN=123:tok" in env
+    assert "ANTHROPIC_WORKSPACE_ID=wrkspc_01abc" in env
     assert sent and sent[-1]["chat_id"] == 555 and "подключён" in sent[-1]["text"]
+
+
+def test_workspace_id_reaches_the_api_and_the_executor(tmp_path, monkeypatch):
+    from freelance_agent.agents.executor import Executor
+    from freelance_agent.budget import BudgetGuard
+    from freelance_agent.claude_client import make_client
+
+    from .conftest import make_settings
+
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"type": "model", "id": "claude-haiku-5-5",
+                                         "display_name": "Claude Haiku 5.5",
+                                         "created_at": "2026-01-01T00:00:00Z"})
+
+    async def run() -> None:
+        import anthropic
+
+        monkeypatch.setattr(anthropic, "DEFAULT_MAX_RETRIES", 0, raising=False)
+        client = make_client("sk-ant-test", "wrkspc_01abc")
+        client._client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        await client.models.retrieve("claude-haiku-5-5")
+
+    asyncio.run(run())
+    assert seen[0].headers["anthropic-workspace-id"] == "wrkspc_01abc"
+
+    settings = make_settings(tmp_path)
+    store = make_store()
+    ex = Executor(settings, store, BudgetGuard(store, settings.budget), workspace_id="wrkspc_01abc")
+    opts = ex.options(tmp_path, 1.0, None)
+    assert opts.env["ANTHROPIC_CUSTOM_HEADERS"] == "anthropic-workspace-id: wrkspc_01abc"
+    assert "ANTHROPIC_CUSTOM_HEADERS" not in Executor(settings, store, BudgetGuard(store, settings.budget)) \
+        .options(tmp_path, 1.0, None).env
