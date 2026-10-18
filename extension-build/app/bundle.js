@@ -136277,25 +136277,48 @@ const { Text: ru } = cr,
   VX = async () => (await $B("readonly", (t) => t.count())) ?? Mb.size,
   // Clears the backtest results only; the run history stays.
   mft = async () => {
-    Mb.clear(), (vtMbState.deals = 0), (await $B("readwrite", (e) => e.clear())) === null && OE() && (await M4(Ehe));
+    if ((Mb.clear(), (vtMbState.deals = 0), OE() && (await $B("readwrite", (e) => e.clear())) === null))
+      throw new Error("IndexedDB недоступна");
   },
-  // All records of a store, read with a cursor (the whole store can be large).
-  vtReadAll = async (e) => {
-    if (!OE()) return e === r2 ? [...Mb.values()] : [];
-    try {
-      const t = await cS(vft);
-      return await new Promise((r) => {
-        const n = [],
-          a = t.transaction(e, "readonly").objectStore(e).openCursor();
-        (a.onsuccess = () => {
-          const i = a.result;
-          i ? (n.push(i.value), i.continue()) : r(n);
-        }),
-          (a.onerror = () => r(n));
-      });
-    } catch (t) {
-      return console.warn("[Optimizer] IndexedDB недоступна", t), e === r2 ? [...Mb.values()] : [];
+  // Calls `t` for every record of store `e` (cursor: the store is never held in memory at once).
+  vtEachRecord = async (e, t) => {
+    if (!OE()) {
+      if (e === r2) for (const n of Mb.values()) t(n);
+      return;
     }
+    const r = await cS(vft);
+    await new Promise((n, a) => {
+      const i = r.transaction(e, "readonly"),
+        o = i.objectStore(e).openCursor();
+      (o.onsuccess = () => {
+        const l = o.result;
+        l ? (t(l.value), l.continue()) : n();
+      }),
+        (o.onerror = () => a(o.error ?? new Error("Не удалось прочитать память"))),
+        (i.onabort = () => a(i.error ?? new Error("Чтение памяти прервано")));
+    });
+  },
+  vtReadAll = async (e) => {
+    const t = [];
+    return await vtEachRecord(e, (r) => t.push(r)), t;
+  },
+  vtGetMany = async (e, t) => {
+    if (!OE() || t.length === 0) return t.map((n) => (e === r2 ? (Mb.get(n) ?? null) : null));
+    const r = await cS(vft);
+    return new Promise((n) => {
+      const a = r.transaction(e, "readonly").objectStore(e),
+        i = t.map(() => null);
+      let o = t.length;
+      t.forEach((l, c) => {
+        const u = a.get(l);
+        (u.onsuccess = () => {
+          (i[c] = u.result ?? null), --o === 0 && n(i);
+        }),
+          (u.onerror = () => {
+            --o === 0 && n(i);
+          });
+      });
+    });
   },
   vtPutAll = async (e, t) => {
     if (!OE() || t.length === 0) return;
@@ -136303,63 +136326,114 @@ const { Text: ru } = cr,
     await new Promise((n, a) => {
       const i = r.transaction(e, "readwrite"),
         o = i.objectStore(e);
-      for (const s of t) o.put(s);
-      (i.oncomplete = () => n()), (i.onerror = () => a(i.error ?? new Error("Не удалось записать в IndexedDB")));
+      for (const l of t) o.put(l);
+      (i.oncomplete = () => n()),
+        (i.onerror = () => a(i.error ?? new Error("Не удалось записать в IndexedDB"))),
+        (i.onabort = () => a(i.error ?? new Error("Запись в IndexedDB прервана")));
     });
   },
-  // Memory file: {format, version, exportedAt, results: [...backtests], history: [...runs]}, gzip when
-  // the browser can compress. Loading merges it: a record is replaced only by a newer one.
+  // Memory file: NDJSON — a header line {format, version, exportedAt}, then {"r": backtest} and
+  // {"h": run} lines; gzip when the browser can compress. Written and read line by line, so a large
+  // memory never sits in JS memory whole.
   vtMemoryFormat = "veles-optimizer-memory",
   vtExportMemory = async () => {
-    const e = (await vtReadAll(r2)).filter((a) => HX(a)),
-      t = await vtReadAll(vtHistoryStore),
-      r = ['{"format":"' + vtMemoryFormat + '","version":1,"exportedAt":' + JSON.stringify(new Date().toISOString()) + ',"results":['];
-    e.forEach((a, i) => r.push((i ? "," : "") + JSON.stringify(a))), r.push('],"history":[');
-    t.forEach((a, i) => r.push((i ? "," : "") + JSON.stringify(a))), r.push("]}");
-    let n = new Blob(r, { type: "application/json" }),
-      a = "json";
+    const e = [JSON.stringify({ format: vtMemoryFormat, version: 2, exportedAt: new Date().toISOString() }) + "\n"];
+    let t = new Blob([], { type: "application/x-ndjson" }),
+      r = 0,
+      n = 0;
+    const a = () => {
+      (t = new Blob([t, ...e], { type: "application/x-ndjson" })), (e.length = 0);
+    };
+    await vtEachRecord(r2, (s) => {
+      HX(s) && (e.push(JSON.stringify({ r: s }) + "\n"), (r += 1), e.length >= 200 && a());
+    }),
+      await vtEachRecord(vtHistoryStore, (s) => {
+        e.push(JSON.stringify({ h: s }) + "\n"), (n += 1), e.length >= 50 && a();
+      }),
+      a();
+    let i = t,
+      o = "ndjson";
     typeof CompressionStream == "function" &&
-      ((n = await new Response(n.stream().pipeThrough(new CompressionStream("gzip"))).blob()), (a = "json.gz"));
-    const i = URL.createObjectURL(n),
-      o = document.createElement("a");
+      ((i = await new Response(t.stream().pipeThrough(new CompressionStream("gzip"))).blob()), (o = "ndjson.gz"));
+    const l = URL.createObjectURL(i),
+      c = document.createElement("a");
     return (
-      (o.href = i),
-      (o.download = `veles-optimizer-memory-${new Date().toISOString().slice(0, 10)}.${a}`),
-      document.body.appendChild(o),
-      o.click(),
-      o.remove(),
-      setTimeout(() => URL.revokeObjectURL(i), 6e4),
-      { results: e.length, history: t.length }
+      (c.href = l),
+      (c.download = `veles-optimizer-memory-${new Date().toISOString().slice(0, 10)}.${o}`),
+      document.body.appendChild(c),
+      c.click(),
+      c.remove(),
+      setTimeout(() => URL.revokeObjectURL(l), 6e4),
+      { results: r, history: n }
     );
+  },
+  // Merge rule: a backtest with deals is never replaced by one without them; otherwise the newer wins.
+  vtMergeResults = async (e, t) => {
+    const r = e.filter((i) => i && typeof i.key == "string" && typeof i.savedAt == "number" && i.metrics && HX(i));
+    t.skipped += e.length - r.length;
+    const n = await vtGetMany(
+        r2,
+        r.map((i) => i.key),
+      ),
+      a = [];
+    r.forEach((i, o) => {
+      const l = n[o];
+      if (!l) {
+        (t.added += 1), a.push(i);
+        return;
+      }
+      const c = Array.isArray(i.deals),
+        u = Array.isArray(l.deals);
+      (u && !c) || (c === u && l.savedAt >= i.savedAt) ? (t.skipped += 1) : ((t.updated += 1), a.push(i));
+    }),
+      await vtPutAll(r2, a);
+    for (const i of a) Mb.has(i.key) && vtMbSet(i.key, i);
   },
   vtImportMemory = async (e) => {
     const t = new Uint8Array(await e.slice(0, 2).arrayBuffer()),
-      r =
-        t[0] === 31 && t[1] === 139
-          ? typeof DecompressionStream == "function"
-            ? await new Response(e.stream().pipeThrough(new DecompressionStream("gzip"))).text()
-            : (() => {
-                throw new Error("браузер не умеет распаковывать .gz — загрузите несжатый .json");
-              })()
-          : await e.text(),
-      n = JSON.parse(r);
-    if (!n || n.format !== vtMemoryFormat || !Array.isArray(n.results)) throw new Error("это не файл памяти оптимизатора");
-    const a = new Map((await vtReadAll(r2)).map((c) => [c.key, c])),
-      i = [];
-    let o = 0,
-      l = 0;
-    for (const c of n.results) {
-      const u = c && typeof c.key == "string" && typeof c.savedAt == "number" && c.metrics && HX(c) ? a.get(c.key) : null;
-      if (!(c && typeof c.key == "string" && typeof c.savedAt == "number" && c.metrics && HX(c)) || (u && u.savedAt >= c.savedAt)) {
-        l += 1;
-        continue;
+      r = t[0] === 31 && t[1] === 139;
+    if (r && typeof DecompressionStream != "function")
+      throw new Error("браузер не умеет распаковывать .gz — загрузите несжатый файл");
+    const n = (r ? e.stream().pipeThrough(new DecompressionStream("gzip")) : e.stream())
+        .pipeThrough(new TextDecoderStream())
+        .getReader(),
+      a = { added: 0, updated: 0, skipped: 0, history: 0 };
+    let i = "",
+      o = !1,
+      l = [],
+      c = [];
+    const u = async () => {
+        l.length > 0 && (await vtMergeResults(l, a), (l = [])),
+          c.length > 0 && (await vtPutAll(vtHistoryStore, c), (a.history += c.length), (c = []));
+      },
+      d = async (f) => {
+        if (!f.trim()) return;
+        let h;
+        try {
+          h = JSON.parse(f);
+        } catch {
+          throw new Error(o ? "файл памяти повреждён" : "это не файл памяти оптимизатора");
+        }
+        if (!o) {
+          if (!h || h.format !== vtMemoryFormat) throw new Error("это не файл памяти оптимизатора");
+          o = !0;
+          return;
+        }
+        h && h.r ? l.push(h.r) : h && h.h && typeof h.h.id == "string" && h.h.result && c.push(h.h),
+          (l.length >= 200 || c.length >= 50) && (await u());
+      };
+    for (;;) {
+      const { value: f, done: h } = await n.read();
+      if (h) break;
+      i += f;
+      let v;
+      for (; (v = i.indexOf("\n")) >= 0; ) {
+        const g = i.slice(0, v);
+        (i = i.slice(v + 1)), await d(g);
       }
-      u || (o += 1), i.push(c);
     }
-    await vtPutAll(r2, i);
-    for (const c of i) Mb.has(c.key) && vtMbSet(c.key, c);
-    const h = Array.isArray(n.history) ? n.history.filter((c) => c && typeof c.id == "string" && c.result) : [];
-    return await vtPutAll(vtHistoryStore, h), { added: o, updated: i.length - o, skipped: l, history: h.length };
+    if ((await d(i), await u(), !o)) throw new Error("файл пустой");
+    return a;
   },
   // Run history: every finished run is kept (VT_HISTORY_PER_GOAL newest per tab) besides the last
   // result in localStorage, so a new run does not wipe the previous one.
@@ -136383,6 +136457,16 @@ const { Text: ru } = cr,
       console.warn("[Optimizer] Не удалось сохранить запуск в историю", t);
     }
   },
+  // A later change of a finished run (stress test, re-sorted leaderboard) goes into its history entry too.
+  vtHistoryTouch = async (e) => {
+    try {
+      const t = e.config && e.config.goal ? e.config.goal : "improve",
+        [r] = await vtGetMany(vtHistoryStore, [`${t}:${e.finishedAt}`]);
+      r && (await vtPutAll(vtHistoryStore, [{ ...r, result: e }]));
+    } catch (t) {
+      console.warn("[Optimizer] Не удалось обновить запуск в истории", t);
+    }
+  },
   vtHistoryList = async (e) =>
     (await vtReadAll(vtHistoryStore)).filter((t) => t.goal === e).sort((t, r) => r.finishedAt - t.finishedAt),
   vtDeleteHistory = async (e) => {
@@ -136392,7 +136476,7 @@ const { Text: ru } = cr,
       const n = t.transaction(vtHistoryStore, "readwrite"),
         a = n.objectStore(vtHistoryStore);
       for (const i of e) a.delete(i);
-      (n.oncomplete = () => r()), (n.onerror = () => r());
+      (n.oncomplete = () => r()), (n.onerror = () => r()), (n.onabort = () => r());
     });
   },
   yft = (e) => {
@@ -136422,6 +136506,8 @@ const { Text: ru } = cr,
   },
   vtCombos = (e) => vtPlural(e, ["комбинация", "комбинации", "комбинаций"]),
   vtVariants = (e) => `${e} ${vtPlural(e, ["вариант", "варианта", "вариантов"])}`,
+  vtFailedFitness = (e) =>
+    !!e && Array.isArray(e.violations) && e.violations.some((t) => typeof t == "string" && t.startsWith("Бэктест не выполнен")),
   vtFormatCount = (e) =>
     Number.isFinite(e) && e < 1e12
       ? Math.round(e).toLocaleString("ru-RU")
@@ -136481,11 +136567,13 @@ const { Text: ru } = cr,
   },
   xft = (e) => {
     const vtKey = vtStoreKey(n2, e.config && e.config.goal);
-    if (qa(vtKey, JSON.stringify(e))) return !0;
-    const r = [...e.archive]
-      .sort((n, a) => u0(n.fitness, a.fitness))
-      .filter((n, a) => a < 100 || n.isBase || n.validation);
-    return qa(vtKey, JSON.stringify({ ...e, archive: r }));
+    // A large archive (full enumeration) does not fit localStorage: skip the doomed full write.
+    if (e.archive.length <= 300 && qa(vtKey, JSON.stringify(e))) return !0;
+    const vtKeep = new Set([...(e.validationKeys ?? []), ...(e.searchPath ?? []).map((n) => n.key), e.bestKey].filter(Boolean)),
+      r = [...e.archive]
+        .sort((n, a) => u0(n.fitness, a.fitness))
+        .filter((n, a) => a < 100 || n.isBase || n.validation || vtKeep.has(n.key));
+    return qa(vtKey, JSON.stringify({ ...e, archive: r, knownKeys: e.archive.length > 300 ? r.map((n) => n.key) : e.knownKeys }));
   },
   FL = (vtKind) => {
     $4(vtStoreKey(n2, vtKind));
@@ -136518,7 +136606,7 @@ const { Text: ru } = cr,
   Mhe = (e, vtHistory = !1) => {
     qa(vtStoreKey(IB, e.config && e.config.goal), JSON.stringify(e)) ||
       console.warn("[Optimizer] Не удалось сохранить итог оптимизации"),
-      vtHistory && vtHistoryAdd(e);
+      e.finishedAt && (vtHistory ? vtHistoryAdd(e) : vtHistoryTouch(e));
   },
   _ft = (vtKind) => {
     $4(vtStoreKey(IB, vtKind));
@@ -136902,7 +136990,16 @@ class Nf {
     if (n === "baseline" || n === "preparing")
       (f = l), (h = Math.max(0, l - this.phaseSymbolsDone) + vtVariants * s + c * u + d);
     else if (n === "search" && vtPattern)
-      h = (this.finishRequested ? 0 : Math.max(0, vtVariants - this.searchEvaluations)) * s + c * u + d;
+      h =
+        (this.finishRequested
+          ? 0
+          : this.vtGrid && this.vtGridProgress && this.vtGridProgress.visited > 0
+            ? Math.max(0, this.vtGridProgress.total - this.vtGridProgress.visited) *
+              Math.min(1, this.searchEvaluations / this.vtGridProgress.visited)
+            : Math.max(0, vtVariants - this.searchEvaluations)) *
+          s +
+        c * u +
+        d;
     else if (n === "search") {
       const b = Math.max(0, f - this.generationDone),
         S = this.finishRequested ? 0 : Math.max(0, r.genetic.generations - (this.generation + 1));
@@ -136939,7 +137036,9 @@ class Nf {
         : n === "baseline"
           ? this.phaseSymbolsDone
           : vtPattern && n === "search"
-            ? this.searchEvaluations
+            ? this.vtGrid && this.vtGridProgress
+              ? this.vtGridProgress.visited
+              : this.searchEvaluations
             : this.generationDone,
       goal: r.goal ?? "improve",
       generationSize: f,
@@ -137494,6 +137593,8 @@ class Nf {
       (this.generationCacheHits = 0),
       (this.searchEvaluations = 0),
       (this.vtGridLogged = 0),
+      (this.vtGridProgress = null),
+      (this.vtUnmeasured = new Set()),
       this.log(
         "info",
         n
@@ -137519,7 +137620,9 @@ class Nf {
             let f = await this.evaluateGenome(l, t, this.config.constraints, d);
             c === this.baseKey && f.portfolio && ((this.references.search = vtReference(f)), (f = this.selfScore(f))),
               (u = this.createCandidate(l, c, f)),
-              this.archive.set(c, u),
+              // A variant with a failed backtest is not archived: a rerun retries it, and no
+              // guarantee or certificate is claimed while it stays unmeasured.
+              vtFailedFitness(f) ? this.vtUnmeasured.add(c) : (this.vtUnmeasured.delete(c), this.archive.set(c, u)),
               this.knownKeys.add(c),
               (this.generationDone += 1),
               this.logCandidate(u),
@@ -137614,7 +137717,8 @@ class Nf {
   }
   // Certificate (src/patternSearch.mjs psCertify): every other value of every parameter of the winner.
   async vtRunCertificate(t, r) {
-    const n = VTPS.psCertifyCost(this.space);
+    const n = VTPS.psCertifyCost(this.space),
+      vtFailedBefore = this.vtUnmeasured ? this.vtUnmeasured.size : 0;
     this.replaying ||
       this.log(
         "info",
@@ -137635,6 +137739,8 @@ class Nf {
       onEvent: (o) => this.vtOnCertifyEvent(o),
     });
     this.vtCertifying = !1;
+    const vtFailed = (this.vtUnmeasured ? this.vtUnmeasured.size : 0) > vtFailedBefore;
+    vtFailed && a.certified && ((a.certified = !1), (a.stoppedBy = "unmeasured"));
     const i = {
       certified: a.certified,
       passes: a.passes,
@@ -137648,7 +137754,7 @@ class Nf {
         a.certified ? "success" : "warning",
         a.certified
           ? `✅ Сертификат: в лучшем варианте ни одно изменение одного параметра на любое разрешённое значение не улучшает оценку больше чем на ${VTPS.PS_DEFAULTS.margin} (проверено ${vtVariants(a.checked)} в последнем проходе${a.moves.length ? `, по пути найдено улучшений: ${a.moves.length}` : ""}).`
-          : `⚠️ Сертификат не завершён: ${a.stoppedBy === "stop" ? "остановлен" : `за ${a.passes} ${vtPlural(a.passes, ["проход", "прохода", "проходов"])} улучшения всё ещё находятся`}, найдено улучшений: ${a.moves.length}. Запустите ещё раз — проверенное возьмётся из памяти.`,
+          : `⚠️ Сертификат не завершён: ${a.stoppedBy === "stop" ? "остановлен" : a.stoppedBy === "unmeasured" ? "часть вариантов не удалось проверить (бэктест не выполнен)" : `за ${a.passes} ${vtPlural(a.passes, ["проход", "прохода", "проходов"])} улучшения всё ещё находятся`}, найдено улучшений: ${a.moves.length}. Запустите ещё раз — проверенное возьмётся из памяти.`,
       );
     const o = a.best && a.best.key !== t.best.key;
     return {
@@ -137666,7 +137772,7 @@ class Nf {
             },
           ]
         : t.path,
-      evaluations: t.evaluations + a.evaluations,
+      evaluations: Math.max(t.evaluations, this.searchEvaluations),
       vtCertificate: i,
     };
   }
@@ -137825,7 +137931,7 @@ class Nf {
         bestKey: t.best.key,
         baseScore: t.base.score,
         bestScore: t.best.score,
-        grid: t.grid ?? null,
+        grid: t.grid ? { ...t.grid, unmeasured: this.vtUnmeasured ? this.vtUnmeasured.size : 0 } : null,
         certificate: t.vtCertificate ?? null,
       });
     const r =
@@ -137849,10 +137955,15 @@ class Nf {
         ),
       t.grid &&
         t.stoppedBy === "complete" &&
-        this.log(
-          "success",
-          `✅ Гарантия перебора: проверены все ${t.grid.total} ${vtCombos(t.grid.total)} (разных после согласования параметров — ${t.grid.unique}); на монетах и периоде поиска лучше выбранного нет ни одной.`,
-        ),
+        (this.vtUnmeasured && this.vtUnmeasured.size > 0
+          ? this.log(
+              "warning",
+              `⚠️ Перебор пройден, но ${vtVariants(this.vtUnmeasured.size)} не удалось проверить (бэктест не выполнен) — гарантии нет. Запустите оптимизацию ещё раз с теми же настройками: проверенное возьмётся из памяти, повторятся только неудачные.`,
+            )
+          : this.log(
+              "success",
+              `✅ Гарантия перебора: проверены все ${t.grid.total} ${vtCombos(t.grid.total)} (разных после согласования параметров — ${t.grid.unique}); на монетах и периоде поиска лучше выбранного нет ни одной.`,
+            )),
       this.callbacks.onLeaderboard(this.getLeaderboard()),
       this.saveStateNow();
   }
@@ -138492,12 +138603,13 @@ ${a.join(`
       label: `${ec(r)} · ${s}`,
       payload: l,
       costDays: zX(o.from, o.to),
-      existingBacktestId: this.inflight[c] ?? null,
+      existingBacktestId: this.inflight[c] ?? this.inflight[vtLegacyKey(l)] ?? null,
       onSubmitted: (b) => {
         (this.inflight[c] = b), (this.budgetDaysSpent += zX(o.from, o.to)), this.emitProgress(), this.saveStateSoon();
       },
     });
     delete this.inflight[c],
+      delete this.inflight[vtLegacyKey(l)],
       (this.backtestsRun += 1),
       (this.durationSamples = [...this.durationSamples.slice(-29), f.durationMs]);
     const h = fut(f.statistics, {
@@ -138777,8 +138889,15 @@ const U1 =
     const e = ba(vtAnchorKey);
     return e === "week" || e === "day" ? e : "month";
   },
+  vtAnchorListeners = new Set(),
+  // Shared by all tabs: every mounted optimizer tab re-dates its rolling period. Switching to "week"
+  // pins yesterday afresh (not an older month end left by a previous run).
   vtSetPeriodAnchor = (e) => {
-    qa(vtAnchorKey, e);
+    if ((qa(vtAnchorKey, e), e === "week")) {
+      const t = new Date();
+      t.setUTCDate(t.getUTCDate() - 1), qa(zL, JSON.stringify({ to: K1(t), savedAt: Date.now() }));
+    }
+    vtAnchorListeners.forEach((t) => t(e));
   },
   a2 = (e) => {
     const t = new Date();
@@ -138794,6 +138913,9 @@ const U1 =
     if (e === "since2020") return { from: "2020-01-01", to: K1(n) };
     const a = new Date(n),
       i = { "3y": 36, "1y": 12, "6m": 6, "3m": 3 }[e];
+    // Month anchor: whole calendar months ending at the last day of the previous month.
+    if (vtAnchor === "month")
+      return { from: K1(new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth() + 1 - i, 1))), to: K1(n) };
     return a.setUTCMonth(a.getUTCMonth() - i), a.setUTCDate(a.getUTCDate() + 1), { from: K1(a), to: K1(n) };
   },
   zft = (e, t) => {
@@ -138859,7 +138981,7 @@ const U1 =
       periodFrom: r.from,
       periodTo: r.to,
       portfolioTarget: "improveBoth",
-      genetic: { ...e.genetic, ...z$.portfolio.balanced, searchMethod: "pattern" },
+      genetic: { ...e.genetic, ...z$.portfolio.balanced, searchMethod: "pattern", vtCertify: !1 },
       scope: {
         ...e.scope,
         dcaIndents: !0,
@@ -139110,9 +139232,8 @@ const U1 =
     });
   },
   // End of rolling periods (see a2): stored per browser, applies to every optimizer tab.
-  vtAnchorControl = ({ disabled: e, onChange: t }) => {
-    const [r, n] = p.useState(vtPeriodAnchor());
-    return E.jsxs(or, {
+  vtAnchorControl = ({ disabled: e, value: r }) =>
+    E.jsxs(or, {
       align: "center",
       gap: 6,
       wrap: !0,
@@ -139122,9 +139243,7 @@ const U1 =
           size: "small",
           disabled: e,
           value: r,
-          onChange: (a) => {
-            vtSetPeriodAnchor(a), n(a), t && t(a);
-          },
+          onChange: (a) => vtSetPeriodAnchor(a),
           options: [
             { value: "month", label: "конец прошлого месяца" },
             { value: "week", label: "на неделю" },
@@ -139132,11 +139251,10 @@ const U1 =
           ],
         }),
         E.jsx(wn, {
-          text: "«Конец прошлого месяца» — все запуски в течение месяца проверяют одни и те же даты, поэтому повторные прогоны берутся из памяти и не тратят бэктесты. «На неделю» — конец закрепляется на 7 дней (как в 2.16). «Вчера» — самые свежие данные, но память срабатывает только в тот же день.",
+          text: "«Конец прошлого месяца» — все запуски в течение месяца проверяют одни и те же даты (целые календарные месяцы), поэтому повторные прогоны берутся из памяти и не тратят бэктесты. «На неделю» — конец закрепляется на 7 дней (как в 2.16). «Вчера» — самые свежие данные, но память срабатывает только в тот же день. Настройка общая для всех вкладок.",
         }),
       ],
-    });
-  },
+    }),
   vtHistorySummary = (e) => {
     const t = e.leaderboard ?? {},
       r = t.top && t.top[0],
@@ -139263,7 +139381,21 @@ const U1 =
         vtRunSession.engine && vtRunSession.engine !== te.current
           ? (n.warning(`Идёт прогон во вкладке «${vtRunSession.label}» — дождитесь окончания или остановите его`), !0)
           : !1;
-    const [vtHistoryOpen, vtSetHistoryOpen] = p.useState(!1);
+    const [vtHistoryOpen, vtSetHistoryOpen] = p.useState(!1),
+      [vtAnchor, vtSetAnchor] = p.useState(vtPeriodAnchor());
+    p.useEffect(() => {
+      // The period end is shared: every mounted tab re-dates its rolling period ("custom" stays, but
+      // a new form object still refreshes the memoized simple form).
+      const ce = (Ne) => {
+        vtSetAnchor(Ne),
+          s((nt) => {
+            if (nt.periodPreset === "custom") return { ...nt };
+            const lr = a2(nt.periodPreset);
+            return { ...nt, periodFrom: lr.from, periodTo: lr.to };
+          });
+      };
+      return vtAnchorListeners.add(ce), () => vtAnchorListeners.delete(ce);
+    }, []);
     p.useEffect(() => {
       vtRequestPersist(),
         ie(Cft()),
@@ -139630,7 +139762,7 @@ const U1 =
           U && (FL(vtKind), K(null));
           const nt = Vft({ ...ce, goal: vtKind }, { botId: ce.botId, botName: oe, ranges: C, botDeposit: ge }),
             vtPrep = vtPrepareRun(nt, g);
-          ce.periodPreset !== "custom" && Sft(ce.periodTo),
+          ce.periodPreset !== "custom" && vtPeriodAnchor() === "week" && Sft(ce.periodTo),
             L([]),
             A(null),
             F(null),
@@ -139807,7 +139939,11 @@ const U1 =
         if (vtGuard()) return;
         window.confirm(
           "Удалить из памяти все сохранённые бэктесты? Отменить нельзя — сначала можно сохранить память в файл. История запусков останется.",
-        ) && (await mft(), Y(0), n.success("Память бэктестов очищена"));
+        ) &&
+          (await mft().then(
+            () => (Y(0), n.success("Память бэктестов очищена")),
+            (ce) => n.error(`Не удалось очистить память: ${ce instanceof Error ? ce.message : String(ce)}`),
+          ));
       },
       vtExportClick = async () => {
         try {
@@ -139838,14 +139974,6 @@ const U1 =
               }
           }),
           ce.click();
-      },
-      // A new period end moves the dates of rolling presets ("custom" dates stay).
-      vtReanchor = () => {
-        s((ce) => {
-          if (ce.periodPreset === "custom") return ce;
-          const Ne = a2(ce.periodPreset);
-          return { ...ce, periodFrom: Ne.from, periodTo: Ne.to };
-        });
       },
       vtShowHistory = (ce) => {
         vtGuard() ||
@@ -140373,7 +140501,7 @@ const U1 =
                           { value: "6m", label: "6 мес" },
                         ],
                       }),
-                      E.jsx(vtAnchorControl, { disabled: mt, onChange: vtReanchor }),
+                      E.jsx(vtAnchorControl, { disabled: mt, value: vtAnchor }),
                       E.jsx(wn, {
                         text:
                           vtKind === "scalper"
@@ -140684,7 +140812,7 @@ const U1 =
                                           style: { width: 150 },
                                         }),
                                         E.jsxs(Ft, { type: "secondary", children: [$e, " дн."] }),
-                                        E.jsx(vtAnchorControl, { disabled: mt, onChange: vtReanchor }),
+                                        E.jsx(vtAnchorControl, { disabled: mt, value: vtAnchor }),
                                       ],
                                     }),
                                   ],

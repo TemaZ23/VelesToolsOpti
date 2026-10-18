@@ -219,9 +219,15 @@ if (args.memory !== 'false') {
   await download.saveAs(file);
   const bytes = readFileSync(file);
   const { gunzipSync } = await import('node:zlib');
-  const memory = JSON.parse((bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes) : bytes).toString('utf8'));
-  check(memory.format === 'veles-optimizer-memory' && memory.results.length > 0, `memory file has backtests (${memory.results?.length ?? 0})`);
-  check(Array.isArray(memory.history) && memory.history.length >= 1, `memory file has the run history (${memory.history?.length ?? 0})`);
+  const lines = (bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes) : bytes)
+    .toString('utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  const results = lines.filter((line) => line.r).length;
+  const runs = lines.filter((line) => line.h).length;
+  check(lines[0]?.format === 'veles-optimizer-memory' && results > 0, `memory file has backtests (${results})`);
+  check(runs >= 1, `memory file has the run history (${runs})`);
   const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 10000 }), pane.getByRole('button', { name: 'Загрузить' }).click()]);
   await chooser.setFiles(file);
   const loaded = await page

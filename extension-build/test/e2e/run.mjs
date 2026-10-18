@@ -70,7 +70,7 @@ await page.goto(`http://127.0.0.1:${port}/index.html`);
 await page.waitForFunction(() => window.__VELES_TEST__ && window.VelesSim, null, { timeout: 30000 });
 
 const summary = await page.evaluate(
-  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring, onlyKinds, certify, rerun }) => {
+  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring, onlyKinds, certify, rerun, failEvery }) => {
     const T = window.__VELES_TEST__;
     // --verifyScoring: compare the fast portfolio replica with xB on every scoring call.
     T.vtFastXBState.verifyAll = Boolean(verifyScoring);
@@ -133,7 +133,8 @@ const summary = await page.evaluate(
         return id;
       },
       fetchStatistics: async (id) => ({ id, ...results.get(id).stats }),
-      fetchStatus: async () => 'FINISHED',
+      // --failEvery=N: every N-th backtest fails on Veles (checks that no guarantee is claimed then).
+      fetchStatus: async (id) => (failEvery && id % failEvery === 0 ? 'ERROR' : 'FINISHED'),
       fetchLastCycle: async () => null,
       finalize: async (stats) => ({ ...stats, netQuote: stats.profitQuote - stats.commissionQuote }),
       fetchAllCycles: async (id) => results.get(id).cycles,
@@ -243,6 +244,7 @@ const summary = await page.evaluate(
     onlyKinds: args.onlyKinds ?? null,
     certify: args.certify === 'true',
     rerun: args.rerun === 'true',
+    failEvery: args.failEvery ? Number(args.failEvery) : null,
     template: {
       ...(args.direction ? { direction: args.direction } : {}),
       ...(args.profile ? { profile: args.profile } : {}),

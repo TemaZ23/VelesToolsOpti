@@ -711,14 +711,14 @@ export const vmSimpleForm = (goal, form, { presets, periodOf, symbols = [] }) =>
     return {
       ...base,
       template: null,
-      genetic: { ...form.genetic, ...balanced, searchMethod: 'pattern' },
+      genetic: { ...form.genetic, ...balanced, searchMethod: 'pattern', vtCertify: false },
       robustness: { ...form.robustness, enabled: false },
     };
   }
   return {
     ...base,
     template,
-    genetic: { ...form.genetic, ...balanced, searchMethod: 'pattern', searchBudget: 140 },
+    genetic: { ...form.genetic, ...balanced, searchMethod: 'pattern', searchBudget: 140, vtCertify: false },
     scope: vmScope(goal, form.scope, template?.direction ?? 'LONG'),
     robustness: { ...form.robustness, enabled: true, neighbors: Math.max(4, form.robustness?.neighbors ?? 4) },
   };
