@@ -187,6 +187,77 @@ if (tabs.includes('scalper')) {
   await page.waitForTimeout(300);
 }
 
+// 2.17 memory: run history, export / import of the memory file, period end, full enumeration and
+// the certificate controls.
+if (args.memory !== 'false') {
+  const firstTab = tabs[0];
+  const firstLabel = { scalper: /Скальпер/, short: /Шорт-бот/, long: /LONG DCA/, coins: /Подбор монет/ }[firstTab];
+  await page.getByRole('tab', { name: firstLabel }).click();
+  await page.waitForTimeout(600);
+  let pane = page.locator('.ant-tabs-tabpane-active');
+  await pane.getByRole('button', { name: 'История' }).click();
+  let history = page.getByRole('dialog', { name: 'История запусков' });
+  await history.waitFor({ timeout: 10000 });
+  await page.waitForTimeout(600);
+  const historyText = await history.innerText();
+  check(historyText.includes('Показать'), `${firstTab}: the finished run is in the history`);
+  check(/бэктестов: \d+, из памяти: \d+/.test(historyText), `${firstTab}: history row has the summary`);
+  await shot('91-history');
+  await history.getByRole('button', { name: 'Показать' }).first().click();
+  // Toasts live a fraction of a second under the simulator's fast timers: poll right away.
+  const shown = await page
+    .waitForFunction(() => document.body.innerText.includes('Показан запуск от'), null, { timeout: 5000, polling: 20 })
+    .then(() => true)
+    .catch(() => false);
+  await page.waitForTimeout(500);
+  check(shown, 'history entry can be shown');
+  check(!(await history.isVisible()), 'history closes after showing an entry');
+
+  // Export the memory (a gzip or JSON file with every backtest) and load it back.
+  const [download] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), pane.getByRole('button', { name: 'Сохранить' }).click()]);
+  const file = join(shots, download.suggestedFilename());
+  await download.saveAs(file);
+  const bytes = readFileSync(file);
+  const { gunzipSync } = await import('node:zlib');
+  const memory = JSON.parse((bytes[0] === 0x1f && bytes[1] === 0x8b ? gunzipSync(bytes) : bytes).toString('utf8'));
+  check(memory.format === 'veles-optimizer-memory' && memory.results.length > 0, `memory file has backtests (${memory.results?.length ?? 0})`);
+  check(Array.isArray(memory.history) && memory.history.length >= 1, `memory file has the run history (${memory.history?.length ?? 0})`);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 10000 }), pane.getByRole('button', { name: 'Загрузить' }).click()]);
+  await chooser.setFiles(file);
+  const loaded = await page
+    .waitForFunction(() => document.body.innerText.includes('Память загружена'), null, { timeout: 20000, polling: 20 })
+    .then(() => true)
+    .catch(() => false);
+  check(loaded, 'memory file loads back');
+
+  // Improve tab, manual settings: full enumeration count, certificate switch, period end control.
+  await page.getByRole('tab', { name: /Улучшить стратегию/ }).click();
+  await page.waitForTimeout(800);
+  pane = page.locator('.ant-tabs-tabpane-active');
+  await pane.getByText('Ручная настройка').first().click();
+  await page.waitForTimeout(1000);
+  await pane.getByText('Перебор', { exact: true }).click();
+  await page.waitForTimeout(600);
+  let manual = await visibleText();
+  check(/Сейчас: .*комбинац/.test(manual), 'full enumeration shows the number of combinations');
+  check(manual.includes('больше предела'), 'the default space is refused as too large');
+  await shot('92-grid');
+  await pane.getByText('Пошаговый', { exact: true }).click();
+  await page.waitForTimeout(500);
+  await pane.getByText('Сертификат лучшего', { exact: true }).locator('xpath=preceding-sibling::button[1]').click();
+  await page.waitForTimeout(500);
+  manual = await visibleText();
+  check(/\+ до [\d\s ]+ вариантов/.test(manual), 'certificate switch shows its cost');
+  check(manual.includes('Конец периода') && manual.includes('конец прошлого месяца'), 'period end control is shown');
+  const now = new Date();
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)).toISOString().slice(0, 10);
+  const dates = await pane.locator('input[type="date"]').evaluateAll((nodes) => nodes.map((node) => node.value));
+  check(dates.includes(monthEnd), `rolling period ends at the previous month end (${monthEnd}; ${dates.join(', ')})`);
+  await shot('93-certificate');
+  await pane.getByText('Устойчивые настр').first().click();
+  await page.waitForTimeout(300);
+}
+
 // Tabs keep their own results: the improve tab is untouched by the mode runs.
 await page.getByRole('tab', { name: /Улучшить стратегию/ }).click();
 await page.waitForTimeout(800);

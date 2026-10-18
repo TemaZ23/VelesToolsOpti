@@ -978,3 +978,282 @@ export const psRunSearch = async (context) => {
   }
   return { best: current, base, path, sensitivity, rounds, evaluations: requested.size, stoppedBy };
 };
+
+// ---------------------------------------------------------------------------------------------
+// Exhaustive search over the discretised space ("полный перебор") and a coordinate-wise
+// optimality check of the winner ("сертификат"). Both use the same `evaluate` contract as
+// psRunSearch, so the engine's archive and the backtest cache make them resumable for free.
+
+/** Number of decimals that represent multiples of `step` exactly. */
+const stepDigits = (step) => (step > 0 ? Math.min(10, Math.max(0, 3 - Math.floor(Math.log10(step)))) : 6);
+
+/** Every allowed value of one dimension: min..max by its step (indices for filter swaps). */
+export const psGridValues = (dim) => {
+  if (psIsChoice(dim)) {
+    return dim.choices.map((_, index) => index);
+  }
+  const { min, max } = dim;
+  if (!(max - min > EPS)) {
+    return [min];
+  }
+  const step = dim.integer ? Math.max(1, Math.round(dim.step || 1)) : dim.step;
+  if (!(step > 0)) {
+    return [min, max];
+  }
+  const digits = stepDigits(step);
+  const count = Math.floor((max - min) / step + 1e-6) + 1;
+  const values = [];
+  for (let i = 0; i < count; i++) {
+    values.push(roundTo(min + i * step, digits));
+  }
+  if (max - values[values.length - 1] > step * 1e-6) {
+    values.push(roundTo(max, digits));
+  }
+  return values;
+};
+
+/** Size of the full grid: `total` combinations (Infinity when it does not fit a double) and per-dimension counts. */
+export const psGridSize = (space) => {
+  const counts = space.dimensions.map((dim) => psGridValues(dim).length);
+  const log10 = counts.reduce((sum, count) => sum + Math.log10(count), 0);
+  const total = counts.reduce((product, count) => product * count, 1);
+  return { total: Number.isFinite(total) ? total : Number.POSITIVE_INFINITY, log10, counts };
+};
+
+/** Variants checked in one pass of {@link psCertify}: every other value of every parameter. */
+export const psCertifyCost = (space) =>
+  space.dimensions.reduce((sum, dim) => sum + Math.max(0, psGridValues(dim).length - 1), 0);
+
+const gcd = (a, b) => {
+  let x = a;
+  let y = b;
+  while (y) {
+    [x, y] = [y, x % y];
+  }
+  return x;
+};
+
+/**
+ * Stride of the visiting order: k → k·stride mod total is a permutation of the grid, so a stopped
+ * enumeration has sampled the whole space evenly instead of varying only the last parameters.
+ */
+export const psGridStride = (total) => {
+  if (total <= 2) {
+    return 1;
+  }
+  let stride = Math.max(1, Math.round(total * 0.6180339887));
+  while (gcd(stride, total) !== 1) {
+    stride += 1;
+  }
+  return stride;
+};
+
+/** Genome number `index` of the grid (mixed radix over `lists`, the first dimension changing fastest). */
+const gridGenome = (space, lists, baseGenome, index) => {
+  const genome = { ...baseGenome };
+  let rest = index;
+  space.dimensions.forEach((dim, position) => {
+    const values = lists[position];
+    genome[dim.id] = values[rest % values.length];
+    rest = Math.floor(rest / values.length);
+  });
+  return genome;
+};
+
+const strictlyBetter = (a, b) => {
+  if (!a) {
+    return false;
+  }
+  if (!b) {
+    return true;
+  }
+  if (a.valid !== b.valid) {
+    return a.valid;
+  }
+  if (!a.valid) {
+    return (a.violation ?? 0) < (b.violation ?? 0) - 1e-12;
+  }
+  return a.score > b.score + 1e-12;
+};
+
+/**
+ * Evaluates every combination of the grid (after `repair`, equal genomes are evaluated once) and
+ * returns the best. The guarantee holds when `stoppedBy === 'complete'`: no other combination of
+ * the allowed values scored higher on the evaluated coins and period.
+ *
+ * `budget` is the largest grid the caller accepts; a bigger grid is not started ('too-large').
+ *
+ * @returns {Promise<{best, base, path, sensitivity, rounds, evaluations, stoppedBy, grid}>}
+ */
+export const psRunGrid = async (context) => {
+  const { space, repair, keyOf, evaluate } = context;
+  const shouldStop = () => (context.shouldStop ? context.shouldStop() : false);
+  const emit = (event) => context.onEvent?.(event);
+  const batchSize = Math.max(1, Math.round(context.batch ?? 24));
+  const lists = space.dimensions.map((dim) => psGridValues(dim));
+  const { total } = psGridSize(space);
+  const grid = { total, visited: 0, unique: 0, evaluated: 0 };
+  const point = (result) => ({ key: result.key, genome: result.genome, score: result.score, round: 0, moves: [] });
+
+  const baseGenome = repair({ ...context.baseGenome });
+  const baseKey = keyOf(baseGenome);
+  const [baseResult] = await evaluate([baseGenome]);
+  if (!baseResult) {
+    return { best: null, base: null, path: [], sensitivity: [], rounds: [], evaluations: 0, stoppedBy: 'stop', grid };
+  }
+  const base = { ...baseResult, key: baseKey, genome: baseGenome };
+  const seen = new Set([baseKey]);
+  let best = base;
+  let evaluated = 1;
+  let stoppedBy = 'complete';
+  const limit = Number.isFinite(context.budget) ? context.budget : Number.POSITIVE_INFINITY;
+  if (!(total <= limit)) {
+    stoppedBy = 'too-large';
+  } else {
+    const stride = psGridStride(total);
+    for (let start = 0; start < total; start += batchSize) {
+      if (shouldStop()) {
+        stoppedBy = 'stop';
+        break;
+      }
+      const end = Math.min(total, start + batchSize);
+      const batch = [];
+      for (let k = start; k < end; k++) {
+        const genome = repair(gridGenome(space, lists, baseGenome, (k * stride) % total));
+        const key = keyOf(genome);
+        if (!seen.has(key)) {
+          seen.add(key);
+          batch.push({ genome, key });
+        }
+      }
+      let complete = true;
+      if (batch.length > 0) {
+        const out = await evaluate(batch.map((item) => item.genome));
+        out.forEach((result, index) => {
+          if (!result) {
+            complete = false;
+            return;
+          }
+          evaluated += 1;
+          const item = { ...result, key: batch[index].key, genome: batch[index].genome };
+          if (strictlyBetter(item, best)) {
+            best = item;
+          }
+        });
+      }
+      grid.visited = complete ? end : start;
+      grid.unique = seen.size;
+      grid.evaluated = evaluated;
+      emit({ type: 'grid', visited: grid.visited, total, unique: seen.size, evaluated, best });
+      if (!complete) {
+        stoppedBy = 'stop';
+        break;
+      }
+    }
+  }
+  grid.unique = seen.size;
+  grid.evaluated = evaluated;
+  return {
+    best,
+    base,
+    path: best.key === base.key ? [point(base)] : [point(base), { ...point(best), round: 1 }],
+    sensitivity: [],
+    rounds: [],
+    evaluations: evaluated,
+    stoppedBy,
+    grid,
+  };
+};
+
+/**
+ * Coordinate-wise check of `start`: every other value of every parameter is tried with the rest
+ * fixed; an improvement (by more than `margin`) becomes the new point and the pass is repeated.
+ * `certified` means a whole pass found no single-parameter change that improves the score.
+ *
+ * @returns {Promise<{best, certified, passes, evaluations, checked, moves, stoppedBy}>}
+ */
+export const psCertify = async (context) => {
+  const { space, repair, keyOf, evaluate } = context;
+  const shouldStop = () => (context.shouldStop ? context.shouldStop() : false);
+  const emit = (event) => context.onEvent?.(event);
+  const margin = context.margin ?? PS_DEFAULTS.margin;
+  const maxPasses = Math.max(1, Math.round(context.maxPasses ?? 3));
+  const budget = Number.isFinite(context.budget) ? Math.max(1, Math.round(context.budget)) : Number.POSITIVE_INFINITY;
+  const better = (a, b) => {
+    if (!a || !b || a.valid !== b.valid || !a.valid) {
+      return strictlyBetter(a, b);
+    }
+    return a.score > b.score + margin;
+  };
+  const dims = space.dimensions
+    .filter((dim) => psGridValues(dim).length > 1)
+    .sort((a, b) => stepPriority(a) - stepPriority(b) || compareText(a.id, b.id));
+  const requested = new Set();
+  let current = context.start;
+  let passes = 0;
+  let checked = 0;
+  let stoppedBy = 'passes';
+  const moves = [];
+  passLoop: while (passes < maxPasses) {
+    passes += 1;
+    let moved = false;
+    checked = 0;
+    for (const dim of dims) {
+      if (shouldStop()) {
+        stoppedBy = 'stop';
+        break passLoop;
+      }
+      const from = psValue(current.genome, dim);
+      const keys = new Set([current.key]);
+      const batch = [];
+      for (const value of psGridValues(dim)) {
+        if (Math.abs(value - from) < 1e-9) {
+          continue;
+        }
+        const genome = repair({ ...current.genome, [dim.id]: value });
+        const key = keyOf(genome);
+        if (!keys.has(key)) {
+          keys.add(key);
+          batch.push({ genome, key });
+        }
+      }
+      if (batch.length === 0) {
+        continue;
+      }
+      const fresh = batch.filter((item) => !requested.has(item.key)).length;
+      if (requested.size + fresh > budget) {
+        stoppedBy = 'budget';
+        break passLoop;
+      }
+      for (const item of batch) {
+        requested.add(item.key);
+      }
+      const out = await evaluate(batch.map((item) => item.genome));
+      if (out.some((result) => !result)) {
+        stoppedBy = 'stop';
+        break passLoop;
+      }
+      checked += batch.length;
+      let bestHere = null;
+      out.forEach((result, index) => {
+        const item = { ...result, key: batch[index].key, genome: batch[index].genome };
+        if (strictlyBetter(item, bestHere)) {
+          bestHere = item;
+        }
+      });
+      emit({ type: 'certify-dim', pass: passes, dim, checked: batch.length, best: bestHere, current });
+      if (better(bestHere, current)) {
+        const move = { pass: passes, dimId: dim.id, label: shortLabel(dim), from, to: psValue(bestHere.genome, dim), score: bestHere.score };
+        moves.push(move);
+        emit({ type: 'certify-move', ...move, result: bestHere, previous: current });
+        current = bestHere;
+        moved = true;
+      }
+    }
+    emit({ type: 'certify-pass', pass: passes, moved, checked });
+    if (!moved) {
+      return { best: current, certified: true, passes, evaluations: requested.size, checked, moves, stoppedBy: 'certified' };
+    }
+  }
+  return { best: current, certified: false, passes, evaluations: requested.size, checked, moves, stoppedBy };
+};

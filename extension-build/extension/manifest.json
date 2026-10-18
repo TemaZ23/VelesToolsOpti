@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Veles Tools",
   "description": "Утилиты для удобной работы с veles.finance.",
-  "version": "2.16.0",
+  "version": "2.17.0",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -20,7 +20,7 @@
       "128": "icons/icon-128.png"
     }
   },
-  "permissions": ["storage", "tabs", "scripting"],
+  "permissions": ["storage", "tabs", "scripting", "unlimitedStorage"],
   "host_permissions": ["https://veles.finance/*", "https://ru.veles.finance/*", "https://beta.veles.finance/*"],
   "background": {
     "service_worker": "scripts/background.js"

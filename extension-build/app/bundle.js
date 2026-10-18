@@ -133029,7 +133029,15 @@ const Zi = (e, t) => {
       i
     );
   },
+  // Bot metadata that does not change a backtest stays out of the cache key: in 2.16 createdAt /
+  // updatedAt were part of it, so renaming, starting or stopping a bot made all its results unusable.
+  vtKeyIgnored = ["name", "createdAt", "updatedAt", "startedAt", "finishedAt", "stoppedAt", "lastActivity", "status", "substatus", "lastFail", "apiKey"],
   pdt = (e) => {
+    const t = { ...e };
+    for (const r of vtKeyIgnored) delete t[r];
+    return mB(t, 6);
+  },
+  vtLegacyKey = (e) => {
     const t = { ...e };
     return delete t.name, mB(t, 6);
   },
@@ -136207,11 +136215,14 @@ const { Text: ru } = cr,
   r2 = "results",
   fft = 120 * 24 * 60 * 60 * 1e3,
   hft = 6 * 60 * 60 * 1e3,
+  // Version 2 adds the run history store (vtHistoryStore) next to the backtest results.
+  vtHistoryStore = "history",
   vft = {
     name: Ehe,
-    version: 1,
+    version: 2,
     upgrade: (e) => {
-      e.objectStoreNames.contains(r2) || e.createObjectStore(r2, { keyPath: "key" });
+      e.objectStoreNames.contains(r2) || e.createObjectStore(r2, { keyPath: "key" }),
+        e.objectStoreNames.contains(vtHistoryStore) || e.createObjectStore(vtHistoryStore, { keyPath: "id" });
     },
   },
   Mb = new Map(),
@@ -136229,7 +136240,9 @@ const { Text: ru } = cr,
         Mb.delete(n), (vtMbState.deals -= vtMbCount(a));
       }
   },
-  HX = (e, t = Date.now()) => t - e.savedAt <= (e.periodOpen ? hft : fft),
+  // A backtest over a finished period never changes, so it is kept for good; only a period that is
+  // still running (its end in the future) expires after hft. fft (120 days) is the 2.16 limit.
+  HX = (e, t = Date.now()) => !e.periodOpen || t - e.savedAt <= hft,
   $B = async (e, t) => {
     if (!OE()) return null;
     try {
@@ -136243,6 +136256,15 @@ const { Text: ru } = cr,
       return console.warn("[Optimizer] IndexedDB недоступна", r), null;
     }
   },
+  // A result saved under the 2.16 key (with bot metadata) is found and re-saved under the stable key.
+  vtLegacyHit = async (e, t) => {
+    const r = vtLegacyKey(e);
+    if (r === t) return null;
+    const n = await pft(r);
+    if (!n) return null;
+    const a = { ...n, key: t };
+    return await gft(a), a;
+  },
   pft = async (e) => {
     const t = Mb.get(e);
     if (t) return HX(t) ? (vtMbSet(e, t), t) : null;
@@ -136253,8 +136275,125 @@ const { Text: ru } = cr,
     vtMbSet(e.key, e), await $B("readwrite", (t) => t.put(e));
   },
   VX = async () => (await $B("readonly", (t) => t.count())) ?? Mb.size,
+  // Clears the backtest results only; the run history stays.
   mft = async () => {
-    Mb.clear(), (vtMbState.deals = 0), await M4(Ehe);
+    Mb.clear(), (vtMbState.deals = 0), (await $B("readwrite", (e) => e.clear())) === null && OE() && (await M4(Ehe));
+  },
+  // All records of a store, read with a cursor (the whole store can be large).
+  vtReadAll = async (e) => {
+    if (!OE()) return e === r2 ? [...Mb.values()] : [];
+    try {
+      const t = await cS(vft);
+      return await new Promise((r) => {
+        const n = [],
+          a = t.transaction(e, "readonly").objectStore(e).openCursor();
+        (a.onsuccess = () => {
+          const i = a.result;
+          i ? (n.push(i.value), i.continue()) : r(n);
+        }),
+          (a.onerror = () => r(n));
+      });
+    } catch (t) {
+      return console.warn("[Optimizer] IndexedDB недоступна", t), e === r2 ? [...Mb.values()] : [];
+    }
+  },
+  vtPutAll = async (e, t) => {
+    if (!OE() || t.length === 0) return;
+    const r = await cS(vft);
+    await new Promise((n, a) => {
+      const i = r.transaction(e, "readwrite"),
+        o = i.objectStore(e);
+      for (const s of t) o.put(s);
+      (i.oncomplete = () => n()), (i.onerror = () => a(i.error ?? new Error("Не удалось записать в IndexedDB")));
+    });
+  },
+  // Memory file: {format, version, exportedAt, results: [...backtests], history: [...runs]}, gzip when
+  // the browser can compress. Loading merges it: a record is replaced only by a newer one.
+  vtMemoryFormat = "veles-optimizer-memory",
+  vtExportMemory = async () => {
+    const e = (await vtReadAll(r2)).filter((a) => HX(a)),
+      t = await vtReadAll(vtHistoryStore),
+      r = ['{"format":"' + vtMemoryFormat + '","version":1,"exportedAt":' + JSON.stringify(new Date().toISOString()) + ',"results":['];
+    e.forEach((a, i) => r.push((i ? "," : "") + JSON.stringify(a))), r.push('],"history":[');
+    t.forEach((a, i) => r.push((i ? "," : "") + JSON.stringify(a))), r.push("]}");
+    let n = new Blob(r, { type: "application/json" }),
+      a = "json";
+    typeof CompressionStream == "function" &&
+      ((n = await new Response(n.stream().pipeThrough(new CompressionStream("gzip"))).blob()), (a = "json.gz"));
+    const i = URL.createObjectURL(n),
+      o = document.createElement("a");
+    return (
+      (o.href = i),
+      (o.download = `veles-optimizer-memory-${new Date().toISOString().slice(0, 10)}.${a}`),
+      document.body.appendChild(o),
+      o.click(),
+      o.remove(),
+      setTimeout(() => URL.revokeObjectURL(i), 6e4),
+      { results: e.length, history: t.length }
+    );
+  },
+  vtImportMemory = async (e) => {
+    const t = new Uint8Array(await e.slice(0, 2).arrayBuffer()),
+      r =
+        t[0] === 31 && t[1] === 139
+          ? typeof DecompressionStream == "function"
+            ? await new Response(e.stream().pipeThrough(new DecompressionStream("gzip"))).text()
+            : (() => {
+                throw new Error("браузер не умеет распаковывать .gz — загрузите несжатый .json");
+              })()
+          : await e.text(),
+      n = JSON.parse(r);
+    if (!n || n.format !== vtMemoryFormat || !Array.isArray(n.results)) throw new Error("это не файл памяти оптимизатора");
+    const a = new Map((await vtReadAll(r2)).map((c) => [c.key, c])),
+      i = [];
+    let o = 0,
+      l = 0;
+    for (const c of n.results) {
+      const u = c && typeof c.key == "string" && typeof c.savedAt == "number" && c.metrics && HX(c) ? a.get(c.key) : null;
+      if (!(c && typeof c.key == "string" && typeof c.savedAt == "number" && c.metrics && HX(c)) || (u && u.savedAt >= c.savedAt)) {
+        l += 1;
+        continue;
+      }
+      u || (o += 1), i.push(c);
+    }
+    await vtPutAll(r2, i);
+    for (const c of i) Mb.has(c.key) && vtMbSet(c.key, c);
+    const h = Array.isArray(n.history) ? n.history.filter((c) => c && typeof c.id == "string" && c.result) : [];
+    return await vtPutAll(vtHistoryStore, h), { added: o, updated: i.length - o, skipped: l, history: h.length };
+  },
+  // Run history: every finished run is kept (VT_HISTORY_PER_GOAL newest per tab) besides the last
+  // result in localStorage, so a new run does not wipe the previous one.
+  VT_HISTORY_PER_GOAL = 30,
+  vtHistoryAdd = async (e) => {
+    try {
+      const t = e.config && e.config.goal ? e.config.goal : "improve",
+        r = {
+          id: `${t}:${e.finishedAt}`,
+          goal: t,
+          botId: e.config ? e.config.botId : null,
+          botName: e.config ? (e.config.botName ?? null) : null,
+          finishedAt: e.finishedAt,
+          result: e,
+        };
+      await vtPutAll(vtHistoryStore, [r]);
+      const n = (await vtReadAll(vtHistoryStore)).filter((i) => i.goal === t).sort((i, o) => o.finishedAt - i.finishedAt),
+        a = n.slice(VT_HISTORY_PER_GOAL);
+      a.length > 0 && (await vtDeleteHistory(a.map((i) => i.id)));
+    } catch (t) {
+      console.warn("[Optimizer] Не удалось сохранить запуск в историю", t);
+    }
+  },
+  vtHistoryList = async (e) =>
+    (await vtReadAll(vtHistoryStore)).filter((t) => t.goal === e).sort((t, r) => r.finishedAt - t.finishedAt),
+  vtDeleteHistory = async (e) => {
+    if (!OE() || e.length === 0) return;
+    const t = await cS(vft);
+    await new Promise((r) => {
+      const n = t.transaction(vtHistoryStore, "readwrite"),
+        a = n.objectStore(vtHistoryStore);
+      for (const i of e) a.delete(i);
+      (n.oncomplete = () => r()), (n.onerror = () => r());
+    });
   },
   yft = (e) => {
     const t = Date.parse(e);
@@ -136262,6 +136401,42 @@ const { Text: ru } = cr,
   },
   // Each optimizer tab keeps its own run, result and form; "improve" uses the 2.15 keys.
   vtStoreKey = (e, t) => (!t || t === "improve" ? e : `${e}__${t}`),
+  // Full enumeration refuses grids above this many combinations; the certificate makes at most
+  // VT_CERT_PASSES passes over every value of every parameter.
+  VT_GRID_MAX = 2e4,
+  VT_CERT_PASSES = 3,
+  // Variants of the search phase for the cost plan (undefined — the genetic search).
+  vtSearchVariants = (e, t) =>
+    e.searchMethod === "grid"
+      ? t
+        ? Math.min(VT_GRID_MAX, VTPS.psGridSize(t).total)
+        : void 0
+      : (e.searchMethod ?? "genetic") === "pattern"
+        ? e.searchBudget + (e.vtCertify === !0 && t ? VT_CERT_PASSES * VTPS.psCertifyCost(t) : 0)
+        : void 0,
+  // Russian plural form: vtPlural(304, ["комбинация", "комбинации", "комбинаций"]) → "комбинации".
+  vtPlural = (e, t) => {
+    const r = Math.abs(Math.round(e)) % 100,
+      n = r % 10;
+    return r > 10 && r < 20 ? t[2] : n === 1 ? t[0] : n >= 2 && n <= 4 ? t[1] : t[2];
+  },
+  vtCombos = (e) => vtPlural(e, ["комбинация", "комбинации", "комбинаций"]),
+  vtVariants = (e) => `${e} ${vtPlural(e, ["вариант", "варианта", "вариантов"])}`,
+  vtFormatCount = (e) =>
+    Number.isFinite(e) && e < 1e12
+      ? Math.round(e).toLocaleString("ru-RU")
+      : Number.isFinite(e)
+        ? `≈10^${Math.floor(Math.log10(e))}`
+        : "больше 10^308",
+  // Asks the browser not to evict the optimizer memory (IndexedDB) under storage pressure.
+  vtRequestPersist = () => {
+    try {
+      typeof navigator < "u" &&
+        navigator.storage &&
+        typeof navigator.storage.persist == "function" &&
+        navigator.storage.persist().catch(() => {});
+    } catch {}
+  },
   n2 = "veles_optimizer_state_v3",
   IB = "veles_optimizer_last_result_v3",
   $he = "veles_optimizer_form_v3",
@@ -136340,9 +136515,10 @@ const { Text: ru } = cr,
     const e = Jg(ba(vtStoreKey(IB, vtKind)));
     return e && e.version === 3 ? e : null;
   },
-  Mhe = (e) => {
+  Mhe = (e, vtHistory = !1) => {
     qa(vtStoreKey(IB, e.config && e.config.goal), JSON.stringify(e)) ||
-      console.warn("[Optimizer] Не удалось сохранить итог оптимизации");
+      console.warn("[Optimizer] Не удалось сохранить итог оптимизации"),
+      vtHistory && vtHistoryAdd(e);
   },
   _ft = (vtKind) => {
     $4(vtStoreKey(IB, vtKind));
@@ -136529,6 +136705,7 @@ class Nf {
         mode: this.config.mode,
         screeningSymbols: this.screeningSymbols,
         searchMethod: this.usePattern ? "pattern" : "genetic",
+        vtGrid: this.vtGrid,
         sensitivity: this.sensitivity,
         searchPath: this.searchPath,
         searchSummary: this.searchSummary,
@@ -136538,12 +136715,24 @@ class Nf {
       }
     );
   }
+  // "grid" (full enumeration) and the certificate run inside the step-by-step flow.
   get usePattern() {
-    return (this.config.genetic.searchMethod ?? "genetic") === "pattern";
+    return ["pattern", "grid"].includes(this.config.genetic.searchMethod ?? "genetic");
   }
-  get searchBudget() {
+  get vtGrid() {
+    return this.config.genetic.searchMethod === "grid";
+  }
+  get vtCertify() {
+    return this.config.genetic.searchMethod === "pattern" && this.config.genetic.vtCertify === !0;
+  }
+  get vtPatternBudget() {
     const t = this.config.genetic.searchBudget;
     return Math.max(5, Math.round(Number.isFinite(t) ? t : 110));
+  }
+  // Variants of the search phase: the whole grid, or the step budget plus the certificate passes.
+  get searchBudget() {
+    if (this.vtGrid) return this.space ? Math.max(1, Math.min(VT_GRID_MAX, VTPS.psGridSize(this.space).total)) : 1;
+    return this.vtPatternBudget + (this.vtCertify && this.space ? VT_CERT_PASSES * VTPS.psCertifyCost(this.space) : 0);
   }
   get maxDepositChange() {
     var r;
@@ -136599,6 +136788,7 @@ class Nf {
       throw new Error(
         "Нечего оптимизировать: все параметры выключены или диапазоны пустые. Включите хотя бы один пункт в «Что подбираем».",
       );
+    this.vtCheckGrid(), vtRequestPersist();
     return (
       (this.baseGenome = KC(this.space)),
       (this.baseKey = Oi(this.baseGenome)),
@@ -136640,9 +136830,11 @@ class Nf {
             : "проверка на отложенном периоде"
           : this.phase === "robustness"
             ? "проверка устойчивости"
-            : this.usePattern
-              ? `пошаговый поиск, раунд ${Math.max(1, this.patternRound)}`
-              : `поколение ${this.generation + 1}/${this.config.genetic.generations}`;
+            : this.vtGrid
+              ? "полный перебор"
+              : this.usePattern
+                ? `пошаговый поиск, раунд ${Math.max(1, this.patternRound)}`
+                : `поколение ${this.generation + 1}/${this.config.genetic.generations}`;
     return this.log("info", `🔄 Продолжаем: ${t}, уже оценено ${this.archive.size} вариантов`), this.runLoop();
   }
   pause() {
@@ -136738,6 +136930,8 @@ class Nf {
       currentGeneration: vtPattern ? Math.max(1, this.patternRound) : Math.min(this.generation + 1, r.genetic.generations),
       totalGenerations: r.genetic.generations,
       searchMethod: vtPattern ? "pattern" : "genetic",
+      vtGrid: this.vtGrid,
+      vtCertifying: !!this.vtCertifying,
       patternStep: this.patternStep,
       evaluatedGenomes: this.archive.size,
       generationDone: vtPick
@@ -137070,17 +137264,20 @@ class Nf {
       this.accumulateElapsed(),
       this.baseStrategy &&
         this.persistEnabled &&
-        (Mhe({
-          version: 3,
-          config: this.config,
-          baseStrategy: this.baseStrategy,
-          quoteCurrency: this.quoteCurrency,
-          leaderboard: t,
-          finishedAt: Date.now(),
-          backtestsRun: this.backtestsRun,
-          cacheHits: this.cacheHits,
-          elapsedMs: this.elapsedBeforeMs,
-        }),
+        (Mhe(
+          {
+            version: 3,
+            config: this.config,
+            baseStrategy: this.baseStrategy,
+            quoteCurrency: this.quoteCurrency,
+            leaderboard: t,
+            finishedAt: Date.now(),
+            backtestsRun: this.backtestsRun,
+            cacheHits: this.cacheHits,
+            elapsedMs: this.elapsedBeforeMs,
+          },
+          !0,
+        ),
         FL(this.config.goal));
     const r = this.config.goal === "coins" ? null : t.top[0],
       vtAbsolute = VTMODES.vmIsTemplateGoal(this.config.goal);
@@ -137287,21 +137484,26 @@ class Nf {
   // again — variants already in the archive are replayed without backtests.
   async runPatternSearch() {
     if (!(this.space && this.baseGenome)) return;
+    this.vtCheckGrid();
     const t = this.universe("search"),
-      r = this.searchBudget,
+      r = this.vtGrid ? this.searchBudget : this.vtPatternBudget,
       n = this.archive.size > 1;
     (this.history = []),
       (this.replaying = n),
       (this.generationDone = 0),
       (this.generationCacheHits = 0),
       (this.searchEvaluations = 0),
+      (this.vtGridLogged = 0),
       this.log(
         "info",
         n
           ? `
-🔄 Восстанавливаем ход пошагового поиска по сохранённым результатам…`
-          : `
-🧭 Пошаговый поиск: до ${r} вариантов × ${t.symbols.length} монет. Сначала каждый параметр меняется по отдельности (видно, что влияет и в какую сторону), затем удачные изменения объединяются, продолжаются, пока есть прирост, и уточняются более мелким шагом.`,
+🔄 Восстанавливаем ход ${this.vtGrid ? "полного перебора" : "пошагового поиска"} по сохранённым результатам…`
+          : this.vtGrid
+            ? `
+🧮 Полный перебор: ${r} ${vtCombos(r)} × ${t.symbols.length} монет. Проверяется каждая комбинация разрешённых значений параметров; уже проверенные берутся из памяти, поэтому перебор можно останавливать и продолжать — он пойдёт с того же места.`
+            : `
+🧭 Пошаговый поиск: до ${r} вариантов × ${t.symbols.length} монет. Сначала каждый параметр меняется по отдельности (видно, что влияет и в какую сторону), затем удачные изменения объединяются, продолжаются, пока есть прирост, и уточняются более мелким шагом.${this.vtCertify ? " В конце — сертификат: каждый параметр лучшего варианта проверяется по всем значениям." : ""}`,
       ),
       this.emitProgress();
     let a = null;
@@ -137334,21 +137536,139 @@ class Nf {
           { score: u.fitness.score, valid: u.fitness.valid, violation: u.fitness.violationAmount, candidate: u }
         );
       },
-      s = await VTPS.psRunSearch({
-        space: this.space,
-        baseGenome: this.baseGenome,
-        repair: this.repair,
-        keyOf: Oi,
-        budget: r,
-        rng: VTPS.psCreateRng(VTPS.psHashSeed(this.baseKey)),
-        options: { stallRounds: ga(Math.round(this.config.genetic.earlyStopGenerations || 2), 1, 4) },
-        evaluate: (l) => Promise.all(l.map(o)),
-        shouldStop: () => this.stopRequested || this.finishRequested || a !== null,
-        onEvent: (l) => this.onPatternEvent(l),
-        onRound: (l) => this.completePatternRound(l),
-      });
+      vtEvaluate = (l) => Promise.all(l.map(o)),
+      vtStop = () => this.stopRequested || this.finishRequested || a !== null;
+    let s = this.vtGrid
+      ? await VTPS.psRunGrid({
+          space: this.space,
+          baseGenome: this.baseGenome,
+          repair: this.repair,
+          keyOf: Oi,
+          budget: VT_GRID_MAX,
+          batch: Math.max(8, 4 * Math.max(1, Math.round(this.config.genetic.maxParallel || 1))),
+          evaluate: vtEvaluate,
+          shouldStop: vtStop,
+          onEvent: (l) => this.vtOnGridEvent(l),
+        })
+      : await VTPS.psRunSearch({
+          space: this.space,
+          baseGenome: this.baseGenome,
+          repair: this.repair,
+          keyOf: Oi,
+          budget: r,
+          rng: VTPS.psCreateRng(VTPS.psHashSeed(this.baseKey)),
+          options: { stallRounds: ga(Math.round(this.config.genetic.earlyStopGenerations || 2), 1, 4) },
+          evaluate: vtEvaluate,
+          shouldStop: vtStop,
+          onEvent: (l) => this.onPatternEvent(l),
+          onRound: (l) => this.completePatternRound(l),
+        });
+    if (a) throw a;
+    !this.stopRequested && !this.finishRequested && this.vtCertify && s.best && (s = await this.vtRunCertificate(s, o));
     if (a) throw a;
     this.stopRequested || this.finishPatternSearch(s);
+  }
+  // A grid above VT_GRID_MAX is refused before any backtest (checked at start and on resume).
+  vtCheckGrid() {
+    if (!(this.vtGrid && this.space)) return;
+    const t = VTPS.psGridSize(this.space).total;
+    if (!(t <= VT_GRID_MAX))
+      throw new Error(
+        `Полный перебор: ${vtFormatCount(t)} ${Number.isFinite(t) && t < 1e12 ? vtCombos(t) : "комбинаций"} — больше предела ${VT_GRID_MAX.toLocaleString("ru-RU")}. Сузьте диапазоны или увеличьте шаг в «Ручной настройке», выключите часть параметров в «Что подбираем» или выберите пошаговый поиск с сертификатом.`,
+      );
+  }
+  // Full enumeration progress (src/patternSearch.mjs psRunGrid): a log line every 10% of the grid.
+  vtOnGridEvent(t) {
+    if (t.type !== "grid") return;
+    (this.searchEvaluations = Math.max(this.searchEvaluations, t.evaluated)),
+      (this.vtGridProgress = { visited: t.visited, total: t.total }),
+      this.emitProgress();
+    const r = Math.floor((10 * t.visited) / Math.max(1, t.total));
+    this.replaying ||
+      r <= this.vtGridLogged ||
+      ((this.vtGridLogged = r),
+      this.log(
+        "info",
+        `🧮 Перебор: ${t.visited} из ${t.total} (${Math.round((100 * t.visited) / Math.max(1, t.total))}%), лучший пока ${this.describePatternResult(t.best)}`,
+      ),
+      this.callbacks.onLeaderboard(this.getLeaderboard()),
+      this.saveStateSoon());
+  }
+  vtOnCertifyEvent(t) {
+    if (!this.replaying)
+      if (t.type === "certify-move") {
+        const r = this.space ? this.space.dimensions.find((n) => n.id === t.dimId) : null;
+        this.log(
+          "success",
+          `🛡️ ${t.label}: ${r ? OL(r, t.from) : t.from} → ${r ? OL(r, t.to) : t.to} — лучше: ${this.describePatternResult(t.result)}`,
+        );
+      } else
+        t.type === "certify-pass" &&
+          this.log(
+            t.moved ? "info" : "success",
+            t.moved
+              ? `🛡️ Проход ${t.pass}: проверено ${vtVariants(t.checked)}, нашлись улучшения — проверяем заново от нового лучшего`
+              : `🛡️ Проход ${t.pass}: проверено ${vtVariants(t.checked)} — ни одно изменение одного параметра не улучшает результат`,
+          );
+    this.emitProgress();
+  }
+  // Certificate (src/patternSearch.mjs psCertify): every other value of every parameter of the winner.
+  async vtRunCertificate(t, r) {
+    const n = VTPS.psCertifyCost(this.space);
+    this.replaying ||
+      this.log(
+        "info",
+        `
+🛡️ Сертификат: каждый параметр лучшего варианта проверяется по всем разрешённым значениям при остальных фиксированных — ${vtVariants(n)} за проход, до ${VT_CERT_PASSES} проходов. Если какое-то значение лучше, переходим туда и проверяем заново.`,
+      ),
+      (this.vtCertifying = !0),
+      this.emitProgress();
+    const a = await VTPS.psCertify({
+      space: this.space,
+      repair: this.repair,
+      keyOf: Oi,
+      start: t.best,
+      maxPasses: VT_CERT_PASSES,
+      budget: VT_CERT_PASSES * n,
+      evaluate: (o) => Promise.all(o.map(r)),
+      shouldStop: () => this.stopRequested || this.finishRequested,
+      onEvent: (o) => this.vtOnCertifyEvent(o),
+    });
+    this.vtCertifying = !1;
+    const i = {
+      certified: a.certified,
+      passes: a.passes,
+      evaluations: a.evaluations,
+      checked: a.checked,
+      moves: a.moves.length,
+      stoppedBy: a.stoppedBy,
+    };
+    this.stopRequested ||
+      this.log(
+        a.certified ? "success" : "warning",
+        a.certified
+          ? `✅ Сертификат: в лучшем варианте ни одно изменение одного параметра на любое разрешённое значение не улучшает оценку больше чем на ${VTPS.PS_DEFAULTS.margin} (проверено ${vtVariants(a.checked)} в последнем проходе${a.moves.length ? `, по пути найдено улучшений: ${a.moves.length}` : ""}).`
+          : `⚠️ Сертификат не завершён: ${a.stoppedBy === "stop" ? "остановлен" : `за ${a.passes} ${vtPlural(a.passes, ["проход", "прохода", "проходов"])} улучшения всё ещё находятся`}, найдено улучшений: ${a.moves.length}. Запустите ещё раз — проверенное возьмётся из памяти.`,
+      );
+    const o = a.best && a.best.key !== t.best.key;
+    return {
+      ...t,
+      best: a.best ?? t.best,
+      path: o
+        ? [
+            ...t.path,
+            {
+              key: a.best.key,
+              genome: a.best.genome,
+              score: a.best.score,
+              round: t.rounds.length + 1,
+              moves: a.moves.map((l) => ({ label: `${l.label} (сертификат)` })),
+            },
+          ]
+        : t.path,
+      evaluations: t.evaluations + a.evaluations,
+      vtCertificate: i,
+    };
   }
   describePatternResult(t) {
     var a, i;
@@ -137505,9 +137825,13 @@ class Nf {
         bestKey: t.best.key,
         baseScore: t.base.score,
         bestScore: t.best.score,
+        grid: t.grid ?? null,
+        certificate: t.vtCertificate ?? null,
       });
     const r =
-        t.stoppedBy === "budget"
+        t.stoppedBy === "complete"
+          ? `проверены все ${t.grid.total} ${vtCombos(t.grid.total)}`
+          : t.stoppedBy === "budget"
           ? "исчерпан бюджет вариантов"
           : t.stoppedBy === "stop"
             ? "завершён досрочно"
@@ -137522,6 +137846,12 @@ class Nf {
           "success",
           `🧭 Поиск завершён (${r}, оценено ${t.evaluations}): ${t.base.score.toFixed(3)} → ${this.describePatternResult(t.best)}${n ? ` · ${this.describeFitness(n)}` : ""}
    изменено: ${VTPS.psDescribeChanges(this.space, this.baseGenome, t.best.genome, OL, 8)}`,
+        ),
+      t.grid &&
+        t.stoppedBy === "complete" &&
+        this.log(
+          "success",
+          `✅ Гарантия перебора: проверены все ${t.grid.total} ${vtCombos(t.grid.total)} (разных после согласования параметров — ${t.grid.unique}); на монетах и периоде поиска лучше выбранного нет ни одной.`,
         ),
       this.callbacks.onLeaderboard(this.getLeaderboard()),
       this.saveStateNow();
@@ -138136,7 +138466,7 @@ ${a.join(`
       }),
       c = pdt(l),
       u = this.depositAmount(i),
-      d = await pft(c);
+      d = (await pft(c)) ?? (await vtLegacyHit(l, c));
     if (d) {
       let b = d.deals;
       const S =
@@ -138439,11 +138769,28 @@ const U1 =
   },
   jft = { enabled: !0, neighbors: 6 },
   K1 = (e) => e.toISOString().slice(0, 10),
+  // End of the rolling periods ("1 год", "с 2020"…): by default the last day of the previous month,
+  // so every run within a month backtests exactly the same dates and reuses the memory; "week" is
+  // the 2.16 behaviour (pinned for 7 days), "day" — always yesterday.
+  vtAnchorKey = "veles_optimizer_period_anchor_v1",
+  vtPeriodAnchor = () => {
+    const e = ba(vtAnchorKey);
+    return e === "week" || e === "day" ? e : "month";
+  },
+  vtSetPeriodAnchor = (e) => {
+    qa(vtAnchorKey, e);
+  },
   a2 = (e) => {
     const t = new Date();
     t.setUTCDate(t.getUTCDate() - 1);
-    const r = bft(),
-      n = r && r <= K1(t) ? new Date(`${r}T00:00:00.000Z`) : t;
+    const vtAnchor = vtPeriodAnchor(),
+      r = vtAnchor === "week" ? bft() : null,
+      n =
+        vtAnchor === "month"
+          ? new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 0))
+          : r && r <= K1(t)
+            ? new Date(`${r}T00:00:00.000Z`)
+            : t;
     if (e === "since2020") return { from: "2020-01-01", to: K1(n) };
     const a = new Date(n),
       i = { "3y": 36, "1y": 12, "6m": 6, "3m": 3 }[e];
@@ -138762,6 +139109,118 @@ const U1 =
       children: [" ", "(", a > 0 ? "+" : "", a.toFixed(2), r, ` к ${vtRef})`],
     });
   },
+  // End of rolling periods (see a2): stored per browser, applies to every optimizer tab.
+  vtAnchorControl = ({ disabled: e, onChange: t }) => {
+    const [r, n] = p.useState(vtPeriodAnchor());
+    return E.jsxs(or, {
+      align: "center",
+      gap: 6,
+      wrap: !0,
+      children: [
+        E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: "Конец периода" }),
+        E.jsx(pl, {
+          size: "small",
+          disabled: e,
+          value: r,
+          onChange: (a) => {
+            vtSetPeriodAnchor(a), n(a), t && t(a);
+          },
+          options: [
+            { value: "month", label: "конец прошлого месяца" },
+            { value: "week", label: "на неделю" },
+            { value: "day", label: "вчера" },
+          ],
+        }),
+        E.jsx(wn, {
+          text: "«Конец прошлого месяца» — все запуски в течение месяца проверяют одни и те же даты, поэтому повторные прогоны берутся из памяти и не тратят бэктесты. «На неделю» — конец закрепляется на 7 дней (как в 2.16). «Вчера» — самые свежие данные, но память срабатывает только в тот же день.",
+        }),
+      ],
+    });
+  },
+  vtHistorySummary = (e) => {
+    const t = e.leaderboard ?? {},
+      r = t.top && t.top[0],
+      n = t.searchSummary ?? null,
+      a = e.config ?? {},
+      i = [
+        `${String(a.periodFrom ?? "?").slice(0, 10)} — ${String(a.periodTo ?? "?").slice(0, 10)}`,
+        `монет: ${Array.isArray(a.symbols) ? a.symbols.length : "?"}`,
+      ];
+    return (
+      n && n.grid && i.push(`полный перебор: ${n.grid.total}${n.stoppedBy === "complete" ? " ✓" : ""}`),
+      n && n.certificate && i.push(n.certificate.certified ? "сертификат ✓" : "сертификат не завершён"),
+      r && r.fitness && i.push(`лучший: оценка ${(r.validatedScore ?? r.fitness.score).toFixed(3)}`),
+      i.push(`бэктестов: ${e.backtestsRun ?? 0}, из памяти: ${e.cacheHits ?? 0}`),
+      i.join(" · ")
+    );
+  },
+  vtHistoryModal = ({ open: e, goal: t, onClose: r, onShow: n, disabled: a }) => {
+    const [i, o] = p.useState(null),
+      s = p.useCallback(() => {
+        vtHistoryList(t)
+          .then(o)
+          .catch(() => o([]));
+      }, [t]);
+    return (
+      p.useEffect(() => {
+        e && s();
+      }, [e, s]),
+      E.jsx(Xr, {
+        title: "История запусков",
+        open: e,
+        onCancel: r,
+        footer: null,
+        width: 760,
+        children:
+          i === null
+            ? E.jsx(Ft, { type: "secondary", children: "Загрузка…" })
+            : i.length === 0
+              ? E.jsx(Ft, {
+                  type: "secondary",
+                  children: `Пока нет завершённых запусков на этой вкладке. Каждый завершённый запуск сохраняется сюда (последние ${VT_HISTORY_PER_GOAL}).`,
+                })
+              : E.jsx("div", {
+                  style: { display: "flex", flexDirection: "column", gap: 8, maxHeight: 480, overflowY: "auto" },
+                  children: i.map((l) =>
+                    E.jsxs(
+                      "div",
+                      {
+                        style: {
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          borderBottom: "1px solid rgba(128,128,128,0.2)",
+                          paddingBottom: 6,
+                        },
+                        children: [
+                          E.jsxs("div", {
+                            style: { flex: 1, minWidth: 0 },
+                            children: [
+                              E.jsx("div", {
+                                children: `${new Date(l.finishedAt).toLocaleString("ru-RU")} · ${l.botName ?? `бот #${l.botId}`}`,
+                              }),
+                              E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: vtHistorySummary(l.result) }),
+                            ],
+                          }),
+                          E.jsx(Ge, { size: "small", disabled: a, onClick: () => n(l.result), children: "Показать" }),
+                          E.jsx(Ge, {
+                            size: "small",
+                            type: "text",
+                            danger: !0,
+                            onClick: async () => {
+                              await vtDeleteHistory([l.id]), s();
+                            },
+                            children: "Удалить",
+                          }),
+                        ],
+                      },
+                      l.id,
+                    ),
+                  ),
+                }),
+      })
+    );
+  },
   Zft = ({ extensionReady: e, kind: vtKind = "improve", embedded: vtEmbedded = !1 }) => {
     var Jn, zn, ea, Pi, Qt, yr, On, mn, xn;
     const t = sS(),
@@ -138804,8 +139263,10 @@ const U1 =
         vtRunSession.engine && vtRunSession.engine !== te.current
           ? (n.warning(`Идёт прогон во вкладке «${vtRunSession.label}» — дождитесь окончания или остановите его`), !0)
           : !1;
+    const [vtHistoryOpen, vtSetHistoryOpen] = p.useState(!1);
     p.useEffect(() => {
-      ie(Cft()),
+      vtRequestPersist(),
+        ie(Cft()),
         VX()
           .then(Y)
           .catch(() => {});
@@ -139061,7 +139522,7 @@ const U1 =
             finalists: o.portfolio.finalists,
             populationSize: o.genetic.populationSize,
             generations: o.genetic.generations,
-            searchVariants: o.genetic.searchMethod === "pattern" ? o.genetic.searchBudget : void 0,
+            searchVariants: vtSearchVariants(o.genetic, Se),
             holdoutCandidates: o.validation.enabled ? o.validation.topCount + 1 : 0,
             holdoutShare: o.validation.holdoutPercent / 100,
             budget: $,
@@ -139071,7 +139532,7 @@ const U1 =
             stressSymbols: o.mode === "portfolio" && o.robustness.enabled ? we : [],
             vtBaselineOnly: vtKind === "coins",
           }),
-        [$, o.genetic, o.mode, o.portfolio, o.robustness, o.validation, M, ye, Te, we],
+        [$, o.genetic, o.mode, o.portfolio, o.robustness, o.validation, M, ye, Te, we, Se],
       ),
       Ue = zft(o.mode, o.genetic),
       St = HL(o, ge),
@@ -139086,6 +139547,12 @@ const U1 =
             Se &&
             Se.dimensions.length === 0 &&
             ce.push("Нечего оптимизировать: включите параметры или расширьте диапазоны"),
+          o.genetic.searchMethod === "grid" &&
+            Se &&
+            !(VTPS.psGridSize(Se).total <= VT_GRID_MAX) &&
+            ce.push(
+              `Полный перебор: ${vtFormatCount(VTPS.psGridSize(Se).total)} комбинаций — больше предела ${VT_GRID_MAX.toLocaleString("ru-RU")}. Выключите часть параметров, сузьте диапазоны или увеличьте шаг`,
+            ),
           o.mode === "portfolio" &&
             !o.portfolio.screeningAuto &&
             Go(o.portfolio.screeningText).length === 0 &&
@@ -139217,7 +139684,7 @@ const U1 =
             finalists: Ve.portfolio.finalists,
             populationSize: Ve.genetic.populationSize,
             generations: Ve.genetic.generations,
-            searchVariants: Ve.genetic.searchMethod === "pattern" ? Ve.genetic.searchBudget : void 0,
+            searchVariants: vtSearchVariants(Ve.genetic, Se),
             holdoutCandidates: 0,
             holdoutShare: 0,
             budget: $,
@@ -139228,7 +139695,7 @@ const U1 =
             vtBaselineOnly: vtKind === "coins",
           });
         return { withStress: ce(We), withoutStress: ce([]) };
-      }, [$, M, Kt, Ve, We, ct]),
+      }, [$, M, Kt, Ve, We, ct, Se]),
       Ye = p.useCallback(() => {
         const ce = [];
         return (
@@ -139338,7 +139805,56 @@ const U1 =
       },
       jt = async () => {
         if (vtGuard()) return;
-        await mft(), Y(0), n.success("Кэш результатов бэктестов очищен");
+        window.confirm(
+          "Удалить из памяти все сохранённые бэктесты? Отменить нельзя — сначала можно сохранить память в файл. История запусков останется.",
+        ) && (await mft(), Y(0), n.success("Память бэктестов очищена"));
+      },
+      vtExportClick = async () => {
+        try {
+          const ce = await vtExportMemory();
+          n.success(`Память сохранена в файл: бэктестов ${ce.results}, запусков в истории ${ce.history}`);
+        } catch (ce) {
+          n.error(`Не удалось сохранить память: ${ce instanceof Error ? ce.message : String(ce)}`);
+        }
+      },
+      vtImportClick = () => {
+        if (vtGuard()) return;
+        const ce = document.createElement("input");
+        (ce.type = "file"),
+          (ce.accept = ".json,.gz,application/json,application/gzip"),
+          (ce.onchange = async () => {
+            const Ne = ce.files && ce.files[0];
+            if (Ne)
+              try {
+                const nt = await vtImportMemory(Ne);
+                n.success(
+                  `Память загружена: новых бэктестов ${nt.added}, обновлено ${nt.updated}, пропущено ${nt.skipped}, запусков в истории ${nt.history}`,
+                ),
+                  VX()
+                    .then(Y)
+                    .catch(() => {});
+              } catch (nt) {
+                n.error(`Не удалось загрузить память: ${nt instanceof Error ? nt.message : String(nt)}`);
+              }
+          }),
+          ce.click();
+      },
+      // A new period end moves the dates of rolling presets ("custom" dates stay).
+      vtReanchor = () => {
+        s((ce) => {
+          if (ce.periodPreset === "custom") return ce;
+          const Ne = a2(ce.periodPreset);
+          return { ...ce, periodFrom: Ne.from, periodTo: Ne.to };
+        });
+      },
+      vtShowHistory = (ce) => {
+        vtGuard() ||
+          (Mhe(ce),
+          z(ce.leaderboard),
+          B(ay(ce.config, ce.baseStrategy, ce.quoteCurrency)),
+          F({ finishedAt: ce.finishedAt, backtestsRun: ce.backtestsRun, cacheHits: ce.cacheHits, elapsedMs: ce.elapsedMs }),
+          vtSetHistoryOpen(!1),
+          n.success(`Показан запуск от ${new Date(ce.finishedAt).toLocaleString("ru-RU")}`));
       },
       nr = (ce) => {
         // Template tabs: the editor shows the mode's absolute windows; only rows changed by the user
@@ -139857,6 +140373,7 @@ const U1 =
                           { value: "6m", label: "6 мес" },
                         ],
                       }),
+                      E.jsx(vtAnchorControl, { disabled: mt, onChange: vtReanchor }),
                       E.jsx(wn, {
                         text:
                           vtKind === "scalper"
@@ -139927,7 +140444,9 @@ const U1 =
                           ? "финальная проверка"
                           : U.phase === "robustness"
                             ? "проверка устойчивости"
-                            : U.searchMethod === "pattern"
+                            : U.searchMethod === "grid"
+                              ? "полный перебор"
+                              : U.searchMethod === "pattern"
                               ? `пошаговый поиск, раунд ${Math.max(1, U.patternRound)}`
                               : `поколение ${U.generation}/${U.totalGenerations}`,
                       " ",
@@ -140165,6 +140684,7 @@ const U1 =
                                           style: { width: 150 },
                                         }),
                                         E.jsxs(Ft, { type: "secondary", children: [$e, " дн."] }),
+                                        E.jsx(vtAnchorControl, { disabled: mt, onChange: vtReanchor }),
                                       ],
                                     }),
                                   ],
@@ -140925,10 +141445,16 @@ const U1 =
                                 E.jsx(pl, {
                                   block: !0,
                                   disabled: mt,
-                                  value: o.genetic.searchMethod === "genetic" ? "genetic" : "pattern",
+                                  value:
+                                    o.genetic.searchMethod === "genetic"
+                                      ? "genetic"
+                                      : o.genetic.searchMethod === "grid"
+                                        ? "grid"
+                                        : "pattern",
                                   onChange: (ce) => l("genetic", { ...o.genetic, searchMethod: ce }),
                                   options: [
-                                    { value: "pattern", label: "Пошаговый (рекомендуется)" },
+                                    { value: "pattern", label: "Пошаговый" },
+                                    { value: "grid", label: "Перебор" },
                                     { value: "genetic", label: "Генетический" },
                                   ],
                                 }),
@@ -140936,17 +141462,21 @@ const U1 =
                                   type: "secondary",
                                   style: { fontSize: 12 },
                                   children:
-                                    o.genetic.searchMethod === "genetic"
+                                    o.genetic.searchMethod === "grid"
+                                      ? `Полный перебор: проверяется каждая комбинация разрешённых значений включённых параметров (диапазоны и шаг — в «Ручной настройке», точность — в «Что подбираем»). Гарантия: лучше найденного варианта на монетах и периоде поиска нет ни одного. Перебор можно останавливать — продолжится с того же места, проверенное берётся из памяти. ${Se ? (VTPS.psGridSize(Se).total <= VT_GRID_MAX ? `Сейчас: ${vtFormatCount(VTPS.psGridSize(Se).total)} ${vtCombos(VTPS.psGridSize(Se).total)} × монеты поиска.` : `Сейчас: ${vtFormatCount(VTPS.psGridSize(Se).total)} комбинаций — больше предела ${VT_GRID_MAX.toLocaleString("ru-RU")}: выключите часть параметров, сузьте диапазоны или увеличьте шаг.`) : "Число комбинаций появится, когда бот загрузится."}`
+                                      : o.genetic.searchMethod === "genetic"
                                       ? "Случайные скрещивания и мутации многих параметров сразу. На десятках параметров и ~100 вариантах обычно уступает пошаговому: случайные изменения чаще ухудшают уже настроенную стратегию."
-                                      : "Сначала каждый параметр сдвигается вверх и вниз по отдельности (плюс «макро»-сдвиги сетки: все отступы шире/уже, объёмы ближе/дальше), удачные изменения объединяются и продолжаются, пока есть прирост, затем шаг уменьшается вдвое. Ход поиска воспроизводим и продолжается после остановки.",
+                                      : "Пошаговый (рекомендуется): сначала каждый параметр сдвигается вверх и вниз по отдельности (плюс «макро»-сдвиги сетки: все отступы шире/уже, объёмы ближе/дальше), удачные изменения объединяются и продолжаются, пока есть прирост, затем шаг уменьшается вдвое. Ход поиска воспроизводим и продолжается после остановки.",
                                 }),
-                                E.jsx(pl, {
+                                o.genetic.searchMethod === "grid"
+                                  ? null
+                                  : E.jsx(pl, {
                                   block: !0,
                                   disabled: mt,
                                   value: Ue,
                                   onChange: (ce) => {
                                     const Ne = ce;
-                                    Ne !== "custom" && l("genetic", { ...o.genetic, ...z$[o.mode][Ne] });
+                                    Ne !== "custom" && l("genetic", { ...o.genetic, ...z$[o.mode][Ne], searchMethod: o.genetic.searchMethod });
                                   },
                                   options: [
                                     { value: "fast", label: "Быстро" },
@@ -140955,7 +141485,27 @@ const U1 =
                                     { value: "custom", label: "Свой", disabled: !0 },
                                   ],
                                 }),
-                                o.genetic.searchMethod !== "genetic"
+                                o.genetic.searchMethod !== "genetic" && o.genetic.searchMethod !== "grid"
+                                  ? E.jsxs(or, {
+                                      align: "center",
+                                      gap: 8,
+                                      wrap: !0,
+                                      children: [
+                                        E.jsx(Hw, {
+                                          size: "small",
+                                          checked: o.genetic.vtCertify === !0,
+                                          disabled: mt,
+                                          onChange: (ce) => l("genetic", { ...o.genetic, vtCertify: ce }),
+                                        }),
+                                        E.jsx(Ft, { children: "Сертификат лучшего" }),
+                                        E.jsx(wn, {
+                                          text: `После поиска каждый параметр лучшего варианта проверяется по всем разрешённым значениям при остальных фиксированных; если какое-то значение лучше — переходим туда и проверяем заново (до ${VT_CERT_PASSES} проходов). Итог: «ни одно изменение одного параметра не улучшает результат». Это гарантия на монетах и периоде поиска, а не прогноз на будущее.`,
+                                        }),
+                                        Se ? E.jsx(Ft, { type: "secondary", style: { fontSize: 12 }, children: `+ до ${vtVariants(VT_CERT_PASSES * VTPS.psCertifyCost(Se)).replace(/^\d+/, (l) => Number(l).toLocaleString("ru-RU"))} (${VTPS.psCertifyCost(Se)} за проход)` }) : null,
+                                      ],
+                                    })
+                                  : null,
+                                o.genetic.searchMethod !== "genetic" && o.genetic.searchMethod !== "grid"
                                   ? E.jsxs(bl, {
                                       gutter: [12, 8],
                                       children: [
@@ -141446,7 +141996,11 @@ const U1 =
                                         style: { fontSize: 12 },
                                         children:
                                           D.searchMethod === "pattern"
-                                            ? `раунд ${D.currentGeneration}${D.patternStep ? ` · шаг ${(D.patternStep * 100).toFixed(D.patternStep < 0.1 ? 1 : 0)}%` : ""}`
+                                            ? D.vtGrid
+                                              ? "полный перебор"
+                                              : D.vtCertifying
+                                                ? "сертификат лучшего"
+                                                : `раунд ${D.currentGeneration}${D.patternStep ? ` · шаг ${(D.patternStep * 100).toFixed(D.patternStep < 0.1 ? 1 : 0)}%` : ""}`
                                             : `вариантов ${D.generationDone}/${D.generationSize}`,
                                       })
                                     : null,
@@ -141864,17 +142418,45 @@ const U1 =
                   E.jsx(Wr, {
                     size: "small",
                     title: "📝 Лог",
-                    extra: E.jsx(ar, {
-                      title:
-                        "Результаты бэктестов хранятся локально и используются повторно, если настройки, монета, период и комиссии совпадают",
-                      children: E.jsxs(Ge, {
-                        size: "small",
-                        type: "text",
-                        icon: E.jsx(S4, {}),
-                        onClick: jt,
-                        disabled: de || !!vtRunSession.engine,
-                        children: ["Очистить кэш (", Z, ")"],
-                      }),
+                    extra: E.jsxs(ut, {
+                      size: 2,
+                      wrap: !0,
+                      children: [
+                        E.jsx(ar, {
+                          title:
+                            "Память оптимизатора: результаты бэктестов хранятся в браузере и используются повторно, если настройки, монета, период и комиссии совпадают. Бэктесты завершённых периодов хранятся бессрочно.",
+                          children: E.jsxs(Ft, { type: "secondary", style: { fontSize: 12 }, children: ["🧠 Память: ", Z] }),
+                        }),
+                        E.jsx(ar, {
+                          title: "Сохранить память и историю запусков в файл — резервная копия и перенос в другой браузер или на другой компьютер",
+                          children: E.jsx(Ge, { size: "small", type: "text", onClick: vtExportClick, children: "Сохранить" }),
+                        }),
+                        E.jsx(ar, {
+                          title: "Загрузить память из файла: добавятся бэктесты, которых ещё нет, и запуски в историю",
+                          children: E.jsx(Ge, {
+                            size: "small",
+                            type: "text",
+                            onClick: vtImportClick,
+                            disabled: de || !!vtRunSession.engine,
+                            children: "Загрузить",
+                          }),
+                        }),
+                        E.jsx(ar, {
+                          title: "Завершённые запуски этой вкладки — можно открыть любой прошлый итог",
+                          children: E.jsx(Ge, { size: "small", type: "text", onClick: () => vtSetHistoryOpen(!0), children: "История" }),
+                        }),
+                        E.jsx(ar, {
+                          title: "Удалить все сохранённые бэктесты (история запусков останется)",
+                          children: E.jsx(Ge, {
+                            size: "small",
+                            type: "text",
+                            icon: E.jsx(S4, {}),
+                            onClick: jt,
+                            disabled: de || !!vtRunSession.engine,
+                            children: "Очистить",
+                          }),
+                        }),
+                      ],
                     }),
                     children: E.jsx(Udt, { logs: N }),
                   }),
@@ -141884,6 +142466,13 @@ const U1 =
           ],
         }),
         E.jsx(Zdt, { open: _, drafts: vtDrafts, overrides: vtIsTpl ? vtRanges : C, onClose: () => I(!1), onSave: nr }),
+        E.jsx(vtHistoryModal, {
+          open: vtHistoryOpen,
+          goal: vtKind,
+          disabled: de || !!vtRunSession.engine,
+          onClose: () => vtSetHistoryOpen(!1),
+          onShow: vtShowHistory,
+        }),
         je
           ? E.jsx(rft, {
               open: Kt,
@@ -141901,9 +142490,7 @@ const U1 =
                 screeningMonths: Ve.portfolio.screeningMonths,
                 depositChange: Ve.portfolio.maxDepositChangePercent ?? 0,
                 variants:
-                  Ve.genetic.searchMethod === "pattern"
-                    ? Ve.genetic.searchBudget
-                    : Ve.genetic.populationSize * Ve.genetic.generations,
+                  vtSearchVariants(Ve.genetic, Se) ?? Ve.genetic.populationSize * Ve.genetic.generations,
                 finalists: Ve.portfolio.finalists,
                 neighbors: Ve.robustness.neighbors,
               },

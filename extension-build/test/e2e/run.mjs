@@ -70,7 +70,7 @@ await page.goto(`http://127.0.0.1:${port}/index.html`);
 await page.waitForFunction(() => window.__VELES_TEST__ && window.VelesSim, null, { timeout: 30000 });
 
 const summary = await page.evaluate(
-  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring }) => {
+  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring, onlyKinds, certify, rerun }) => {
     const T = window.__VELES_TEST__;
     // --verifyScoring: compare the fast portfolio replica with xB on every scoring call.
     T.vtFastXBState.verifyAll = Boolean(verifyScoring);
@@ -103,6 +103,7 @@ const summary = await page.evaluate(
         ...form.genetic,
         searchMethod: method,
         ...(budget ? { searchBudget: budget } : {}),
+        ...(certify ? { vtCertify: true } : {}),
       },
     };
     const config = T.Vft(form, {
@@ -111,6 +112,14 @@ const summary = await page.evaluate(
       ranges: {},
       botDeposit: strategy.deposit.amount,
     });
+    // --onlyKinds=takeProfit,pullUp: switch off every other parameter (e.g. a small grid for --method=grid).
+    if (onlyKinds) {
+      const kinds = new Set(onlyKinds.split(','));
+      const space = T.Tu(strategy, config.scope, {}, config.precision);
+      config.ranges = Object.fromEntries(
+        space.dimensions.filter((dim) => !kinds.has(dim.kind)).map((dim) => [dim.id, { enabled: false, min: dim.min, max: dim.max }]),
+      );
+    }
     const results = new Map();
     let nextId = 1;
     let engine = null;
@@ -140,7 +149,7 @@ const summary = await page.evaluate(
       fetchStrategy: async () => strategy,
       transport,
       listingDate: async () => null,
-      persist: Boolean(stopAfter),
+      persist: Boolean(stopAfter) || Boolean(rerun),
       vtCheckEvaluator: true,
       schedulerOptions: { minIntervalMs: 0, pollIntervalMs: 1, sleep: async () => {}, maxInFlight: 16 },
     };
@@ -156,7 +165,15 @@ const summary = await page.evaluate(
         throw new Error('no saved state to resume');
       }
       leaderboard = await resumed.resume();
-      engine = { backtestsRun: backtestsBeforeStop + resumed.backtestsRun, archive: resumed.archive };
+      // The resumed engine restores the backtest counter from the saved state.
+      engine = { backtestsRun: resumed.backtestsRun, archive: resumed.archive };
+    }
+    // --rerun: the same run once more from scratch — everything must come from the memory.
+    let rerunInfo = null;
+    if (rerun) {
+      const second = new T.Nf(config, { ...callbacks, onLog: () => {} }, deps);
+      const again = await second.start();
+      rerunInfo = { backtests: second.backtestsRun, cacheHits: second.cacheHits, bestKey: again.top[0]?.key.slice(0, 6) ?? null };
     }
     const describe = (candidate) => {
       if (!candidate) {
@@ -201,6 +218,8 @@ const summary = await page.evaluate(
           }
         : null,
       history: leaderboard.history,
+      searchSummary: leaderboard.searchSummary ?? null,
+      rerun: rerunInfo,
       scoringMismatches: T.vtFastXBState.mismatches ?? [],
       logs,
       leaderboard,
@@ -221,6 +240,9 @@ const summary = await page.evaluate(
     goal: args.goal ?? 'improve',
     minDealsRate: args.minDealsRate !== undefined ? Number(args.minDealsRate) : null,
     verifyScoring: args.verifyScoring === 'true',
+    onlyKinds: args.onlyKinds ?? null,
+    certify: args.certify === 'true',
+    rerun: args.rerun === 'true',
     template: {
       ...(args.direction ? { direction: args.direction } : {}),
       ...(args.profile ? { profile: args.profile } : {}),

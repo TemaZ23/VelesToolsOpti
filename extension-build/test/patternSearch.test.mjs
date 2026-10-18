@@ -2,17 +2,23 @@ import { describe, expect, it } from 'vitest';
 import {
   psApplyMove,
   psBuildMoves,
+  psCertify,
+  psCertifyCost,
   psChoiceMoves,
   psCoinGroups,
   psCreateRng,
   psFoldMetrics,
   psFoldScore,
   psFoldScores,
+  psGridSize,
+  psGridStride,
+  psGridValues,
   psObjective,
   psPatternPoint,
   psPickFinalists,
   psPickScreeningSymbols,
   psRescale,
+  psRunGrid,
   psRunSearch,
   psScaleEntries,
   psSliceEntries,
@@ -462,5 +468,159 @@ describe('psDescribeMove', () => {
     const text = psDescribeMove(space, baseGenome, next, move, (dim, value) => String(value));
     expect(text.startsWith('Ордер 6: объём 20→')).toBe(true);
     expect(text).toMatch(/пересчитано связанных: \d+/);
+  });
+});
+
+describe('exhaustive grid', () => {
+  /** Three numeric parameters and a filter swap: 8 × 5 × 4 × 3 = 480 combinations. */
+  const smallSpace = () => ({
+    dimensions: [
+      { id: 'tp', kind: 'takeProfit', group: 'exit', label: 'Тейк, %', min: 0.4, max: 0.75, step: 0.05, baseValue: 0.5 },
+      { id: 'pull', kind: 'pullUp', group: 'grid', label: 'Подтяжка, %', min: 0.2, max: 0.6, step: 0.1, baseValue: 0.4 },
+      { id: 'n', kind: 'conditionInterval', group: 'timeframes', label: 'ТФ', min: 0, max: 3, step: 1, integer: true, baseValue: 1 },
+      {
+        id: 'sw',
+        kind: 'conditionSwap',
+        group: 'structure',
+        label: 'Фильтр',
+        min: 0,
+        max: 2,
+        step: 1,
+        baseValue: 0,
+        choices: [{ kind: 'set', label: 'RSI' }, { kind: 'set', label: 'CCI' }, { kind: 'off', label: 'выкл.' }],
+      },
+    ],
+  });
+  const key = (genome) => JSON.stringify(Object.keys(genome).sort().map((id) => [id, Math.round(genome[id] * 1e6) / 1e6]));
+  const identity = (genome) => ({ ...genome });
+  const base = (space) => Object.fromEntries(space.dimensions.map((dim) => [dim.id, dim.baseValue]));
+  // A bumpy objective: the global optimum is not where a one-parameter-at-a-time search lands first.
+  const objective = (g) => 1 + Math.sin(g.tp * 17) * 0.3 + Math.cos(g.pull * 9 + g.n) * 0.2 + (g.sw === 1 ? 0.15 : 0) - 0.05 * g.n * g.sw;
+  const evaluator = (cache, calls) => async (genomes) =>
+    genomes.map((genome) => {
+      const k = key(genome);
+      if (!cache.has(k)) {
+        calls.count += 1;
+        cache.set(k, { score: objective(genome), valid: true, violation: 0 });
+      }
+      return cache.get(k);
+    });
+
+  it('lists every value of a dimension, including an off-grid maximum', () => {
+    expect(psGridValues({ min: 0.4, max: 0.75, step: 0.05 })).toEqual([0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75]);
+    expect(psGridValues({ min: 1, max: 2.1, step: 0.5 })).toEqual([1, 1.5, 2, 2.1]);
+    expect(psGridValues({ min: 0, max: 3, step: 1, integer: true })).toEqual([0, 1, 2, 3]);
+    expect(psGridValues({ kind: 'conditionSwap', choices: [{}, {}, {}], min: 0, max: 2, step: 1 })).toEqual([0, 1, 2]);
+    expect(psGridValues({ min: 5, max: 5, step: 1 })).toEqual([5]);
+    const space = smallSpace();
+    expect(psGridSize(space).total).toBe(8 * 5 * 4 * 3);
+    expect(psCertifyCost(space)).toBe(7 + 4 + 3 + 2);
+  });
+
+  it('visits a permutation of the grid', () => {
+    for (const total of [1, 2, 7, 12, 480, 1001]) {
+      const stride = psGridStride(total);
+      const seen = new Set();
+      for (let k = 0; k < total; k++) {
+        seen.add((k * stride) % total);
+      }
+      expect(seen.size).toBe(total);
+    }
+  });
+
+  it('checks every combination exactly once and returns the global best', async () => {
+    const space = smallSpace();
+    const calls = { count: 0 };
+    const cache = new Map();
+    const out = await psRunGrid({ space, repair: identity, keyOf: key, baseGenome: base(space), budget: 1000, batch: 7, evaluate: evaluator(cache, calls) });
+    expect(out.stoppedBy).toBe('complete');
+    expect(out.grid.visited).toBe(480);
+    expect(calls.count).toBe(480); // the base genome is a grid point, so nothing extra
+    let bestScore = -Infinity;
+    for (const tp of psGridValues(space.dimensions[0]))
+      for (const pull of psGridValues(space.dimensions[1]))
+        for (const n of [0, 1, 2, 3])
+          for (const sw of [0, 1, 2]) bestScore = Math.max(bestScore, objective({ tp, pull, n, sw }));
+    expect(out.best.score).toBeCloseTo(bestScore, 12);
+    // Resumed from the cache: nothing is evaluated again and the answer is the same.
+    const again = { count: 0 };
+    const second = await psRunGrid({ space, repair: identity, keyOf: key, baseGenome: base(space), budget: 1000, evaluate: evaluator(cache, again) });
+    expect(again.count).toBe(0);
+    expect(second.best.key).toBe(out.best.key);
+  });
+
+  it('evaluates genomes made equal by the repair once', async () => {
+    const space = smallSpace();
+    const calls = { count: 0 };
+    // The filter swap does not matter when the timeframe index is 0: collapse it.
+    const repair = (genome) => (genome.n === 0 ? { ...genome, sw: 0 } : { ...genome });
+    const out = await psRunGrid({ space, repair, keyOf: key, baseGenome: base(space), budget: 1000, evaluate: evaluator(new Map(), calls) });
+    expect(out.stoppedBy).toBe('complete');
+    expect(calls.count).toBe(480 - 8 * 5 * 2);
+    expect(out.grid.unique).toBe(calls.count);
+  });
+
+  it('does not start a grid above the limit and resumes after a stop', async () => {
+    const space = smallSpace();
+    const tooLarge = await psRunGrid({ space, repair: identity, keyOf: key, baseGenome: base(space), budget: 100, evaluate: evaluator(new Map(), { count: 0 }) });
+    expect(tooLarge.stoppedBy).toBe('too-large');
+    expect(tooLarge.evaluations).toBe(1);
+    const cache = new Map();
+    const first = { count: 0 };
+    let batches = 0;
+    const stopped = await psRunGrid({
+      space,
+      repair: identity,
+      keyOf: key,
+      baseGenome: base(space),
+      budget: 1000,
+      batch: 50,
+      evaluate: evaluator(cache, first),
+      shouldStop: () => batches >= 3,
+      onEvent: (event) => {
+        if (event.type === 'grid') {
+          batches += 1;
+        }
+      },
+    });
+    expect(stopped.stoppedBy).toBe('stop');
+    expect(stopped.grid.visited).toBe(150);
+    const rest = { count: 0 };
+    const resumed = await psRunGrid({ space, repair: identity, keyOf: key, baseGenome: base(space), budget: 1000, evaluate: evaluator(cache, rest) });
+    expect(resumed.stoppedBy).toBe('complete');
+    expect(first.count + rest.count).toBe(480);
+  });
+
+  it('certifies a point no single-parameter change improves', async () => {
+    const space = smallSpace();
+    const cache = new Map();
+    const calls = { count: 0 };
+    const evaluate = evaluator(cache, calls);
+    const start = { ...(await evaluate([base(space)]))[0], key: key(base(space)), genome: base(space) };
+    const out = await psCertify({ space, repair: identity, keyOf: key, start, evaluate, maxPasses: 6 });
+    expect(out.certified).toBe(true);
+    expect(out.best.score).toBeGreaterThan(start.score);
+    for (const dim of space.dimensions) {
+      for (const value of psGridValues(dim)) {
+        const neighbour = { ...out.best.genome, [dim.id]: value };
+        expect(objective(neighbour)).toBeLessThanOrEqual(out.best.score + 0.0025 + 1e-12);
+      }
+    }
+    // Starting from the certified point it is certified again in one pass, all from the cache.
+    const again = { count: 0 };
+    const second = await psCertify({ space, repair: identity, keyOf: key, start: out.best, evaluate: evaluator(cache, again) });
+    expect(second.certified).toBe(true);
+    expect(second.passes).toBe(1);
+    expect(again.count).toBe(0);
+  });
+
+  it('reports an unfinished certificate when the budget runs out', async () => {
+    const space = smallSpace();
+    const evaluate = evaluator(new Map(), { count: 0 });
+    const start = { ...(await evaluate([base(space)]))[0], key: key(base(space)), genome: base(space) };
+    const out = await psCertify({ space, repair: identity, keyOf: key, start, evaluate, budget: 5 });
+    expect(out.certified).toBe(false);
+    expect(out.stoppedBy).toBe('budget');
+    expect(out.evaluations).toBeLessThanOrEqual(5);
   });
 });
