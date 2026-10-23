@@ -43,6 +43,7 @@ from .strategy import BotConfig, Condition, Order, PortfolioConfig, Sleeve, long
 OUT = Path("output/dca_lab")
 STATE = OUT / "robust_state.json"
 FULL_FROM, FULL_TO = IS_FROM, OOS_TO
+HOLDOUT_FROM = "2023-01-01"
 N_FOLDS = 5
 SPLIT_SEED = 2026
 
@@ -359,7 +360,8 @@ def cmd_validate(args: argparse.Namespace) -> None:
     market = load_market(list(coins), series=series_for("long"), verbose=False)
     cfgs = _configs(state)
     names = list(cfgs)
-    windows = {"IS": (IS_FROM, IS_TO), "OOS": (OOS_FROM, OOS_TO), "FULL": (FULL_FROM, FULL_TO)}
+    # минутки монет вне WORK скачаны с 2023-01 — их окна начинаются там же (иначе %/мес занижен)
+    windows = {"IS": (HOLDOUT_FROM, IS_TO), "OOS": (OOS_FROM, OOS_TO), "FULL": (HOLDOUT_FROM, FULL_TO)}
     if args.coins == "work":
         windows = {"OOS": (OOS_FROM, OOS_TO), "FULL": (FULL_FROM, FULL_TO)}
     out: dict = {"coins": market.coins, "windows": {}}
@@ -387,6 +389,47 @@ def cmd_settings(args: argparse.Namespace) -> None:
     print(sleeve_ru(sl))
 
 
+def _row(name: str, m: dict) -> str:
+    return (
+        f"| {name} | {m['avg_month_pct']:.2f} | {m['dd_abs_pct']:.1f} | {m['eff']:.3f} | {m['worst_month_pct']:.2f} | "
+        f"{m['deals']} | {'да' if m['liquidated'] else 'нет'} |"
+    )
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    """Таблицы для отчёта из robust_state.json (Markdown в stdout)."""
+    state = _load_state()
+    win = state["winner"]
+    names = ["AUTHOR_22X", "LONG_OPT"] + ([win] if win != "LONG_OPT" else [])
+    label = {"AUTHOR_22X": "Автор 22.X", "LONG_OPT": "LONG_OPT", win: "LONG_OPT v2" if win != "LONG_OPT" else "LONG_OPT"}
+    head = "| Настройки | %/мес | Просадка, % депо | Эфф. | Худший месяц | Сделок | Ликвидация |\n|---|---|---|---|---|---|---|"
+    out = ["### Отбор: IS 2021-03 … 2025-04, монеты WORK", "",
+           "| Кандидат | Оценка | Эфф. | Среднее 2 худших фолдов | Худшая половина монет | Плато (соседи: среднее / 20%) |",
+           "|---|---|---|---|---|---|"]  # fmt: skip
+    for r in state.get("plateau", []):
+        p = r["own_parts"]
+        out.append(f"| {r['name']} | {r['own']:.4f} | {p['eff']:.3f} | {p['worst2_folds']:.3f} | {p['halves_min']:.3f} | "
+                   f"{r['nb_mean']:.4f} / {r['nb_q20']:.4f} |")  # fmt: skip
+    titles = {
+        ("work", "OOS"): "Вне отбора по времени: 2025-04 … 2026-10, монеты WORK",
+        ("work", "FULL"): "Вся история: 2021-03 … 2026-10, монеты WORK",
+        ("holdout", "IS"): "Чужие монеты (83 вне WORK), 2023-01 … 2025-04",
+        ("holdout", "OOS"): "Чужие монеты, 2025-04 … 2026-10",
+        ("holdout", "FULL"): "Чужие монеты, 2023-01 … 2026-10",
+    }
+    for (coins, w), title in titles.items():
+        data = state.get("validate", {}).get(coins, {}).get("windows", {}).get(w)
+        if not data:
+            continue
+        out += ["", f"### {title}", "", head] + [_row(label[n], data[n]) for n in names if n in data]
+    for coins in ("work", "holdout"):
+        data = state.get("validate", {}).get(coins, {}).get("oos_cost_stress")
+        if data:
+            out += ["", f"### OOS с дорогими издержками (taker 0.08%, фандинг 0.015%/8ч), {'WORK' if coins == 'work' else 'чужие монеты'}", "", head]
+            out += [_row(label[n], data[n]) for n in names if n in data]
+    print("\n".join(out))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -401,8 +444,11 @@ def main() -> None:
     v = sub.add_parser("validate")
     v.add_argument("--coins", choices=("work", "holdout"), default="work")
     sub.add_parser("settings")
+    sub.add_parser("report")
     args = ap.parse_args()
-    {"search": cmd_search, "plateau": cmd_plateau, "validate": cmd_validate, "settings": cmd_settings}[args.cmd](args)
+    {"search": cmd_search, "plateau": cmd_plateau, "validate": cmd_validate, "settings": cmd_settings, "report": cmd_report}[
+        args.cmd
+    ](args)
 
 
 if __name__ == "__main__":
