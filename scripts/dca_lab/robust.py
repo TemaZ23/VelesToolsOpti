@@ -36,7 +36,7 @@ import numpy as np
 
 from .data import CACHE_DIR, WORK_COINS, coin_to_symbol
 from .optimize import LONG_SPACE, P, build_long_bot, decode, encode, fold_efficiency, mutate, crossover, series_for
-from .portfolio import Market, Result, load_market, minute_of, run_batch
+from .portfolio import Market, Result, date_of, load_market, minute_of, run_batch
 from .run import IS_FROM, IS_TO, OOS_FROM, OOS_TO
 from .strategy import BotConfig, Condition, Order, PortfolioConfig, Sleeve, long_strategy_22x
 
@@ -389,6 +389,42 @@ def cmd_settings(args: argparse.Namespace) -> None:
     print(sleeve_ru(sl))
 
 
+def _year_stats(r: Result) -> list[dict]:
+    """По календарным годам: доходность, %/мес от начального депозита и просадка внутри года (по худшим ценам)."""
+    eq, low = r.daily[:, 0], r.daily[:, 1]
+    out, start = [], 0
+    labels = [date_of(r.t_from + d * 1440)[:4] for d in range(len(eq))]
+    while start < len(eq):
+        end = start
+        while end < len(eq) and labels[end] == labels[start]:
+            end += 1
+        e0 = eq[start - 1] if start > 0 else r.deposit
+        peak, dd = e0, 0.0
+        for d in range(start, end):
+            dd = max(dd, peak - low[d])
+            peak = max(peak, eq[d])
+        months = (end - start) / 30.4375
+        out.append({
+            "year": labels[start],
+            "month_pct": round((eq[end - 1] - e0) / r.deposit * 100 / months, 2),
+            "dd_pct": round(dd / r.deposit * 100, 1),
+        })  # fmt: skip
+        start = end
+    return out
+
+
+def cmd_years(args: argparse.Namespace) -> None:
+    state = _load_state()
+    market = load_market(list(WORK_COINS), series=series_for("long"), verbose=False)
+    cfgs = _configs(state)
+    names = [n for n in ("AUTHOR_22X", "LONG_OPT", state["winner"]) if n in cfgs]
+    res = run_batch(market, [cfgs[n] for n in names], minute_of(FULL_FROM), minute_of(FULL_TO))
+    state["years"] = {n: _year_stats(r) for n, r in zip(names, res)}
+    for n in names:
+        print(n, state["years"][n], flush=True)
+    _save_state(state)
+
+
 def _row(name: str, m: dict) -> str:
     return (
         f"| {name} | {m['avg_month_pct']:.2f} | {m['dd_abs_pct']:.1f} | {m['eff']:.3f} | {m['worst_month_pct']:.2f} | "
@@ -427,6 +463,14 @@ def cmd_report(args: argparse.Namespace) -> None:
         if data:
             out += ["", f"### OOS с дорогими издержками (taker 0.08%, фандинг 0.015%/8ч), {'WORK' if coins == 'work' else 'чужие монеты'}", "", head]
             out += [_row(label[n], data[n]) for n in names if n in data]
+    years = state.get("years")
+    if years:
+        ys = [y["year"] for y in next(iter(years.values()))]
+        out += ["", "### По годам, монеты WORK (%/мес от начального депозита · просадка внутри года, % депо)", "",
+                "| Год | " + " | ".join(label.get(n, n) for n in years) + " |", "|---" * (len(years) + 1) + "|"]  # fmt: skip
+        for i, y in enumerate(ys):
+            cells = [f"{years[n][i]['month_pct']:.2f} · {years[n][i]['dd_pct']:.0f}%" for n in years]
+            out.append(f"| {y} | " + " | ".join(cells) + " |")
     print("\n".join(out))
 
 
@@ -445,8 +489,9 @@ def main() -> None:
     v.add_argument("--coins", choices=("work", "holdout"), default="work")
     sub.add_parser("settings")
     sub.add_parser("report")
+    sub.add_parser("years")
     args = ap.parse_args()
-    {"search": cmd_search, "plateau": cmd_plateau, "validate": cmd_validate, "settings": cmd_settings, "report": cmd_report}[
+    {"search": cmd_search, "plateau": cmd_plateau, "validate": cmd_validate, "settings": cmd_settings, "report": cmd_report, "years": cmd_years}[
         args.cmd
     ](args)
 
