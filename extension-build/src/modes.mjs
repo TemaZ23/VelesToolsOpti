@@ -799,6 +799,8 @@ export const vmStyleViolations = (stats, constraints) => {
 export const vmIsModeMetric = (metric) => metric === VM_STABLE_METRIC;
 
 const RATIO_SOFT_CAP = 50;
+/** Smallest drawdown the stable score assumes, as a share of the total deposit. */
+export const VM_RISK_FLOOR_SHARE = 0.01;
 const RATIO_MAX = 100;
 
 /**
@@ -825,8 +827,11 @@ export const vmProfitToRisk = (profit, risk, floor = 1e-6) => {
  * (half-year slices and coin groups of the search) that are profitable: × (0.5 + 0.5 × share).
  * A strategy that earns only in one period or on one group of coins scores up to 2× lower.
  */
-export const vmStableScore = (raw, folds) => {
-  const overall = vmProfitToRisk(raw?.adjustedProfit ?? 0, raw?.risk ?? 0);
+export const vmStableScore = (raw, folds, deposit = 0) => {
+  // Drawdown below 1% of the deposit counts as 1%: a variant that almost never trades (tiny
+  // drawdown) must not win on profit / drawdown alone.
+  const floor = deposit > 0 ? deposit * VM_RISK_FLOOR_SHARE : 0;
+  const overall = vmProfitToRisk(raw?.adjustedProfit ?? 0, Math.max(raw?.risk ?? 0, floor));
   if (!(overall > 0) || !Array.isArray(folds) || folds.length < 2) {
     return roundTo(overall, 4);
   }
@@ -835,7 +840,8 @@ export const vmStableScore = (raw, folds) => {
 };
 
 /** Score of a portfolio fitness for a mode metric. */
-export const vmScore = (metric, { raw, folds }) => (metric === VM_STABLE_METRIC ? vmStableScore(raw, folds) : 0);
+export const vmScore = (metric, { raw, folds, deposit = 0 }) =>
+  metric === VM_STABLE_METRIC ? vmStableScore(raw, folds, deposit) : 0;
 
 // ═══════════════════════════════════════════════════════════════════
 // ROBUSTNESS VERDICT (absolute)

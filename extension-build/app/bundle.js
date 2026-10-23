@@ -132662,7 +132662,12 @@ const sdt = new Set(["FAILED", "ERROR", "CANCELLED", "CANCELED"]),
   lR = (e) => (e instanceof Error ? e : new Error(String(e))),
   k$ = (e) => (e instanceof odt || "status" in e ? (e.status ?? void 0) : void 0),
   cdt = (e, t) => new RegExp(`\\b${t}\\b`).test(e.message),
-  IX = (e) => k$(e) === 429 || cdt(e, 429) || /too many requests/i.test(e.message),
+  // A known HTTP status decides; the message text is used only when there is none
+  // (a 4xx text with "0.429" in it is not a rate limit).
+  IX = (e) => {
+    const t = k$(e);
+    return t !== void 0 ? t === 429 : cdt(e, 429) || /too many requests/i.test(e.message);
+  },
   udt = (e) => k$(e) === 402 || /\bHTTP 402\b/.test(e.message) || /payment required/i.test(e.message),
   cR = (e) => {
     const t = e.message.toLowerCase();
@@ -132696,7 +132701,7 @@ const sdt = new Set(["FAILED", "ERROR", "CANCELLED", "CANCELED"]),
   },
   MX = (e) => {
     const t = k$(e);
-    if (t !== void 0 && (t >= 500 || t === 408 || t === 403)) return !0;
+    if (t !== void 0) return t >= 500 || t === 408 || t === 403;
     const r = e.message.toLowerCase();
     return [
       "network",
@@ -132835,7 +132840,7 @@ class hdt {
           d > 0 && (await this.sleep(d, !0), await this.waitWhilePaused()), (this.lastSubmitAt = this.nowFn());
           try {
             const f = await this.transport.submit(t.payload);
-            return l && c > 0 && l.noteSubmitted(c), this.noteConnectionRestored(s), f;
+            return (this.vtSubmitOkAt = this.nowFn()), l && c > 0 && l.noteSubmitted(c), this.noteConnectionRestored(s), f;
           } catch (f) {
             const h = lR(f);
             if (h instanceof Ts) throw h;
@@ -132867,10 +132872,14 @@ class hdt {
               continue;
             }
             if (!MX(h)) throw new Ts(h.message);
-            if (u >= this.options.maxSubmitRetries)
+            if (u >= this.options.maxSubmitRetries) {
+              // Other backtests are being accepted: this one payload is the problem, skip its coin.
+              if (this.vtSubmitOkAt && this.nowFn() - this.vtSubmitOkAt < 10 * 6e4)
+                throw new Ts(`Veles не принимает этот бэктест (${u} попыток): ${h.message}`);
               throw new rc(
                 `Не удалось запустить бэктест после ${u} попыток: ${h.message}. Проверьте связь и нажмите «Продолжить».`,
               );
+            }
             this.log(
               "warning",
               `⏳ ${t.label}: ${h.message}. Повтор ${u + 1}/${this.options.maxSubmitRetries} через ${Math.round(a / 1e3)} с`,
@@ -133608,12 +133617,12 @@ const Zi = (e, t) => {
   // over folds (time slices and coin groups of the search) when fold consistency is on.
   vtPortfolioScore = (v, raw, rescale, r) => {
     if (VTMODES.vmIsModeMetric(r.target.metric))
-      return { score: VTMODES.vmScore(r.target.metric, { raw, folds: v.folds }), rescale: null };
+      return { score: VTMODES.vmScore(r.target.metric, { raw, folds: v.folds, deposit: r.settings.totalDeposit }), rescale: null };
     if (!rescale) return { score: kL(raw, r.target, r.reference), rescale: null };
     const t = v.folds && r.reference.folds ? VTPS.psFoldScores(v.folds, r.reference.folds, rescale.scale, r.settings.totalDeposit) : [],
       n = t.map((a) => a.score);
     return {
-      score: r.useFolds ? VTPS.psObjective(rescale.score, n) : rescale.score,
+      score: r.useFolds ? VTPS.psObjective(rescale.score, t) : rescale.score,
       rescale: {
         scale: rescale.scale,
         profitGain: rescale.profitGain,
@@ -133697,7 +133706,8 @@ const Zi = (e, t) => {
     const d = new Map(e.map((f, h) => [f.symbol, h]));
     return c.sort((f, h) => (d.get(f) ?? 0) - (d.get(h) ?? 0));
   },
-  Edt = async (e, t, r, n) => {
+  // vtScale: the variant's deposit multiplier — the charts show it at the same deposit as the table.
+  Edt = async (e, t, r, n, vtScale = 1) => {
     const i = hhe("v2").fetchAllCycles;
     if (!i) throw new Error("Загрузка сделок недоступна");
     const o = [];
@@ -133715,7 +133725,7 @@ const Zi = (e, t) => {
         (s += 1),
         n == null || n(s, e.symbols.length);
     }
-    return xB(o, t).aggregated;
+    return xB(VTPS.psScaleEntries(o, vtScale), t).aggregated;
   },
   phe = 24 * 60 * 60 * 1e3,
   ghe = 60,
@@ -133800,7 +133810,7 @@ const Zi = (e, t) => {
     }
     return { better: a, total: i };
   },
-  DX = (e) => e.profitNotWorse && e.riskNotWorse && e.score >= 1 - Er,
+  DX = (e) => e.profitNotWorse && e.riskNotWorse && e.score >= 1 - jL.tolerance - Er,
   Idt = (e) => {
     const { baseEntries: t, entries: r, settings: n } = e,
       a = [];
@@ -134182,6 +134192,9 @@ const Zi = (e, t) => {
           r,
           i.length > 0 ? ` (${i.join("; ")})` : "",
           `. «Создать бота» подставит этот депозит; с прежним депозитом ${r < 1 ? "выше" : "ниже"} и прибыль, и просадка.`,
+          r < 1
+            ? " С меньшим депозитом ордера тоже меньше — если какая-то монета не запустится (ордер ниже минимального на бирже), оставьте на ней прежний депозит."
+            : "",
         ],
       })
     );
@@ -134672,6 +134685,7 @@ const Zi = (e, t) => {
               },
               { from: a.periodFrom, to: a.periodTo },
               (P, D) => g(Math.round((P / Math.max(1, D)) * 100)),
+              vtDepositScale(e),
             );
             h(R);
           } catch (R) {
@@ -135328,7 +135342,7 @@ const Zi = (e, t) => {
           E.jsx(Jl, {
             type: "secondary",
             children:
-              "Создаётся новый бот с ровно теми настройками, что тестировались. Существующие боты не меняются. Бот не запускается, пока не отмечен флажок ниже.",
+              "Создаётся новый бот с настройками найденного варианта — сетка, вход, тейк и стоп как в бэктестах, депозит — с учётом рекомендованного множителя. Существующие боты не меняются. Бот не запускается, пока не отмечен флажок ниже.",
           }),
           E.jsxs("div", {
             children: [
@@ -136741,6 +136755,9 @@ class Nf {
     Et(this, "vtExcluded", []);
     Et(this, "vtExtraFinalists", !1);
     Et(this, "vtPendingKeys", new Map());
+    // 2.18: search-coin evaluations use the deposit and position limit scaled to the search share
+    // (saved runs from older versions keep the old rule, so their scores stay comparable).
+    Et(this, "vtScaledSearch", !0);
     Et(this, "finalEntries", new Map());
     Et(this, "robustnessTotal", 0);
     Et(this, "stressOnly", !1);
@@ -136954,7 +136971,8 @@ class Nf {
       (this.stopRequested = !1),
       (this.scheduler = this.createScheduler()),
       (this.space = Tu(this.baseStrategy, this.config.scope, this.config.ranges, this.config.precision)),
-      await this.loadListingDates();
+      // listing dates of the saved run: the same periods per coin (and cache keys) as before the stop
+      this.listing.size > 0 || (await this.loadListingDates());
     const t =
       this.phase === "baseline"
         ? "исходная стратегия на всех монетах"
@@ -137581,8 +137599,9 @@ class Nf {
       if (this.archive.has(c)) return;
       const u = c === this.baseKey ? null : (this.references.search ?? null);
       let d = await this.evaluateGenome(l, t, this.config.constraints, u);
-      // backtests Veles failed to run are retried once before the variant is stored
+      // backtests Veles failed to run are retried before the variant is stored (the original — twice)
       vtFailedFitness(d) && !this.stopRequested && (d = await this.evaluateGenome(l, t, this.config.constraints, u));
+      c === this.baseKey && vtFailedFitness(d) && !this.stopRequested && (d = await this.evaluateGenome(l, t, this.config.constraints, u));
       c === this.baseKey && this.vtCheckSearchBase(d);
       c === this.baseKey && d.portfolio && ((this.references.search = vtReference(d)), (d = this.selfScore(d)));
       const f = this.createCandidate(l, c, d);
@@ -137715,10 +137734,8 @@ class Nf {
           try {
             const d = c === this.baseKey ? null : (this.references.search ?? null);
             let f = await this.evaluateGenome(l, t, this.config.constraints, d);
-            c === this.baseKey &&
-              vtFailedFitness(f) &&
-              !this.stopRequested &&
-              (f = await this.evaluateGenome(l, t, this.config.constraints, d)),
+            for (let vtTry = 0; vtTry < 2 && c === this.baseKey && vtFailedFitness(f) && !this.stopRequested; vtTry++)
+              f = await this.evaluateGenome(l, t, this.config.constraints, d);
               c === this.baseKey && this.vtCheckSearchBase(f),
             c === this.baseKey && f.portfolio && ((this.references.search = vtReference(f)), (f = this.selfScore(f))),
               (u = this.createCandidate(l, c, f)),
@@ -137916,7 +137933,7 @@ class Nf {
         const a = t.scan.filter((s) => s.result.valid && s.delta > 0).sort((s, l) => l.delta - s.delta),
           i = t.scan.filter((s) => s.delta < 0).sort((s, l) => s.delta - l.delta),
           o = (s) =>
-            `${s.move.label} (${(s.delta === 1 || s.delta === -1) && !(s.result.valid && t.current.valid) ? (s.delta > 0 ? "проходит ограничения" : "не проходит ограничения") : this.formatScoreDelta(s.delta)})`;
+            `${s.move.label} (${s.result && this.vtUnmeasured && this.vtUnmeasured.has(s.result.key) ? "не запускается в Veles" : (s.delta === 1 || s.delta === -1) && !(s.result.valid && t.current.valid) ? (s.delta > 0 ? "проходит ограничения" : "не проходит ограничения") : this.formatScoreDelta(s.delta)})`;
         this.log(
           a.length > 0 ? "success" : "info",
           `📈 Лучше текущего: ${a.length > 0 ? a.slice(0, 6).map(o).join(", ") : "нет"}${a.length > 6 ? ` и ещё ${a.length - 6}` : ""}${i.length > 0 ? `
@@ -138066,6 +138083,13 @@ class Nf {
               "success",
               `✅ Гарантия перебора: проверены все ${t.grid.total} ${vtCombos(t.grid.total)} (разных после согласования параметров — ${t.grid.unique}); на монетах и периоде поиска лучше выбранного нет ни одной.`,
             )),
+      !t.grid &&
+        this.vtUnmeasured &&
+        this.vtUnmeasured.size > 0 &&
+        this.log(
+          "warning",
+          `⚠️ ${vtVariants(this.vtUnmeasured.size)} Veles не досчитал на части монет поиска (ошибка Veles или ордер меньше минимального на бирже) — сравнить их нельзя, в поиске они не участвуют. Повторный запуск с теми же настройками возьмёт проверенное из памяти и повторит только неудачные; если ошибки на одних и тех же монетах — увеличьте депозит бота в бэктестах или сузьте диапазоны объёмов.`,
+        ),
       this.callbacks.onLeaderboard(this.getLeaderboard()),
       this.saveStateNow();
   }
@@ -138561,18 +138585,30 @@ class Nf {
       ),
       i = await Promise.all(
         a.map(async (l) => {
-          const c = this.archive.get(Oi(l)),
-            u = c
-              ? c.fitness
-              : await this.evaluateGenome(l, n, this.config.constraints, this.references.search ?? null);
+          const c = this.archive.get(Oi(l));
+          let u = c
+            ? c.fitness
+            : await this.evaluateGenome(l, n, this.config.constraints, this.references.search ?? null);
+          // one retry for backtests Veles did not finish (the rest come from memory)
+          !c &&
+            vtFailedFitness(u) &&
+            !this.stopRequested &&
+            (u = await this.evaluateGenome(l, n, this.config.constraints, this.references.search ?? null));
           return (
-            (this.generationDone += n.symbols.length), this.emitProgress(), { score: vtOverallScore(u), valid: u.valid }
+            (this.generationDone += n.symbols.length),
+            this.emitProgress(),
+            { score: vtOverallScore(u), valid: u.valid, vtFailed: vtFailedFitness(u) }
           );
         }),
-      );
-    if (i.length === 0) return null;
+      ),
+      // a neighbour Veles did not run on some coin is not measured: it is neither a pass nor a "sharp peak"
+      vtFailed = i.filter((l) => l.vtFailed).length,
+      vtTested = i.filter((l) => !l.vtFailed);
+    vtFailed > 0 &&
+      this.log("info", `   плато: ${vtFailed} из ${i.length} соседних настроек Veles не запустил на части монет — они не учитываются`);
+    if (vtTested.length === 0) return null;
     const o = (s = this.archive.get(this.baseKey)) == null ? void 0 : s.fitness;
-    return Mdt(i, vtOverallScore(t.fitness), o ? vtOverallScore(o) : 1);
+    return Mdt(vtTested, vtOverallScore(t.fitness), o ? vtOverallScore(o) : 1);
   }
   logRobustness(t, r) {
     const n = `Вариант ${t.key.slice(0, 6)}`,
@@ -138584,7 +138620,7 @@ class Nf {
           : `   по годам: не хуже исходной в ${r.yearsNotWorse} из ${r.yearsTotal}`,
       );
     for (const o of r.segments.filter((s) => s.kind !== "year" && s.kind !== "stressYear")) {
-      const s = r.absolute ? o.profit > 0 : o.profitNotWorse && o.riskNotWorse && o.score >= 1;
+      const s = r.absolute ? o.profit > 0 : DX(o);
       a.push(`   ${o.label}: прибыль ${CB(o)}, просадка ${wB(o)} ${s ? "✅" : r.absolute ? "✗ убыток" : "✗ хуже"}`);
     }
     const i = r.segments.filter((o) => o.kind === "stressYear");
@@ -138665,13 +138701,19 @@ ${a.join(`
         depositAmount: h.metrics.depositAmount,
         deals: h.deals ?? [],
       })),
+      // The search runs on a part of the coins: the deposit and the position limit are scaled to that
+      // part, so blocking and the drawdown limit (in % of the deposit) work as on the whole list.
+      vtAll = r.kind === "search" && this.vtScaledSearch ? this.universe("final") : null,
+      vtAllCount = vtAll ? vtAll.symbols.filter((h) => this.periodFor(h, vtAll.period) !== null).length : 0,
+      vtShare = vtAllCount > l.length && l.length > 0 ? l.length / vtAllCount : 1,
+      vtLimit = this.config.portfolio.maxConcurrentPositions,
       { fitness: f } = wdt(
         d,
         u.map((h) => ({ ...h.metrics, periodFrom: h.period.from, periodTo: h.period.to })),
         {
           settings: {
-            totalDeposit: this.config.portfolio.totalDeposit,
-            maxConcurrentPositions: this.config.portfolio.maxConcurrentPositions,
+            totalDeposit: this.config.portfolio.totalDeposit * vtShare,
+            maxConcurrentPositions: vtLimit && vtShare < 1 ? Math.max(1, Math.round(vtLimit * vtShare)) : vtLimit,
             penalizeActiveMae: n.penalizeOpenDeals,
             dynamicBlockOrder: this.config.portfolio.dynamicBlockOrder ?? null,
           },
@@ -138715,7 +138757,8 @@ ${a.join(`
     if (!r) return;
     const n = new Set(this.config.symbols.map((s) => Zi(s, this.quoteCurrency))),
       a = this.deps.listingDate ?? J_,
-      i = [];
+      i = [],
+      vtUnknown = [];
     await Promise.all(
       [...n].map(async (s) => {
         try {
@@ -138723,11 +138766,16 @@ ${a.join(`
           this.listing.set(s, l ? l.getTime() : null),
             l && l.getTime() >= Date.parse(this.config.periodTo) && i.push(ec(s));
         } catch {
-          this.listing.set(s, null);
+          this.listing.set(s, null), vtUnknown.push(ec(s));
         }
       }),
     ),
-      i.length > 0 && this.log("warning", `⏭️ Не торговались в выбранный период и будут пропущены: ${i.join(", ")}`);
+      i.length > 0 && this.log("warning", `⏭️ Не торговались в выбранный период и будут пропущены: ${i.join(", ")}`),
+      vtUnknown.length > 0 &&
+        this.log(
+          "warning",
+          `⚠️ Не удалось узнать дату листинга (${vtUnknown.length}): ${vtUnknown.slice(0, 12).join(", ")}${vtUnknown.length > 12 ? "…" : ""} — для них берётся весь период`,
+        );
   }
   async evaluateSymbol(t, r, n, a) {
     const i = this.strategyForBacktest(t);
@@ -138886,6 +138934,8 @@ ${a.join(`
       (this.screeningSymbols = t.screeningSymbols ?? null),
       (this.vtExcluded = t.vtExcluded ?? []),
       (this.vtExtraFinalists = !!t.vtExtraFinalists),
+      (this.vtScaledSearch = !!t.vtScaledSearch),
+      (this.listing = new Map(Array.isArray(t.vtListing) ? t.vtListing : [])),
       (this.budgetDaysSpent = t.budgetDaysSpent ?? 0),
       (this.backtestsRun = t.backtestsRun),
       (this.cacheHits = t.cacheHits),
@@ -138924,6 +138974,8 @@ ${a.join(`
       screeningSymbols: this.screeningSymbols,
       vtExcluded: this.vtExcluded,
       vtExtraFinalists: this.vtExtraFinalists,
+      vtScaledSearch: this.vtScaledSearch,
+      vtListing: [...this.listing],
       budgetDaysSpent: this.budgetDaysSpent,
       backtestsRun: this.backtestsRun,
       cacheHits: this.cacheHits,
@@ -140281,7 +140333,11 @@ const U1 =
               ? "только монеты поиска"
               : `${nt.length} ${vtPlural(nt.length, ["монета", "монеты", "монет"])}`,
           lr = `Оптимизатор · ${(k == null ? void 0 : k.config.botName) ?? (k == null ? void 0 : k.config.botId) ?? ""} · ${Ne} · ${vtScope}${vtS !== 1 ? ` · депозит ×1 (в оптимизаторе ×${vtS})` : ""} · ${new Date().toLocaleDateString()}`;
-        return ((tn = r(lr, nt)) == null ? void 0 : tn.id) ?? null;
+        const vtId = ((tn = r(lr, nt)) == null ? void 0 : tn.id) ?? null,
+          vtLim = k == null ? void 0 : k.config.portfolio.maxConcurrentPositions;
+        // the group opens with the optimizer's position limit (the groups page defaults to 3)
+        vtId && typeof vtLim == "number" && vtLim > 0 && Fq(vtId, { maxConcurrentPositions: Math.min(vtLim, nt.length), positionBlocking: !1 });
+        return vtId;
       },
       et = (ce) => {
         const Ne = Ze(ce, ce.isBase ? "исходная" : `вариант ${ce.key.slice(0, 6)}`);

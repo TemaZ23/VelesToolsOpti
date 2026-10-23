@@ -396,12 +396,36 @@ export const psFoldScore = (candidate, base, scale, totalDeposit) => {
   return roundTo(Math.min(profitTerm, riskTerm), 4);
 };
 
-/** Search objective: overall score, capped by the median fold score (improvement must be broad). */
+/** Median that takes the lower of the two middle values for an even count (no averaging up). */
+export const psLowerMedian = (values) => {
+  if (values.length === 0) {
+    return 0;
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor((sorted.length - 1) / 2)];
+};
+
+/**
+ * Search objective: the overall score capped by the typical fold score, so an improvement must be
+ * broad. Time slices and coin groups are judged separately (coin groups follow the overall result
+ * and would hide bad half-years) and the weaker kind counts; with an even number of folds the lower
+ * middle value is taken (of two folds — the worse one).
+ * `foldScores`: numbers, or `{score, key}` with keys `t…` (time) and `c…` (coin groups).
+ */
 export const psObjective = (overall, foldScores) => {
   if (!Number.isFinite(overall) || !foldScores || foldScores.length < 2) {
     return overall;
   }
-  return roundTo(Math.min(overall, psMedian(foldScores)), 4);
+  const groups = new Map();
+  for (const item of foldScores) {
+    const score = typeof item === 'number' ? item : item.score;
+    const kind = typeof item === 'number' ? 'all' : String(item.key ?? '').startsWith('c') ? 'coins' : 'time';
+    if (Number.isFinite(score)) {
+      groups.set(kind, [...(groups.get(kind) ?? []), score]);
+    }
+  }
+  const typical = [...groups.values()].filter((list) => list.length > 0).map(psLowerMedian);
+  return typical.length > 0 ? roundTo(Math.min(overall, ...typical), 4) : overall;
 };
 
 const monthLabel = (ms) => new Date(ms).toISOString().slice(0, 7);

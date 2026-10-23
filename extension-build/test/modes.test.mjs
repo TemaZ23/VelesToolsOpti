@@ -367,6 +367,10 @@ describe('deal style, constraints and score', () => {
     expect(vmStableScore(raw, [{ profit: -1 }, { profit: -2 }])).toBe(1.5);
     expect(vmStableScore({ adjustedProfit: -50, risk: 100 }, [{ profit: 1 }, { profit: 1 }])).toBe(-0.5);
     expect(vmStableScore({ adjustedProfit: 10, risk: 0 }, null)).toBe(100);
+    // with the deposit known, a drawdown below 1% of it counts as 1%: a near-idle variant cannot win
+    expect(vmStableScore({ adjustedProfit: 14, risk: 3 }, null, 5000)).toBeCloseTo(0.28, 4);
+    expect(vmStableScore({ adjustedProfit: 0.5, risk: 0 }, null, 5000)).toBeCloseTo(0.01, 4);
+    expect(vmStableScore({ adjustedProfit: 900, risk: 600 }, null, 5000)).toBeCloseTo(1.5, 4);
     // Above 50 the ratio is compressed, but stays ordered and below 100.
     const high = vmStableScore({ adjustedProfit: 120, risk: 1 }, null);
     const higher = vmStableScore({ adjustedProfit: 200, risk: 1 }, null);

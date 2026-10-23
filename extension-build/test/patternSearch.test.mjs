@@ -264,6 +264,13 @@ describe('folds', () => {
     expect(psObjective(1.2, [1.1, 0.9, 1.05])).toBeCloseTo(1.05, 4);
     expect(psObjective(1.02, [1.1, 1.3, 1.05])).toBeCloseTo(1.02, 4);
     expect(psObjective(1.2, [0.9])).toBe(1.2);
+    // two folds: the worse one, not their mean
+    expect(psObjective(1.3, [1.64, 0.656])).toBeCloseTo(0.656, 4);
+    // time slices and coin groups are judged separately: coin groups cannot hide bad half-years
+    const time = [1.45, 1.35, 1.25, 0.92, 0.92, 0.92, 0.92, 0.92].map((score, index) => ({ key: `t${index}`, score }));
+    const coins = [1.1, 1.1, 1.1].map((score, index) => ({ key: `c${index}`, score }));
+    expect(psObjective(1.2, [...time, ...coins])).toBeCloseTo(0.92, 4);
+    expect(psObjective(1.05, [...time.map((f) => ({ ...f, score: 1.2 })), ...coins])).toBeCloseTo(1.05, 4);
   });
 });
 
