@@ -54,6 +54,7 @@ PYTHONPATH=. python3 -m pytest -q scripts/dca_lab/tests
 | `finalize.py` | отбор кандидатов по in-sample, OOS-проверка, чувствительность, сборка `configs.json` |
 | `report.py` | метрики по окнам, профиль «размер бота → риск», риск по дате старта |
 | `make_report.py` | Markdown-таблицы из `report_data.json` |
+| `robust.py` | робастная доводка: Veles-округление, фолды + половины монет, плато, проверка вне отбора и на чужих монетах ([отчёт](../../output/dca_lab/ROBUST_REPORT.md)) |
 | `regime.py` | режим рынка по BTC → множитель блокировки по дням |
 | `veles_format.py` | настройки бота в терминах интерфейса Veles |
 | `run.py` | CLI (`baseline`, `optimize`) |
