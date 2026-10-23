@@ -160,7 +160,7 @@ const summary = await page.evaluate(
       transport,
       listingDate: async () => null,
       // with failures the memory is on, as in the extension: the original's search coins are cache hits
-      persist: Boolean(stopAfter) || Boolean(rerun) || Boolean(failEvery),
+      persist: Boolean(stopAfter) || Boolean(rerun) || Boolean(failEvery) || failCoins.length > 0 || failVariantCoins.length > 0,
       vtCheckEvaluator: true,
       schedulerOptions: { minIntervalMs: 0, pollIntervalMs: 1, sleep: async () => {}, maxInFlight: 16 },
     };

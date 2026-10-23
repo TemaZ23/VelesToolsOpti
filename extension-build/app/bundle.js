@@ -133013,7 +133013,7 @@ class hdt {
       }
       await this.sleep(i, !1);
     }
-    const d = Math.round(n / 6e4);
+    const d = Math.round(vtLimit / 6e4);
     throw new Ts(`${r}: бэктест #${t} не завершился за ${d} мин${u ? ` (${u})` : ""}`);
   }
 }
@@ -136755,6 +136755,7 @@ class Nf {
     Et(this, "vtExcluded", []);
     Et(this, "vtExtraFinalists", !1);
     Et(this, "vtPendingKeys", new Map());
+    Et(this, "vtCounted", new Set());
     // 2.18: search-coin evaluations use the deposit and position limit scaled to the search share
     // (saved runs from older versions keep the old rule, so their scores stay comparable).
     Et(this, "vtScaledSearch", !0);
@@ -137128,6 +137129,7 @@ class Nf {
         if ((await this.runCoinSelection(), this.stopRequested)) return this.getLeaderboard();
         return (this.phase = "done"), this.finish();
       }
+      if (this.phase === "search" && (await this.vtPrepareSearchBase(), this.stopRequested)) return this.getLeaderboard();
       if (this.phase === "search" && this.usePattern) {
         if ((await this.runPatternSearch(), this.stopRequested)) return this.getLeaderboard();
         this.scheduler.undrain(), this.enterPostSearchPhase();
@@ -137409,7 +137411,7 @@ class Nf {
       this.saveStateNow();
   }
   selfScore(t) {
-    if (!t.portfolio) return t;
+    if (!t.portfolio || VTMODES.vmIsModeMetric(this.config.target.metric)) return t;
     const r = vtReference(t),
       n = this.config.target.metric === "improveBoth" ? VTPS.psRescale(r, r, this.maxDepositChange) : null,
       a = vtPortfolioScore(t, t.portfolio.raw ?? t.portfolio, n, {
@@ -137684,6 +137686,29 @@ class Nf {
       })
     );
   }
+  // Before the search the original is measured on the search coins: a coin Veles does not run it on
+  // (two tries) leaves the comparison for everyone, like in the portfolio baseline — also in single
+  // mode and for hand-picked search coins, which the baseline does not cover.
+  async vtPrepareSearchBase() {
+    if (!this.baseGenome || this.archive.has(this.baseKey) || this.config.goal === "coins") return;
+    for (let vtTry = 0; vtTry < 3 && !this.stopRequested; vtTry++) {
+      const t = this.universe("search");
+      if (t.symbols.length === 0) break;
+      const { fitness: r, vtFailures: n } = await this.evaluateGenomeDetailed(this.baseGenome, t, this.config.constraints, null);
+      if (this.stopRequested || !vtFailedFitness(r)) return;
+      const a = Object.keys(n ?? {});
+      if (vtTry === 0 || a.length === 0) continue;
+      (this.vtExcluded = [...new Set([...(this.vtExcluded ?? []), ...a])]),
+        this.screeningSymbols && (this.screeningSymbols = this.screeningSymbols.filter((i) => !a.includes(i))),
+        this.log(
+          "warning",
+          `⚠️ Исходная не запускается на монетах поиска: ${a.map(ec).join(", ")} — убраны из сравнения для всех вариантов`,
+        ),
+        this.saveStateNow();
+    }
+    if (this.universe("search").symbols.length === 0)
+      throw new Error("Исходный бот не запускается в Veles ни на одной монете поиска. Проверьте бота, депозит и период на veles.finance.");
+  }
   // The original is the yardstick of the search: measured on fewer coins than the variants it
   // would skew every comparison, so the run stops (resumable) instead of scoring against it.
   vtCheckSearchBase(t) {
@@ -137734,7 +137759,7 @@ class Nf {
           try {
             const d = c === this.baseKey ? null : (this.references.search ?? null);
             let f = await this.evaluateGenome(l, t, this.config.constraints, d);
-            for (let vtTry = 0; vtTry < 2 && c === this.baseKey && vtFailedFitness(f) && !this.stopRequested; vtTry++)
+            for (let vtTry = 0; vtTry < (c === this.baseKey ? 2 : 1) && vtFailedFitness(f) && !this.stopRequested; vtTry++)
               f = await this.evaluateGenome(l, t, this.config.constraints, d);
               c === this.baseKey && this.vtCheckSearchBase(f),
             c === this.baseKey && f.portfolio && ((this.references.search = vtReference(f)), (f = this.selfScore(f))),
@@ -138211,7 +138236,9 @@ class Nf {
           // Veles still will not run the variant on a few coins where the original runs (at most a
           // tenth): compare both on the coins the variant does run — like the original's own coins
           // that fail on the minimum order — and say which coins it loses.
-          if (t && vtFailedFitness(v) && !this.stopRequested) {
+          // only for the relative score («лучше по обоим»): it is a ratio to the original on the same
+          // coins, so it stays comparable with the original's 1; absolute scores would not be.
+          if (t && vtFailedFitness(v) && !this.stopRequested && this.config.target.metric === "improveBoth" && this.references.final) {
             const vtOk = new Set(g.map((x) => x.symbol)),
               vtLost = r.symbols.filter((x) => this.periodFor(x, r.period) !== null && !vtOk.has(x));
             if (vtLost.length > 0 && vtLost.length <= Math.max(1, Math.floor(r.symbols.length / 10)) && g.length > 0) {
@@ -138295,8 +138322,10 @@ class Nf {
         v = ((d = (u = s.base) == null ? void 0 : u.validation) == null ? void 0 : d.portfolio) ?? null,
         g = h.filter((m) => {
           var b;
-          const y = (b = m.validation) == null ? void 0 : b.portfolio;
-          return !!(y && v && y.adjustedProfit > v.adjustedProfit && y.risk < v.risk);
+          const y = (b = m.validation) == null ? void 0 : b.portfolio,
+            // a variant that loses coins is compared with the original on the same coins
+            vtRef = (m.validation && m.validation.vtBaseSame && m.validation.vtBaseSame.portfolio) || v;
+          return !!(y && vtRef && y.adjustedProfit > vtRef.adjustedProfit && y.risk < vtRef.risk);
         });
       VTMODES.vmIsTemplateGoal(this.config.goal) && h.length > 0
         ? this.log(
@@ -138653,7 +138682,11 @@ ${a.join(`
   }
   async evaluateGenomeDetailed(t, r, n, a, i) {
     const vtBase = Oi(t) === this.baseKey,
-      vtBaseCoins = new Set((this.finalEntries.get(this.baseKey) ?? []).map((h) => h.symbol));
+      vtBaseCoins = new Set(
+        this.phase === "baseline"
+          ? (this.finalEntries.get(this.baseKey) ?? []).map((h) => h.symbol)
+          : [...this.universe("final").symbols, ...this.universe("search").symbols],
+      );
     const o = this.config.mode === "portfolio",
       s = {},
       l = r.symbols.filter((h) => this.periodFor(h, r.period) !== null),
@@ -138692,6 +138725,7 @@ ${a.join(`
           { target: this.config.target, constraints: n, expectedSymbols: l.length, failures: s },
         ),
         entries: [],
+        vtFailures: s,
       };
     const d = u.map((h) => ({
         symbol: h.metrics.symbol,
@@ -138727,7 +138761,7 @@ ${a.join(`
           useFolds: r.kind === "search" && this.foldConsistency,
         },
       );
-    return { fitness: f, entries: d };
+    return { fitness: f, entries: d, vtFailures: s };
   }
   strategyForBacktest(t) {
     const r = this.buildCandidateStrategy(t);
@@ -138843,7 +138877,11 @@ ${a.join(`
         (this.inflight[c] = b), (this.budgetDaysSpent += zX(o.from, o.to)), this.emitProgress(), this.saveStateSoon();
       },
     });
-    (this.backtestsRun += 1), (this.durationSamples = [...this.durationSamples.slice(-29), f.durationMs]);
+    // a finished backtest re-read after a failed deals download is not counted twice
+    this.vtCounted.has(f.backtestId) ||
+      (this.vtCounted.add(f.backtestId),
+      (this.backtestsRun += 1),
+      (this.durationSamples = [...this.durationSamples.slice(-29), f.durationMs]));
     const h = fut(f.statistics, {
       symbol: r,
       depositAmount: u,
