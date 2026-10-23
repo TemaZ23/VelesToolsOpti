@@ -70,7 +70,7 @@ await page.goto(`http://127.0.0.1:${port}/index.html`);
 await page.waitForFunction(() => window.__VELES_TEST__ && window.VelesSim, null, { timeout: 30000 });
 
 const summary = await page.evaluate(
-  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring, onlyKinds, certify, rerun, failEvery }) => {
+  async ({ method, budget, coins, robustness, months, screen, depositChange, folds, stopAfter, mode, goal, template, minDealsRate, verifyScoring, onlyKinds, certify, rerun, failEvery, failCoins, failVariantCoins }) => {
     const T = window.__VELES_TEST__;
     // --verifyScoring: compare the fast portfolio replica with xB on every scoring call.
     T.vtFastXBState.verifyAll = Boolean(verifyScoring);
@@ -121,20 +121,29 @@ const summary = await page.evaluate(
       );
     }
     const results = new Map();
+    const failed = new Set();
     let nextId = 1;
     let engine = null;
+    const coinOf = (payload) => String(payload.symbol ?? payload.symbols?.[0] ?? '').split('/')[0].replace(/USDT$/, '');
     const transport = {
       submit: async (payload) => {
         const id = nextId++;
         if (stopAfter && id === stopAfter && engine) {
           setTimeout(() => engine.stop(), 0);
         }
+        // --failCoins=A,B: Veles never runs these coins (e.g. an order below the exchange minimum);
+        // --failVariantCoins=C: only variants fail there, the original runs (smaller order volumes).
+        const coin = coinOf(payload);
+        const isBase = engine && String(payload.name ?? '').startsWith(`Opt_${engine.baseKey.slice(0, 6)}_`);
+        if (failCoins.includes(coin) || (!isBase && failVariantCoins.includes(coin))) {
+          failed.add(id);
+        }
         results.set(id, sim.backtest(payload));
         return id;
       },
       fetchStatistics: async (id) => ({ id, ...results.get(id).stats }),
       // --failEvery=N: every N-th backtest fails on Veles (checks that no guarantee is claimed then).
-      fetchStatus: async (id) => (failEvery && id % failEvery === 0 ? 'ERROR' : 'FINISHED'),
+      fetchStatus: async (id) => ((failEvery && id % failEvery === 0) || failed.has(id) ? 'ERROR' : 'FINISHED'),
       fetchLastCycle: async () => null,
       finalize: async (stats) => ({ ...stats, netQuote: stats.profitQuote - stats.commissionQuote }),
       fetchAllCycles: async (id) => results.get(id).cycles,
@@ -167,7 +176,7 @@ const summary = await page.evaluate(
       }
       leaderboard = await resumed.resume();
       // The resumed engine restores the backtest counter from the saved state.
-      engine = { backtestsRun: resumed.backtestsRun, archive: resumed.archive };
+      engine = { backtestsRun: resumed.backtestsRun, archive: resumed.archive, vtExcluded: resumed.vtExcluded, baseKey: resumed.baseKey };
     }
     // --rerun: the same run once more from scratch — everything must come from the memory.
     let rerunInfo = null;
@@ -202,6 +211,7 @@ const summary = await page.evaluate(
     };
     return {
       ms: Math.round(performance.now() - started),
+      excluded: engine.vtExcluded ?? null,
       backtests: engine.backtestsRun,
       evaluated: engine.archive.size,
       top: leaderboard.top.slice(0, 6).map(describe),
@@ -245,6 +255,8 @@ const summary = await page.evaluate(
     certify: args.certify === 'true',
     rerun: args.rerun === 'true',
     failEvery: args.failEvery ? Number(args.failEvery) : null,
+    failCoins: args.failCoins ? args.failCoins.split(',') : [],
+    failVariantCoins: args.failVariantCoins ? args.failVariantCoins.split(',') : [],
     template: {
       ...(args.direction ? { direction: args.direction } : {}),
       ...(args.profile ? { profile: args.profile } : {}),

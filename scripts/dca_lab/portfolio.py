@@ -77,29 +77,45 @@ def _series_cache_path(symbol: str, tz_amp: float) -> Path:
     return SERIES_DIR / f"{symbol}_v{SERIES_VERSION}_tz{tz_amp:g}.npz"
 
 
+def _cut(ts: np.ndarray) -> tuple[int, int]:
+    """(сколько минут отрезать с начала, глобальная минута старта) — первые полные сутки UTC, не раньше GLOBAL_T0."""
+    if not len(ts):
+        return 0, 0
+    first_full_day = ((ts[0] + DAY_MS - 1) // DAY_MS) * DAY_MS
+    cut = int((first_full_day - ts[0]) // 60_000)
+    start = int((ts[cut] - GLOBAL_T0_MS) // 60_000) if cut < len(ts) else 0
+    if start < 0:
+        cut, start = cut - start, 0
+    return cut, start
+
+
 def _aligned(symbol: str):
     """Минутки монеты, обрезанные до первых полных суток UTC и не раньше GLOBAL_T0."""
     d = load_symbol(symbol)
-    ts, ohlc, qvol = d["ts"], d["ohlc"], d["qvol"]
-    first_full_day = ((ts[0] + DAY_MS - 1) // DAY_MS) * DAY_MS
-    cut = int((first_full_day - ts[0]) // 60_000)
-    ts, ohlc, qvol = ts[cut:], ohlc[cut:], qvol[cut:]
-    start = int((ts[0] - GLOBAL_T0_MS) // 60_000) if len(ts) else 0
-    if start < 0:
-        ts, ohlc, qvol = ts[-start:], ohlc[-start:], qvol[-start:]
-        start = 0
-    return start, ohlc, qvol
+    cut, start = _cut(d["ts"])
+    return start, d["ohlc"][cut:], d["qvol"][cut:]
+
+
+def _span(symbol: str) -> tuple[int, int]:
+    """(старт, число минут) без чтения свечей — только метки времени (в 3 раза меньше чтения с диска)."""
+    with np.load(CACHE_DIR / f"{symbol}.npz") as z:
+        ts = z["ts"]
+    cut, start = _cut(ts)
+    return start, max(len(ts) - cut, 0)
 
 
 def _ensure_series(symbol: str, tz_amp: float) -> tuple[int, int] | None:
     """Строит кеш серий монеты (если нет). Возвращает (start, n_minutes)."""
     if not (CACHE_DIR / f"{symbol}.npz").exists():
         return None
+    path = _series_cache_path(symbol, tz_amp)
+    if path.exists():
+        start, n = _span(symbol)
+        return (start, n) if n >= 3 * 1440 else None
     start, ohlc, qvol = _aligned(symbol)
     n = len(ohlc)
     if n < 3 * 1440:
         return None
-    path = _series_cache_path(symbol, tz_amp)
     if not path.exists():
         series = build_series(ohlc, qvol, tz_amp)
         SERIES_DIR.mkdir(parents=True, exist_ok=True)

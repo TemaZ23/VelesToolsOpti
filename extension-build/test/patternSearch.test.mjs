@@ -410,6 +410,24 @@ describe('psRunSearch', () => {
     expect(outcome.rounds.length).toBeGreaterThanOrEqual(2);
   });
 
+  it('evaluates the original as is when its values are off the step grid', async () => {
+    const { space, repair, baseGenome } = makeSpace();
+    const offGrid = { ...baseGenome, tp: baseGenome.tp + 0.013 };
+    expect(keyOf(repair(offGrid))).not.toBe(keyOf(offGrid));
+    const seen = [];
+    const outcome = await psRunSearch({
+      space,
+      repair,
+      keyOf,
+      baseGenome: offGrid,
+      budget: 20,
+      rng: psCreateRng(1),
+      evaluate: async (genomes) => genomes.map((genome) => (seen.push(keyOf(genome)), { score: 1, valid: true, violation: 0 })),
+    });
+    expect(seen[0]).toBe(keyOf(offGrid));
+    expect(outcome.base.key).toBe(keyOf(offGrid));
+  });
+
   it('replays an interrupted search for free and continues identically', async () => {
     const cache = new Map();
     const first = await run(110, cache);

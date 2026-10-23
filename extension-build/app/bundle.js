@@ -132765,7 +132765,7 @@ class hdt {
         const s = this.nowFn();
         try {
           const l = await this.finalize(
-              await this.waitForResult(t.existingBacktestId, t.label, this.options.existingTimeoutMs),
+              await this.waitForResult(t.existingBacktestId, t.label, this.options.existingTimeoutMs, this.options.timeoutMs),
             ),
             c = await this.fetchLastCycleIfNeeded(t.existingBacktestId, l);
           return { backtestId: t.existingBacktestId, statistics: l, lastCycle: c, durationMs: this.nowFn() - s };
@@ -132958,19 +132958,28 @@ class hdt {
       return null;
     }
   }
-  async waitForResult(t, r, n) {
+  // vtRunningLimit: while Veles reports the backtest as still running/queued, wait up to this long
+  // instead of `n` (a resumed run must not resubmit a backtest that is merely queued).
+  async waitForResult(t, r, n, vtRunningLimit) {
     const a = this.nowFn(),
       i = Math.max(500, this.options.pollIntervalMs);
     let o = 0,
       s = null,
       l = a,
       c = 0,
-      u = null;
-    for (await this.sleep(i, !1); this.nowFn() - a < n; ) {
+      u = null,
+      vtLimit = n,
+      vtOffline = 0,
+      vtOfflineAt = null;
+    // Time without a connection to the veles tab does not count towards the limit (up to 3 h).
+    const vtElapsed = () => this.nowFn() - a - vtOffline - (vtOfflineAt !== null ? this.nowFn() - vtOfflineAt : 0);
+    for (await this.sleep(i, !1); vtElapsed() < vtLimit; ) {
       try {
         const f = await this.fetchStatusSafe(t);
         if (f && sdt.has(f)) throw new Ts(`Бэктест #${t} завершился со статусом ${f}`);
+        vtRunningLimit && f && ldt.has(f) && (vtLimit = Math.max(vtLimit, vtRunningLimit));
         const h = await this.transport.fetchStatistics(t);
+        vtOfflineAt !== null && ((vtOffline += this.nowFn() - vtOfflineAt), (vtOfflineAt = null));
         if (h && typeof h.id == "number") {
           const v = ddt(h);
           v !== s && (l = this.nowFn()), (s = v), (c = f === null ? c + 1 : 0);
@@ -132978,7 +132987,8 @@ class hdt {
             m = this.nowFn() - l > 5 * 6e4 && this.nowFn() - a > 15 * 6e4;
           if (!(g || (f !== null && ldt.has(f) && !m))) {
             if ((typeof h.totalDeals == "number" ? h.totalDeals : 0) > 0 || o >= this.options.zeroDealConfirmations)
-              return h;
+              // Accepted without a final status (stuck or unknown): usable now, but not stored for good.
+              return f === null || ldt.has(f) ? { ...h, vtUnconfirmed: !0 } : h;
             o += 1;
           }
         }
@@ -132986,6 +132996,10 @@ class hdt {
         if (f instanceof Ts || f instanceof Af || f instanceof f0) throw f;
         const h = lR(f);
         if (cR(h)) throw new rc(h.message);
+        if (TX(h)) {
+          vtOfflineAt === null && (vtOfflineAt = this.nowFn());
+          if (this.nowFn() - vtOfflineAt > 3 * 36e5) throw new rc(`Нет связи с вкладкой veles.finance больше 3 ч: ${h.message}`);
+        }
         u = h.message;
       }
       await this.sleep(i, !1);
@@ -133109,9 +133123,20 @@ const Zi = (e, t) => {
     if (typeof r != "string" || r.length === 0) return null;
     const n = await T4({ page: 0, size: 30, sort: "date,desc" }),
       a = r.toUpperCase(),
+      vtDay = (o) => (typeof o == "string" ? o.slice(0, 10) : null),
+      vtSame = (o, s) => !(vtDay(o) && vtDay(s)) || vtDay(o) === vtDay(s),
       i = n.content.find((o) => {
         const s = Date.parse(o.date);
-        return typeof o.name == "string" && o.name.toUpperCase() === a && (!Number.isFinite(s) || s >= t - 10 * 6e4);
+        // The same name is used for the search, final and stress periods of one variant and coin:
+        // the period must match, and the backtest must be created by this very request.
+        return (
+          typeof o.name == "string" &&
+          o.name.toUpperCase() === a &&
+          Number.isFinite(s) &&
+          s >= t - 10 * 6e4 &&
+          vtSame(o.from, e.from) &&
+          vtSame(o.to, e.to)
+        );
       });
     return i ? i.id : null;
   },
@@ -133875,6 +133900,7 @@ const Zi = (e, t) => {
       plateau: e.plateau,
       stress: l,
       verdict: _,
+      finalBetter: !!e.finalBetter,
       worstScore: _t(I, 4),
       reasons: m,
     };
@@ -134412,6 +134438,15 @@ const Zi = (e, t) => {
       var i;
       return ((i = a.robustness) == null ? void 0 : i.verdict) === "partial";
     });
+    if (!n && t.every((a) => a.robustness.finalBetter === !1))
+      return E.jsx(dn, {
+        type: "info",
+        showIcon: !0,
+        style: { marginBottom: 12 },
+        message: "На всех монетах ни один вариант не лучше исходной",
+        description:
+          "Варианты, лучшие на монетах поиска, на полном списке монет за весь период не обошли исходную по прибыли и просадке. Исходные настройки и есть лучший результат этого поиска — менять ботов не нужно. Можно повторить поиск с другими параметрами в «Что подбираем».",
+      });
     return E.jsx(dn, {
       type: "warning",
       showIcon: !0,
@@ -136701,6 +136736,11 @@ class Nf {
     Et(this, "references", {});
     Et(this, "baselineFitness", null);
     Et(this, "screeningSymbols", null);
+    // Coins the original itself cannot backtest (Veles error, usually an order below the exchange
+    // minimum at this deposit): left out of every comparison so base and variants share one coin set.
+    Et(this, "vtExcluded", []);
+    Et(this, "vtExtraFinalists", !1);
+    Et(this, "vtPendingKeys", new Map());
     Et(this, "finalEntries", new Map());
     Et(this, "robustnessTotal", 0);
     Et(this, "stressOnly", !1);
@@ -136779,10 +136819,15 @@ class Nf {
       : null;
   }
   getLeaderboard() {
-    const t = [...this.archive.values()]
-      .sort(e2)
-      .slice(0, Mft)
-      .map((r) => ({ ...r }));
+    const vtSorted = [...this.archive.values()].sort(e2),
+      // Portfolio: every variant checked on all coins stays in the table (passed or not), ahead of
+      // variants measured only on the search coins — a failed finalist must not vanish behind them.
+      vtChecked = this.config.mode === "portfolio" ? vtSorted.filter((r) => r.isBase || r.validation) : [],
+      t = (
+        vtChecked.length > 0
+          ? [...vtChecked, ...vtSorted.filter((r) => !(r.isBase || r.validation))].slice(0, Math.max(Mft, vtChecked.length))
+          : vtSorted.slice(0, Mft)
+      ).map((r) => ({ ...r }));
     return (
       mut(t),
       {
@@ -136845,6 +136890,7 @@ class Nf {
     try {
       return await this.vtStart();
     } catch (t) {
+      t instanceof Af || this.vtHalt();
       throw (
         this.status !== "error" &&
           ((this.status = "error"),
@@ -136953,11 +136999,12 @@ class Nf {
       this.emitProgress());
   }
   universe(t) {
-    const r = this.config.symbols.map((n) => Zi(n, this.quoteCurrency));
+    const vtOut = new Set(this.vtExcluded ?? []),
+      r = this.config.symbols.map((n) => Zi(n, this.quoteCurrency)).filter((n) => !vtOut.has(n));
     if (this.config.mode === "portfolio") {
       const n = this.periods.final ?? { from: this.config.periodFrom, to: this.config.periodTo };
       return t === "search"
-        ? { kind: t, symbols: this.screeningSymbols ?? r, period: this.periods.search }
+        ? { kind: t, symbols: (this.screeningSymbols ?? r).filter((s) => !vtOut.has(s)), period: this.periods.search }
         : { kind: "final", symbols: r, period: n };
     }
     return t === "holdout" && this.periods.holdout
@@ -137099,7 +137146,7 @@ class Nf {
       return this.finish();
     } catch (t) {
       if (t instanceof Af) return this.getLeaderboard();
-      (this.status = "error"), this.saveStateNow();
+      (this.status = "error"), this.saveStateNow(), this.vtHalt();
       const r = dR(t).message;
       throw (
         (this.log("error", `❌ ${r}`),
@@ -137111,9 +137158,14 @@ class Nf {
       this.accumulateElapsed();
     }
   }
+  // Coins of the universe (listed in the period) without a successful backtest among the entries.
+  vtMissingCoins(t, r) {
+    const n = new Set(r.map((a) => a.symbol));
+    return t.symbols.filter((a) => this.periodFor(a, t.period) !== null && !n.has(a));
+  }
   async runBaseline() {
     if (!(this.baseGenome && this.baseStrategy)) return;
-    const t = this.universe("final");
+    let t = this.universe("final");
     (this.phaseSymbolsDone = 0),
       this.log(
         "info",
@@ -137121,16 +137173,42 @@ class Nf {
 📌 Исходная стратегия на всех монетах: ${t.symbols.length} монет, ${t.period.from.slice(0, 10)} — ${t.period.to.slice(0, 10)} (каждая монета — с даты листинга)`,
       ),
       this.emitProgress();
-    const { fitness: r, entries: n } = await this.evaluateGenomeDetailed(
+    const vtTick = () => {
+      (this.phaseSymbolsDone += 1), this.emitProgress(), this.saveStateSoon();
+    };
+    let { fitness: r, entries: n } = await this.evaluateGenomeDetailed(
       this.baseGenome,
       t,
       this.config.constraints,
       null,
-      () => {
-        (this.phaseSymbolsDone += 1), this.emitProgress(), this.saveStateSoon();
-      },
+      vtTick,
     );
     if (this.stopRequested) return;
+    let vtMissing = this.vtMissingCoins(t, n);
+    if (vtMissing.length > 0 && n.length > 0) {
+      // One retry: a transient Veles error must not drop a coin for the whole run (successful coins are cache hits).
+      this.log("info", `🔁 Повторяем бэктест исходной на монетах с ошибкой (${vtMissing.length}): ${vtMissing.map(ec).join(", ")}`);
+      ({ fitness: r, entries: n } = await this.evaluateGenomeDetailed(this.baseGenome, t, this.config.constraints, null));
+      if (this.stopRequested) return;
+      vtMissing = this.vtMissingCoins(t, n);
+    }
+    if (n.length === 0 && vtMissing.length > 0)
+      throw new Error(
+        `Исходный бот не запустился в Veles ни на одной монете (${vtMissing.length}). Последняя ошибка: ${this.lastJobError ?? "нет данных"}. Проверьте бота, депозит и период на veles.finance.`,
+      );
+    if (vtMissing.length > 0) {
+      const vtDep = this.config.portfolio.depositPerBot;
+      (this.vtExcluded = [...new Set([...(this.vtExcluded ?? []), ...vtMissing])]),
+        (t = this.universe("final")),
+        this.log(
+          "warning",
+          `⚠️ Исходная не запускается на ${vtMissing.length} ${vtPlural(vtMissing.length, ["монете", "монетах", "монетах"])}: ${vtMissing.map(ec).join(", ")} — ошибка Veles (чаще всего ордер меньше минимального на бирже${vtDep ? ` при депозите ${vtDep} USDT на бота` : ""}). Эти монеты убраны из сравнения: исходная и все варианты считаются на одних и тех же ${t.symbols.length} монетах.`,
+        ),
+        ({ fitness: r, entries: n } = await this.evaluateGenomeDetailed(this.baseGenome, t, this.config.constraints, null));
+      if (this.stopRequested) return;
+    }
+    r.valid ||
+      this.log("warning", `⚠️ Исходная не проходит ограничения на всех монетах: ${r.violations.join("; ") || "нет данных"}`);
     this.finalEntries.set(this.baseKey, n), (this.baselineFitness = r);
     const a = r.portfolio;
     if (
@@ -137154,7 +137232,7 @@ class Nf {
     ) {
       const o = this.config.portfolio.screeningCount;
       this.screeningSymbols =
-        o >= t.symbols.length ? t.symbols : this.usePattern ? VTPS.psPickScreeningSymbols(n, o) : _dt(n, o);
+        o >= n.length ? n.map((e) => e.symbol) : this.usePattern ? VTPS.psPickScreeningSymbols(n, o) : _dt(n, o);
     }
     const i = this.universe("search");
     this.log(
@@ -137411,15 +137489,18 @@ class Nf {
             `💰 Цифры варианта — при депозите бота ×${s}: ${l > 0 ? `${_t(l * s, 2)} вместо ${l} USDT в боте` : ""}${c ? `${l > 0 ? ", " : ""}${_t(c * s, 2)} вместо ${c} USDT в бэктестах` : ""}. «Создать бота» подставит этот депозит.`,
           );
         }
-      } else
-        n &&
-          n.key === r.key &&
-          this.log(
-            "warning",
-            vtAbsolute
-              ? "📊 Поиск не улучшил исходный шаблон — попробуйте другой профиль, таймфрейм или более длинный период"
+      } else if (n && n.key === r.key) {
+        const vtChecked = [...this.archive.values()].filter((o) => !o.isBase && o.validation),
+          vtNoRun = vtChecked.filter((o) => o.validatedScore === null && vtFailedFitness(o.validation));
+        this.log(
+          "warning",
+          vtAbsolute
+            ? "📊 Поиск не улучшил исходный шаблон — попробуйте другой профиль, таймфрейм или более длинный период"
+            : vtChecked.length > 0 && vtNoRun.length === vtChecked.length
+              ? "📊 Ни одного финалиста не удалось проверить на всех монетах: Veles не запускает их на части монет (обычно ордер меньше минимального на бирже). Исходные настройки остаются лучшими из проверенных. Увеличьте депозит бота в бэктестах или сузьте диапазон объёмов ордеров и повторите."
               : "📊 Исходные настройки оказались лучшими из найденных — менять ботов не нужно",
-          );
+        );
+      }
     }
     if (this.robustnessEnabled) {
       const n = t.top.filter((o) => o.robustness),
@@ -137443,6 +137524,11 @@ class Nf {
               "warning",
               `🟡 Улучшение устойчиво лишь частично (${i.map((o) => o.key.slice(0, 6)).join(", ")}): держится не везде. Проверьте вкладку «Устойчивость» и запускайте осторожно.`,
             )
+          : n.length > 0 && !vtAbsolute && n.every((o) => o.robustness.finalBetter === !1)
+            ? this.log(
+                "info",
+                "📊 На всех монетах за весь период ни один вариант не обошёл исходную — исходные настройки и есть лучший результат этого поиска.",
+              )
           : n.length > 0 &&
             this.log(
               "warning",
@@ -137495,6 +137581,9 @@ class Nf {
       if (this.archive.has(c)) return;
       const u = c === this.baseKey ? null : (this.references.search ?? null);
       let d = await this.evaluateGenome(l, t, this.config.constraints, u);
+      // backtests Veles failed to run are retried once before the variant is stored
+      vtFailedFitness(d) && !this.stopRequested && (d = await this.evaluateGenome(l, t, this.config.constraints, u));
+      c === this.baseKey && this.vtCheckSearchBase(d);
       c === this.baseKey && d.portfolio && ((this.references.search = vtReference(d)), (d = this.selfScore(d)));
       const f = this.createCandidate(l, c, d);
       this.archive.set(c, f),
@@ -137576,6 +137665,14 @@ class Nf {
       })
     );
   }
+  // The original is the yardstick of the search: measured on fewer coins than the variants it
+  // would skew every comparison, so the run stops (resumable) instead of scoring against it.
+  vtCheckSearchBase(t) {
+    if (vtFailedFitness(t) && !this.stopRequested)
+      throw new Error(
+        `Исходная не запустилась в Veles на части монет поиска (${t.violations.find((r) => r.startsWith("Бэктест не выполнен"))}) — сравнивать варианты не с чем. Нажмите «Продолжить», чтобы повторить.`,
+      );
+  }
   rankedSearchCandidates() {
     return [...this.archive.values()].sort((t, r) => u0(t.fitness, r.fitness));
   }
@@ -137618,6 +137715,11 @@ class Nf {
           try {
             const d = c === this.baseKey ? null : (this.references.search ?? null);
             let f = await this.evaluateGenome(l, t, this.config.constraints, d);
+            c === this.baseKey &&
+              vtFailedFitness(f) &&
+              !this.stopRequested &&
+              (f = await this.evaluateGenome(l, t, this.config.constraints, d)),
+              c === this.baseKey && this.vtCheckSearchBase(f),
             c === this.baseKey && f.portfolio && ((this.references.search = vtReference(f)), (f = this.selfScore(f))),
               (u = this.createCandidate(l, c, f)),
               // A variant with a failed backtest is not archived: a rerun retries it, and no
@@ -138066,21 +138168,56 @@ class Nf {
     let i = null;
     const o = async (f) => {
       const h = this.archive.get(f);
-      if (!(!h || h.validation))
+      // A check that failed only because Veles did not run some backtests is repeated once
+      // (a transient error must not condemn a finalist; resumed runs retry it too).
+      if (h && !(h.validation && !(vtFailedFitness(h.validation) && (h.vtTries ?? 1) < 2)))
         try {
-          const { fitness: v, entries: g } = await this.evaluateGenomeDetailed(
+          let { fitness: v, entries: g } = await this.evaluateGenomeDetailed(
             h.genome,
             r,
             n,
             t ? (this.references.final ?? null) : null,
           );
+          let vtTries = (h.validation ? (h.vtTries ?? 1) : 0) + 1;
+          if (vtFailedFitness(v) && vtTries < 2 && !this.stopRequested) {
+            this.log("info", `🔁 ${h.isBase ? "Исходный бот" : `Вариант ${f.slice(0, 6)}`}: повторяем бэктесты с ошибкой`);
+            ({ fitness: v, entries: g } = await this.evaluateGenomeDetailed(h.genome, r, n, t ? (this.references.final ?? null) : null));
+            vtTries += 1;
+          }
+          // Veles still will not run the variant on a few coins where the original runs (at most a
+          // tenth): compare both on the coins the variant does run — like the original's own coins
+          // that fail on the minimum order — and say which coins it loses.
+          if (t && vtFailedFitness(v) && !this.stopRequested) {
+            const vtOk = new Set(g.map((x) => x.symbol)),
+              vtLost = r.symbols.filter((x) => this.periodFor(x, r.period) !== null && !vtOk.has(x));
+            if (vtLost.length > 0 && vtLost.length <= Math.max(1, Math.floor(r.symbols.length / 10)) && g.length > 0) {
+              const vtSub = { ...r, symbols: r.symbols.filter((x) => !vtLost.includes(x)) },
+                { fitness: vtBaseSub } = await this.evaluateGenomeDetailed(this.baseGenome, vtSub, n, null);
+              if (!this.stopRequested && !vtFailedFitness(vtBaseSub)) {
+                ({ fitness: v, entries: g } = await this.evaluateGenomeDetailed(h.genome, vtSub, n, vtReference(vtBaseSub)));
+                v = {
+                  ...v,
+                  vtLostCoins: vtLost,
+                  vtBaseSame: vtBaseSub.portfolio
+                    ? { portfolio: vtBaseSub.portfolio, pnlToRisk: vtBaseSub.pnlToRisk, totalDeals: vtBaseSub.totalDeals }
+                    : null,
+                };
+              }
+            }
+          }
           t && this.finalEntries.set(f, g);
-          const m = { ...h, validation: v, validatedScore: t ? (v.valid ? v.score : null) : put(h.fitness, v) };
-          this.archive.set(f, m), (this.generationDone += 1);
-          const y =
+          const m = { ...h, validation: v, validatedScore: t ? (v.valid ? v.score : null) : put(h.fitness, v), vtTries };
+          this.archive.set(f, m), h.validation || (this.generationDone += 1);
+          const vtNoRun = (v.violations ?? []).find((x) => typeof x == "string" && x.startsWith("Бэктест не выполнен")),
+            vtLostNote = v.vtLostCoins
+              ? ` · в Veles не запускается на ${v.vtLostCoins.map(ec).join(", ")} (у исходной работает; обычно ордер меньше минимального) — сравнение с исходной на тех же ${r.symbols.length - v.vtLostCoins.length} монетах`
+              : "",
+            y =
             m.validatedScore === null
-              ? `❌ не прошёл (${v.violations[0] ?? "ограничения"})`
-              : `✅ ${this.describeFitness(v)}`;
+              ? vtNoRun
+                ? `❌ не запускается в Veles на монетах ${vtNoRun.replace(/^Бэктест не выполнен:\s*/, "")} (у исходной они работают; чаще всего ордер варианта меньше минимального на бирже)`
+                : `❌ не прошёл (${v.violations[0] ?? "ограничения"})${vtLostNote}`
+              : `✅ ${this.describeFitness(v)}${vtLostNote}`;
           this.log("info", `🔎 ${m.isBase ? "Исходный бот" : `Вариант ${f.slice(0, 6)}`}: ${y}`),
             this.callbacks.onCandidate(m),
             this.emitProgress(),
@@ -138092,10 +138229,33 @@ class Nf {
     };
     if (t) {
       for (const f of a) if ((await o(f), i || this.stopRequested)) break;
+      // Every finalist failed only because Veles would not run it on some coins (the original runs
+      // there): check the next best variants from the search instead of ending with nothing.
+      const vtFin = a.map((f) => this.archive.get(f)).filter((f) => f && f.validation);
+      if (
+        !(i || this.stopRequested || this.vtExtraFinalists) &&
+        vtFin.length > 0 &&
+        vtFin.every((f) => f.validatedScore === null) &&
+        vtFin.some((f) => vtFailedFitness(f.validation))
+      ) {
+        const vtMore = this.rankedSearchCandidates()
+          .filter((f) => !f.isBase && !f.validation && f.fitness.valid && !this.validationKeys.includes(f.key))
+          .slice(0, Math.max(1, Math.round(this.config.portfolio.finalists)))
+          .map((f) => f.key);
+        (this.vtExtraFinalists = !0),
+          vtMore.length > 0 &&
+            (this.log(
+              "warning",
+              `⚠️ Финалисты не запускаются на части монет — проверяем на всех монетах следующих по оценке: ${vtMore.map((f) => f.slice(0, 6)).join(", ")}`,
+            ),
+            this.validationKeys.push(...vtMore),
+            this.saveStateNow());
+        for (const f of vtMore) if ((await o(f), i || this.stopRequested)) break;
+      }
     } else await Promise.all(a.map((f) => o(f)));
     if (i) throw i;
     const s = this.getLeaderboard(),
-      l = s.top.filter((f) => f.validation && f.validatedScore === null && !f.isBase);
+      l = [...this.archive.values()].filter((f) => f.validation && f.validatedScore === null && !f.isBase);
     if (
       (l.length > 0 &&
         this.log(
@@ -138456,6 +138616,8 @@ ${a.join(`
     return (await this.evaluateGenomeDetailed(t, r, n, a)).fitness;
   }
   async evaluateGenomeDetailed(t, r, n, a, i) {
+    const vtBase = Oi(t) === this.baseKey,
+      vtBaseCoins = new Set((this.finalEntries.get(this.baseKey) ?? []).map((h) => h.symbol));
     const o = this.config.mode === "portfolio",
       s = {},
       l = r.symbols.filter((h) => this.periodFor(h, r.period) !== null),
@@ -138464,17 +138626,21 @@ ${a.join(`
           l.map(async (h) => {
             try {
               const v = await this.evaluateSymbol(t, h, r.period, o);
-              return (this.consecutiveJobFailures = 0), i == null || i(), v;
+              return (this.consecutiveJobFailures = 0), (this.vtVariantFailures = 0), i == null || i(), v;
             } catch (v) {
               if (v instanceof Ts) {
+                // A variant Veles rejects on a coin where the original runs (order below the minimum,
+                // leverage above the pair's maximum) is that variant's problem, not a broken run:
+                // such failures stop the run only after a much longer streak.
+                const vtOwn = !vtBase && vtBaseCoins.has(h);
                 (s[h] = v.message),
-                  (this.consecutiveJobFailures += 1),
+                  vtOwn ? (this.vtVariantFailures = (this.vtVariantFailures ?? 0) + 1) : (this.consecutiveJobFailures += 1),
                   (this.lastJobError = v.message),
                   this.log("warning", `⚠️ ${ec(h)}: ${v.message}`);
                 const g = Math.max(4, Math.min(l.length, 10) * 2);
-                if (this.consecutiveJobFailures >= g)
+                if (this.consecutiveJobFailures >= g || (this.vtVariantFailures ?? 0) >= Math.max(60, g * 3))
                   throw new Error(
-                    `Бэктесты подряд завершаются ошибкой (${this.consecutiveJobFailures} раз). Последняя: ${this.lastJobError}. Проверьте бота, монеты и период на veles.finance вручную, затем нажмите «Продолжить».`,
+                    `Бэктесты подряд завершаются ошибкой (${this.consecutiveJobFailures + (this.vtVariantFailures ?? 0)} раз). Последняя: ${this.lastJobError}. Проверьте бота, монеты и период на veles.finance вручную, затем нажмите «Продолжить».`,
                   );
                 return i == null || i(), null;
               }
@@ -138567,15 +138733,21 @@ ${a.join(`
     const i = this.strategyForBacktest(t);
     if (!i) throw new Error("Базовая стратегия не загружена");
     const o = this.periodFor(r, n) ?? n,
-      s = Oi(t).slice(0, 6),
+      s = Oi(t).slice(0, 6);
+    let l;
+    try {
       l = vdt(i, {
         symbol: r,
         quoteCurrency: this.quoteCurrency,
         period: o,
         backtest: this.config.backtest,
         name: `Opt_${s}_${ec(r)}`,
-      }),
-      c = pdt(l),
+      });
+    } catch (vtE) {
+      // e.g. a ticker Veles cannot compose: skip this coin, not the whole run
+      throw new Ts(`${ec(r)}: ${dR(vtE).message}`);
+    }
+    const c = pdt(l),
       u = this.depositAmount(i),
       d = (await pft(c)) ?? (await vtLegacyHit(l, c));
     if (d) {
@@ -138599,6 +138771,21 @@ ${a.join(`
           { metrics: { ...d.metrics, symbol: r, depositAmount: u }, period: o, deals: b }
         );
     }
+    // The same backtest requested twice at once (e.g. equal variants in one batch) runs once.
+    const vtSame = this.vtPendingKeys.get(c);
+    if (vtSame) {
+      const x = await vtSame;
+      return { ...x, metrics: { ...x.metrics, symbol: r, depositAmount: u } };
+    }
+    const vtJob = this.vtRunBacktest(t, r, o, s, l, c, u, a);
+    this.vtPendingKeys.set(c, vtJob);
+    try {
+      return await vtJob;
+    } finally {
+      this.vtPendingKeys.delete(c);
+    }
+  }
+  async vtRunBacktest(t, r, o, s, l, c, u, a) {
     const f = await this.scheduler.run({
       label: `${ec(r)} · ${s}`,
       payload: l,
@@ -138608,10 +138795,7 @@ ${a.join(`
         (this.inflight[c] = b), (this.budgetDaysSpent += zX(o.from, o.to)), this.emitProgress(), this.saveStateSoon();
       },
     });
-    delete this.inflight[c],
-      delete this.inflight[vtLegacyKey(l)],
-      (this.backtestsRun += 1),
-      (this.durationSamples = [...this.durationSamples.slice(-29), f.durationMs]);
+    (this.backtestsRun += 1), (this.durationSamples = [...this.durationSamples.slice(-29), f.durationMs]);
     const h = fut(f.statistics, {
       symbol: r,
       depositAmount: u,
@@ -138633,8 +138817,12 @@ ${a.join(`
         metrics: y,
         deals: v,
         savedAt: Date.now(),
-        periodOpen: yft(o.to),
+        // accepted without a final Veles status: kept only for a few hours, then re-checked
+        periodOpen: yft(o.to) || !!(f.statistics && f.statistics.vtUnconfirmed),
       }),
+      // the finished backtest stays attached until its deals are stored (a failure re-reads it, not reruns it)
+      delete this.inflight[c],
+      delete this.inflight[vtLegacyKey(l)],
       { metrics: h, period: o, deals: v }
     );
   }
@@ -138696,6 +138884,8 @@ ${a.join(`
       (this.references = t.references ?? {}),
       (this.baselineFitness = t.baselineFitness ?? null),
       (this.screeningSymbols = t.screeningSymbols ?? null),
+      (this.vtExcluded = t.vtExcluded ?? []),
+      (this.vtExtraFinalists = !!t.vtExtraFinalists),
       (this.budgetDaysSpent = t.budgetDaysSpent ?? 0),
       (this.backtestsRun = t.backtestsRun),
       (this.cacheHits = t.cacheHits),
@@ -138732,6 +138922,8 @@ ${a.join(`
       references: this.references,
       baselineFitness: this.baselineFitness,
       screeningSymbols: this.screeningSymbols,
+      vtExcluded: this.vtExcluded,
+      vtExtraFinalists: this.vtExtraFinalists,
       budgetDaysSpent: this.budgetDaysSpent,
       backtestsRun: this.backtestsRun,
       cacheHits: this.cacheHits,
@@ -138748,10 +138940,18 @@ ${a.join(`
       savedAt: Date.now(),
     };
   }
+  // After a fatal error: cancel this engine's backtests and stop it from overwriting the saved
+  // state — «Продолжить» builds a new engine from that state.
+  vtHalt() {
+    (this.vtHalted = !0), this.saveTimer && (clearTimeout(this.saveTimer), (this.saveTimer = null));
+    try {
+      this.scheduler.cancel();
+    } catch {}
+  }
   saveStateNow() {
     if (
       (this.saveTimer && (clearTimeout(this.saveTimer), (this.saveTimer = null)),
-      this.phase === "done" || !this.persistEnabled || this.stressOnly)
+      this.phase === "done" || !this.persistEnabled || this.stressOnly || this.vtHalted)
     )
       return;
     const t = this.snapshotState();
@@ -140062,12 +140262,26 @@ const U1 =
           Ya.click(),
           URL.revokeObjectURL(tn);
       },
-      Ze = (ce, Ne) => {
+      // Backtests of a candidate for a Veles Tools group; with `vtOther`, only coins both have,
+      // so the two groups of a comparison cover the same coins.
+      vtGroupIds = (ce, vtOther) => {
+        const nt = ce.validation ?? ce.fitness,
+          tn = Array.isArray(nt.symbols) && nt.symbols.length === nt.backtestIds.length ? nt.symbols.map((x) => x.symbol) : null,
+          Ya = vtOther ? (vtOther.validation ?? vtOther.fitness) : null,
+          Xn = Ya && Array.isArray(Ya.symbols) ? new Set(Ya.symbols.map((x) => x.symbol)) : null;
+        return tn && Xn ? nt.backtestIds.filter((x, i) => Xn.has(tn[i])) : nt.backtestIds;
+      },
+      Ze = (ce, Ne, vtOther) => {
         var tn;
-        const nt = ce.validation ?? ce.fitness;
-        if (nt.backtestIds.length === 0) return null;
-        const lr = `Оптимизатор · ${(k == null ? void 0 : k.config.botName) ?? (k == null ? void 0 : k.config.botId) ?? ""} · ${Ne} · ${new Date().toLocaleDateString()}`;
-        return ((tn = r(lr, nt.backtestIds)) == null ? void 0 : tn.id) ?? null;
+        const nt = vtGroupIds(ce, vtOther);
+        if (nt.length === 0) return null;
+        const vtS = vtDepositScale(ce),
+          vtScope =
+            (k == null ? void 0 : k.config.mode) === "portfolio" && !ce.validation
+              ? "только монеты поиска"
+              : `${nt.length} ${vtPlural(nt.length, ["монета", "монеты", "монет"])}`,
+          lr = `Оптимизатор · ${(k == null ? void 0 : k.config.botName) ?? (k == null ? void 0 : k.config.botId) ?? ""} · ${Ne} · ${vtScope}${vtS !== 1 ? ` · депозит ×1 (в оптимизаторе ×${vtS})` : ""} · ${new Date().toLocaleDateString()}`;
+        return ((tn = r(lr, nt)) == null ? void 0 : tn.id) ?? null;
       },
       et = (ce) => {
         const Ne = Ze(ce, ce.isBase ? "исходная" : `вариант ${ce.key.slice(0, 6)}`);
@@ -140075,6 +140289,9 @@ const U1 =
           n.warning("Нет бэктестов для группы");
           return;
         }
+        (k == null ? void 0 : k.config.mode) === "portfolio" &&
+          !ce.validation &&
+          n.warning("Вариант проверен только на монетах поиска — группа неполная. Полная проверка на всех монетах — у финалистов.");
         n.success(
           E.jsxs("span", {
             children: [
@@ -140107,14 +140324,23 @@ const U1 =
         J({ strategy: k.baseStrategy, symbols: ce.selected.map((Ne) => Zi(Ne, k.quoteCurrency)) });
       },
       Tt = () => {
-        const ce = j == null ? void 0 : j.top.find((tn) => !tn.isBase),
+        const vtPortfolio = (k == null ? void 0 : k.config.mode) === "portfolio",
+          vtTop = (j == null ? void 0 : j.top) ?? [],
+          // Only a variant checked on all coins is comparable with the original's all-coins group.
+          ce = vtPortfolio
+            ? (vtTop.find((tn) => !tn.isBase && ig(tn) === "pass") ?? vtTop.find((tn) => !tn.isBase && tn.validation))
+            : vtTop.find((tn) => !tn.isBase),
           Ne = j == null ? void 0 : j.base;
         if (!(ce && Ne)) {
-          n.warning("Нужны исходная и хотя бы один найденный вариант");
+          n.warning(
+            vtPortfolio && Ne && vtTop.some((tn) => !tn.isBase)
+              ? "Ни один вариант ещё не проверен на всех монетах — сравнивать с исходной нечего. Группу варианта по монетам поиска можно создать кнопкой «Группа» в таблице."
+              : "Нужны исходная и хотя бы один найденный вариант",
+          );
           return;
         }
-        const nt = Ze(Ne, "исходная"),
-          lr = Ze(ce, `вариант ${ce.key.slice(0, 6)}`);
+        const nt = Ze(Ne, "исходная", ce),
+          lr = Ze(ce, `вариант ${ce.key.slice(0, 6)}${ig(ce) === "fail" ? " (не прошёл проверку)" : ""}`, Ne);
         if (!(nt && lr)) {
           n.warning("Нет бэктестов для группы");
           return;
@@ -140122,7 +140348,9 @@ const U1 =
         n.success(
           E.jsxs("span", {
             children: [
-              "Созданы две группы — исходная и лучший вариант.",
+              ig(ce) === "pass"
+                ? "Созданы две группы — исходная и лучший вариант, на одних и тех же монетах."
+                : "Созданы две группы — исходная и лучший из проверенных вариантов (он не прошёл ограничения на всех монетах).",
               " ",
               E.jsx(Ge, {
                 type: "link",
@@ -140156,7 +140384,8 @@ const U1 =
             ? Math.min(99, Math.round((D.completedBacktests / D.totalBacktests) * 100))
             : 0,
       Pr = pt ? (pt.validation ?? pt.fitness) : null,
-      _r = Xe ? (Xe.validation ?? Xe.fitness) : null,
+      // a variant Veles does not run on a few coins is compared with the original on the same coins
+      _r = pt && pt.validation && pt.validation.vtBaseSame ? pt.validation.vtBaseSame : Xe ? (Xe.validation ?? Xe.fitness) : null,
       mt = de,
       en = (ce, Ne, nt) =>
         E.jsx(ar, {
@@ -142207,6 +142436,12 @@ const U1 =
                             Pr.valid ? null : E.jsx(un, { color: "red", children: "не проходит ограничения" }),
                             zt && !pt.validation
                               ? E.jsx(un, { color: "default", children: "пока только монеты поиска" })
+                              : null,
+                            pt.validation && pt.validation.vtLostCoins
+                              ? E.jsx(ar, {
+                                  title: "Veles не запускает этот вариант на этих монетах (у исходной работает; обычно ордер меньше минимального на бирже). Цифры и сравнение с исходной — на остальных монетах.",
+                                  children: E.jsx(un, { color: "orange", children: `не запускается: ${pt.validation.vtLostCoins.map(ec).join(", ")}` }),
+                                })
                               : null,
                           ],
                         }),

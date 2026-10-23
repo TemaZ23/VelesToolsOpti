@@ -739,7 +739,9 @@ export const psRunSearch = async (context) => {
   const delta = (result, current) =>
     result.valid && current.valid ? result.score - current.score : result.valid ? 1 : -1;
 
-  const [base] = await evaluateMany([repair({ ...context.baseGenome })]);
+  // The original is evaluated exactly as it is: snapped to the step grid it would get a different
+  // key than the engine's base (then nothing is scored against the original — the reference is lost).
+  const [base] = await evaluateMany([{ ...context.baseGenome }]);
   if (!base) {
     return { best: null, base: null, path: [], sensitivity: [], rounds: [], evaluations: requested.size, stoppedBy: 'stop' };
   }
@@ -1095,7 +1097,7 @@ export const psRunGrid = async (context) => {
   const grid = { total, visited: 0, unique: 0, evaluated: 0 };
   const point = (result) => ({ key: result.key, genome: result.genome, score: result.score, round: 0, moves: [] });
 
-  const baseGenome = repair({ ...context.baseGenome });
+  const baseGenome = { ...context.baseGenome }; // as is, see psRunSearch
   const baseKey = keyOf(baseGenome);
   const [baseResult] = await evaluate([baseGenome]);
   if (!baseResult) {
