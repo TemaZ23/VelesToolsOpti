@@ -114,7 +114,7 @@ check(new RegExp(`${botCoins + 1} монет`).test(page0), `bot coins plus own 
 await shot('02-coins');
 
 // Depth: full enumeration is refused for the default space, allowed for two parameters.
-const gridOption = page.locator('.ant-segmented-item').filter({ hasText: 'Перебор всего' });
+const gridOption = page.locator('.ant-segmented-item').filter({ hasText: 'Перебор' });
 check((await gridOption.getAttribute('class')).includes('disabled'), 'full enumeration disabled for a large space');
 for (const label of ['Отступы ордеров сетки', 'Объёмы ордеров (сумма сохраняется)', 'Пороги фильтров входа', 'Пороги фильтров в ордерах сетки', 'Пороги фильтров тейка и стопа', 'Заменять фильтры похожими индикаторами', 'Пробовать выключать фильтры', 'Стоп-лосс']) {
   const box = page.getByText(label, { exact: true });

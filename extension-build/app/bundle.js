@@ -134315,7 +134315,7 @@ const Zi = (e, t) => {
                       disabled: t.coins === 0 || (t.busy && !t.running),
                       onClick: () => t.onRun(e),
                       children: [
-                        r ? "Повторить стресс-тест" : "Стресс-тест на расширенном списке",
+                        r ? "Повторить проверку на других монетах" : "Проверить на других монетах",
                         t.coins > 0 ? ` (${t.coins} монет)` : "",
                       ],
                     }),
@@ -134424,7 +134424,7 @@ const Zi = (e, t) => {
               type: "secondary",
               style: { margin: 0 },
               children:
-                "Проверка устойчивости делается для вариантов, прошедших финальную проверку на всех монетах (режим «Стратегия на список монет»). Стресс-тест на расширенном списке монет можно запустить для такого варианта и отсюда.",
+                "Проверка устойчивости делается для вариантов, прошедших финальную проверку на всех монетах. Дополнительно вариант и исходную можно прогнать на ~150 ликвидных монетах Bybit, которых не было в прогоне: если вариант лучше и там — улучшение не привязано к вашим монетам (полезно для бота на одной монете).",
             }),
             E.jsx(LX, { candidate: e, stress: t }),
           ],
@@ -138030,6 +138030,42 @@ class Nf {
       case "bound":
         (this.boundMoves = this.boundMoves ?? []), (n = t.move) && this.boundMoves.push(n.label);
         break;
+      case "expand":
+        this.log(
+          "info",
+          `↔️ ${t.flat} из ${t.scanned} шагов ничего не меняют — рядом с текущими настройками бот ведёт себя так же. Шаг увеличен до ${r(t.step)} диапазона, чтобы дотянуться до другого поведения`,
+        );
+        break;
+      case "explore":
+        this.log(
+          "info",
+          `
+🗺️ Разведка всего диапазона: пошаговый поиск сошёлся, остаток бюджета (${t.budgetLeft}) — на ${vtVariants(t.count)}, равномерно разбросанных по всем разрешённым значениям параметров (латинский гиперкуб). Так проверяется, нет ли лучшего решения вдали от текущих настроек`,
+        );
+        break;
+      case "explored": {
+        const a = t.top[0];
+        this.log(
+          a && a.score > t.best.score + 0.0025 ? "success" : "info",
+          a
+            ? `🗺️ Лучшая из разведанных точек: ${this.describePatternResult(a)}${a.score > t.best.score + 0.0025 ? " — лучше найденного пошагово ✅" : ` (пошаговый поиск: ${this.describePatternResult(t.best)})`}`
+            : "🗺️ Ни одна из разведанных точек не проходит ограничения",
+        );
+        break;
+      }
+      case "restart":
+        this.log(
+          "info",
+          `
+🔁 Пошаговый поиск ${t.restart}/${t.of} от точки разведки ${this.describePatternResult(t.from)} — до ${vtVariants(t.budget)}`,
+        );
+        break;
+      case "restarted":
+        this.log(
+          t.result && t.best && t.result.key === t.best.key ? "success" : "info",
+          `🔁 Поиск ${t.restart} пришёл к ${this.describePatternResult(t.result)}${t.result && t.best && t.result.key === t.best.key ? " — это новый лучший ✅" : ` · лучший остаётся ${this.describePatternResult(t.best)}`}`,
+        );
+        break;
     }
   }
   captureSensitivity(t, r) {
@@ -138123,7 +138159,9 @@ class Nf {
           ? "исчерпан бюджет вариантов"
           : t.stoppedBy === "stop"
             ? "завершён досрочно"
-            : "дальнейшие шаги не дают прироста",
+            : t.stoppedBy === "explored"
+              ? "пошаговый поиск сошёлся, остаток бюджета ушёл на разведку всего диапазона"
+              : "дальнейшие шаги не дают прироста",
       n = (a = this.archive.get(t.best.key)) == null ? void 0 : a.fitness;
     t.best.key === t.base.key
       ? this.log(
@@ -139969,6 +140007,32 @@ const U1 =
         () => (vtBase ? Tu(vtBase, vtScope, vtRanges, o.precision) : null),
         [o.precision, vtScope, vtRanges, vtBase],
       ),
+      // Which «Что подбираем» items exist in this bot at all (a bot without a stop-loss or without
+      // filters does not get those switches).
+      vtApplicable = p.useMemo(() => {
+        if (!vtBase) return null;
+        const ce = Object.fromEntries(Object.entries(Aft).map(([nt, lr]) => [nt, typeof lr == "boolean" ? !1 : lr])),
+          Ne = {};
+        for (const nt of [
+          "dcaIndents",
+          "dcaVolumes",
+          "takeProfit",
+          "stopLoss",
+          "stopLossConditional",
+          "pullUp",
+          "entryThresholds",
+          "orderThresholds",
+          "exitThresholds",
+          "structureSwap",
+          "structureRemove",
+        ])
+          try {
+            Ne[nt] = Tu(vtBase, { ...ce, linkOrderConditions: !0, structureSimilarOnly: !0, [nt]: !0 }, {}, o.precision).dimensions.length > 0;
+          } catch {
+            Ne[nt] = !0;
+          }
+        return Ne;
+      }, [vtBase, o.precision]),
       _e = Se ? Qut(Se) : null,
       Te = p.useMemo(
         () => ({ from: `${o.periodFrom}T00:00:00.000Z`, to: `${o.periodTo}T23:59:59.999Z` }),
@@ -140775,7 +140839,7 @@ const U1 =
         },
         {
           title: Ve.genetic.searchMethod === "grid" ? "Перебор всех комбинаций" : "Поиск",
-          description: `${Ve.genetic.searchMethod === "grid" ? `все комбинации` : `до ${Ve.genetic.searchBudget} вариантов${Ve.genetic.vtCertify ? " + сертификат" : ""}`} на ${Math.min(Ve.portfolio.screeningCount, ct.length)} ключевых ${vtPlural(Math.min(Ve.portfolio.screeningCount, ct.length), ["монете", "монетах", "монетах"])}${Ve.portfolio.vtHoldoutPercent > 0 ? `, без последних ${Ve.portfolio.vtHoldoutPercent}% периода` : ""}. Засчитывается вариант с лучшей прибылью / МПУ, чем у бота, — в большинстве полугодий и групп монет, сделок не меньше 60%`,
+          description: `${Ve.genetic.searchMethod === "grid" ? `все комбинации` : `${Ve.genetic.searchBudget} вариантов${Ve.genetic.vtCertify ? " + сертификат" : ""}: пошаговый поиск от ваших настроек (если рядом всё одинаково — шаг растёт), остаток — разведка всего диапазона и поиск от лучших точек;`} на ${Math.min(Ve.portfolio.screeningCount, ct.length)} ключевых ${vtPlural(Math.min(Ve.portfolio.screeningCount, ct.length), ["монете", "монетах", "монетах"])}${Ve.portfolio.vtHoldoutPercent > 0 ? `, без последних ${Ve.portfolio.vtHoldoutPercent}% периода` : ""}. Засчитывается вариант с лучшей прибылью / МПУ, чем у бота, — в большинстве полугодий и групп монет, сделок не меньше 60%`,
         },
         {
           title: "Финал",
@@ -140911,23 +140975,21 @@ const U1 =
                 vertical: !0,
                 gap: 4,
                 children: [
-                  en("dcaIndents", "Отступы ордеров сетки"),
-                  en("dcaVolumes", "Объёмы ордеров (сумма сохраняется)"),
-                  en("takeProfit", "Тейк-профит / мин. P&L тейка"),
-                  en("stopLoss", "Стоп-лосс", {
-                    disabled: !!g && !Mt,
-                    tooltip: g && !Mt ? "У бота нет фиксированного стоп-лосса" : void 0,
-                  }),
-                  en("stopLossConditional", "Мин. отступ стопа по сигналу", {
-                    disabled: !!g && !$t,
-                    tooltip: g && !$t ? "У бота нет стоп-лосса по сигналу" : void 0,
-                  }),
-                  en("pullUp", "Подтяжка сетки"),
-                  en("entryThresholds", "Пороги фильтров входа"),
-                  en("orderThresholds", "Пороги фильтров в ордерах сетки"),
-                  en("exitThresholds", "Пороги фильтров тейка и стопа"),
-                  en("structureSwap", "Заменять фильтры похожими индикаторами"),
-                  en("structureRemove", "Пробовать выключать фильтры"),
+                  ...[
+                    ["dcaIndents", "Отступы ордеров сетки"],
+                    ["dcaVolumes", "Объёмы ордеров (сумма сохраняется)"],
+                    ["takeProfit", "Тейк-профит / мин. P&L тейка"],
+                    ["stopLoss", "Стоп-лосс"],
+                    ["stopLossConditional", "Мин. отступ стопа по сигналу"],
+                    ["pullUp", "Подтяжка сетки"],
+                    ["entryThresholds", "Пороги фильтров входа"],
+                    ["orderThresholds", "Пороги фильтров в ордерах сетки"],
+                    ["exitThresholds", "Пороги фильтров тейка и стопа"],
+                    ["structureSwap", "Заменять фильтры похожими индикаторами"],
+                    ["structureRemove", "Пробовать выключать фильтры"],
+                  ]
+                    .filter(([ce]) => !vtApplicable || vtApplicable[ce])
+                    .map(([ce, Ne]) => E.jsx(p.Fragment, { children: en(ce, Ne) }, ce)),
                   E.jsxs(or, {
                     align: "center",
                     gap: 8,
@@ -140959,7 +141021,54 @@ const U1 =
                 ],
               }),
             ),
-            vtSection("Депозит и блокировка", an, "От них считается портфель: все боты на общей шкале времени, с блокировкой — как в «Группах бэктестов». Прибыль и МПУ в % депозита."),
+            ct.length > 1
+              ? vtSection("Депозит и блокировка", an, "От них считается портфель: все боты на общей шкале времени, с блокировкой — как в «Группах бэктестов». Прибыль и МПУ — в % общего депозита.")
+              : vtSection(
+                  "Депозит",
+                  E.jsxs(or, {
+                    vertical: !0,
+                    gap: 6,
+                    children: [
+                      E.jsxs(ut, {
+                        wrap: !0,
+                        children: [
+                          E.jsx(bn, {
+                            size: "small",
+                            addonBefore: "Счёт",
+                            min: 1,
+                            value: o.portfolio.totalDeposit,
+                            disabled: mt,
+                            onChange: (ce) => l("portfolio", { ...o.portfolio, totalDeposit: ce ?? 5e3 }),
+                            style: { width: 170 },
+                          }),
+                          E.jsx(bn, {
+                            size: "small",
+                            addonBefore: "на бота, %",
+                            min: 0.01,
+                            max: 100,
+                            step: 0.05,
+                            value: o.portfolio.botSharePercent,
+                            disabled: mt || o.portfolio.useBotDeposit,
+                            onChange: (ce) => l("portfolio", { ...o.portfolio, botSharePercent: ce ?? 0.75 }),
+                            style: { width: 150 },
+                          }),
+                        ],
+                      }),
+                      E.jsxs(_n, {
+                        checked: o.portfolio.useBotDeposit,
+                        disabled: mt,
+                        onChange: (ce) => l("portfolio", { ...o.portfolio, useBotDeposit: ce.target.checked }),
+                        children: ["Депозит как в боте (", ge ?? "—", " USDT)"],
+                      }),
+                      E.jsx(Ft, {
+                        type: "secondary",
+                        style: { fontSize: 12 },
+                        children: `В бэктестах ${St ?? ge ?? "—"} USDT на бота. Прибыль и МПУ показываются в % от счёта — укажите реальный размер счёта. Одна монета — блокировка не нужна.`,
+                      }),
+                    ],
+                  }),
+                  "Сравнение «прибыль / МПУ» от размера депозита не зависит; депозит нужен, чтобы проценты в итогах были про ваши деньги и чтобы бэктесты шли с реальным размером ордера (минимальный ордер биржи).",
+                ),
             vtSection(
               "Глубина поиска",
               E.jsxs(or, {
@@ -140976,7 +141085,7 @@ const U1 =
                       { value: "fast", label: "Быстро" },
                       { value: "standard", label: "Стандарт" },
                       { value: "max", label: "Максимум" },
-                      { value: "grid", label: "Перебор всего", disabled: !vtCanGrid },
+                      { value: "grid", label: "Перебор", disabled: !vtCanGrid },
                     ],
                   }),
                   E.jsx(Ft, {
@@ -140984,12 +141093,12 @@ const U1 =
                     style: { fontSize: 12 },
                     children:
                       (o.vtDepth ?? "standard") === "fast"
-                        ? "до 60 вариантов: каждый параметр по отдельности, затем удачные изменения вместе"
+                        ? "60 вариантов: пошаговый поиск от ваших настроек, остаток — разведка всего диапазона"
                         : o.vtDepth === "max"
-                          ? `до 400 вариантов + сертификат: каждый параметр лучшего варианта проверяется по всем значениям, пока ни одно изменение не улучшает результат${Se ? ` (≈${vtFormatCount(vtSearchVariants(Ve.genetic, Se) ?? 0)} вариантов)` : ""}`
+                          ? `400 вариантов + сертификат: пошаговый поиск, разведка всего диапазона и поиск от лучших найденных точек; затем каждый параметр лучшего варианта проверяется по всем значениям, пока ни одно изменение не улучшает результат${Se ? ` (всего до ≈${vtFormatCount(vtSearchVariants(Ve.genetic, Se) ?? 0)} вариантов)` : ""}`
                           : o.vtDepth === "grid" && vtCanGrid
                             ? `все ${vtFormatCount(vtCombos2)} комбинаций — гарантированно лучшая на монетах и периоде поиска`
-                            : `до 150 вариантов: по отдельности → вместе → уточнение мелким шагом${!vtCanGrid && Se ? ` · «Перебор всего» доступен до ${vtFormatCount(VT_GRID_MAX)} комбинаций — оставьте 2–4 параметра` : ""}`,
+                            : `150 вариантов: пошаговый поиск от ваших настроек (по отдельности → вместе → уточнение), остаток — разведка всего диапазона и поиск от лучших найденных точек${!vtCanGrid && Se ? ` · «Перебор» (все комбинации) доступен до ${vtFormatCount(VT_GRID_MAX)} комбинаций — оставьте 2–4 параметра` : ""}`,
                   }),
                 ],
               }),
@@ -143158,7 +143267,7 @@ const U1 =
                             }),
                             E.jsx(Ft, {
                               children:
-                                "2. Нажмите «Найти лучшие настройки». Ваш бот прогоняется на всех монетах — это точка отсчёта. Затем на ключевых монетах (без отложенной части периода) каждый параметр сдвигается по отдельности, удачные изменения объединяются и уточняются; на «Максимуме» лучший вариант ещё проверяется по всем значениям каждого параметра (сертификат), «Перебор всего» проверяет каждую комбинацию. Цель — прибыль / МПУ лучше, чем у бота, в большинстве полугодий и групп монет.",
+                                "2. Нажмите «Найти лучшие настройки». Ваш бот прогоняется на всех монетах — это точка отсчёта. Затем на ключевых монетах (без отложенной части периода) каждый параметр сдвигается по отдельности, удачные изменения объединяются и уточняются; если рядом с ботом ничего не меняется, шаг увеличивается. Оставшиеся варианты идут на разведку всего диапазона (точки, равномерно разбросанные по всем значениям) и пошаговый поиск от лучших из них — так находится решение и вдали от текущих настроек. На «Максимуме» лучший ещё проверяется по всем значениям каждого параметра (сертификат), «Перебор» проверяет каждую комбинацию. Цель — прибыль / МПУ лучше, чем у бота, в большинстве полугодий и групп монет.",
                             }),
                             E.jsx(Ft, {
                               children:

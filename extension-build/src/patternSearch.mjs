@@ -44,7 +44,53 @@ export const PS_DEFAULTS = Object.freeze({
   harmful: 0.03,
   /** Share of the budget kept for combining moves after the first scan. */
   reserveShare: 0.15,
+  /** A round is flat when at least this share of its steps changes the score by less than `insensitive`. */
+  flatShare: 0.6,
+  /** How many times a flat round may double the step (0.125 → 0.25 → 0.5 of the range). */
+  maxExpansions: 2,
+  /** Largest step, as a share of the range. */
+  maxStep: 0.5,
+  /** Spend the budget left after the climb on exploration and restarts. */
+  explore: true,
+  /** Explore only when at least this many evaluations (and this share of the budget) are left. */
+  exploreMin: 8,
+  exploreMinShare: 0.1,
+  /** Share of the leftover budget for the spread-out points; the rest goes to the restarts. */
+  exploreShare: 0.4,
+  /** Climbs from the best explored points. */
+  restarts: 2,
 });
+
+/**
+ * `count` points spread over the whole allowed ranges (Latin hypercube on the step grid): every
+ * parameter takes values from `count` equal slices of its range, each slice once, in random pairing.
+ */
+export const psLatinSamples = (space, baseGenome, count, rng) => {
+  const dims = space.dimensions;
+  const orders = dims.map(() => {
+    const order = Array.from({ length: count }, (_, index) => index);
+    for (let i = count - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return order;
+  });
+  return Array.from({ length: count }, (_, index) => {
+    const genome = { ...baseGenome };
+    dims.forEach((dim, position) => {
+      const values = psGridValues(dim);
+      const size = values.length;
+      const slice = orders[position][index];
+      // disjoint index ranges per slice (every slice its own values); with fewer values than
+      // points every value is used at least once
+      const lo = Math.ceil((slice * size) / count);
+      const hi = Math.ceil(((slice + 1) * size) / count) - 1;
+      const pick = size >= count ? lo + Math.floor(rng() * (hi - lo + 1)) : Math.floor((slice * size) / count);
+      genome[dim.id] = values[Math.min(size - 1, pick)];
+    });
+    return genome;
+  });
+};
 
 /** @param {number} value @param {number} min @param {number} max */
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -770,239 +816,315 @@ export const psRunSearch = async (context) => {
     return { best: null, base: null, path: [], sensitivity: [], rounds: [], evaluations: requested.size, stoppedBy: 'stop' };
   }
 
-  let current = base;
+  let best = base;
   const path = [{ key: base.key, genome: base.genome, score: base.score, round: 0, moves: [] }];
   const stepMoves = psBuildMoves(space);
-  /** @type {Map<string, {tested: boolean, delta: number}>} */
-  const moveState = new Map();
-  const touchedDims = new Set();
-  const rememberedChoices = new Map();
   const rounds = [];
   let sensitivity = [];
-  let step = options.initialStep;
-  let stall = 0;
   let round = 0;
+  let restartNo = 0;
   let stoppedBy = 'converged';
 
-  const planned = (move) => {
-    const state = moveState.get(move.id);
-    if (!state?.tested) {
-      return true;
-    }
-    if (move.dimIds.some((dimId) => touchedDims.has(dimId))) {
-      return true;
-    }
-    return Math.abs(state.delta) >= options.insensitive && state.delta > -options.harmful;
-  };
+  /**
+   * Step-by-step climb from `start` until no step helps or `cap` evaluations are used: scan every
+   * move, combine the improving ones, follow accepted directions, repeat the round's pattern;
+   * widen the step on a flat round, halve it otherwise.
+   */
+  const climb = async (start, cap, first) => {
+    let current = start;
+    /** @type {Map<string, {tested: boolean, delta: number}>} */
+    const moveState = new Map();
+    const touchedDims = new Set();
+    const rememberedChoices = new Map();
+    let step = options.initialStep;
+    let stall = 0;
+    let expansions = 0;
+    let localRound = 0;
+    const capLeft = () => Math.min(budgetLeft(), cap - requested.size);
+    const planned = (move) => {
+      const state = moveState.get(move.id);
+      if (!state?.tested) {
+        return true;
+      }
+      if (move.dimIds.some((dimId) => touchedDims.has(dimId))) {
+        return true;
+      }
+      return Math.abs(state.delta) >= options.insensitive && state.delta > -options.harmful;
+    };
+    while (true) {
+      if (shouldStop()) {
+        stoppedBy = 'stop';
+        break;
+      }
+      if (capLeft() <= 0) {
+        stoppedBy = 'budget';
+        break;
+      }
+      if (step < options.minStep - 1e-12) {
+        break;
+      }
+      round += 1;
+      localRound += 1;
+      const roundStart = current;
+      const before = requested.size;
 
-  while (true) {
-    if (shouldStop()) {
-      stoppedBy = 'stop';
-      break;
-    }
-    if (budgetLeft() <= 0) {
-      stoppedBy = 'budget';
-      break;
-    }
-    if (step < options.minStep - 1e-12) {
-      break;
-    }
-    round += 1;
-    const roundStart = current;
-    const before = requested.size;
-
-    // 1. Scan.
-    const moves = [
-      ...stepMoves.filter(planned),
-      ...psChoiceMoves(space, current.genome, rng, round === 1 ? options.choiceSamples : 0, rememberedChoices),
-    ].sort((a, b) => a.priority - b.priority || compareText(a.id, b.id));
-    const reserve = round === 1 ? Math.max(4, Math.ceil(budget * options.reserveShare)) : 2;
-    let room = Math.max(0, budgetLeft() - reserve);
-    const candidates = [];
-    const seen = new Set([current.key]);
-    for (const move of moves) {
-      const genome = psApplyMove(space, current.genome, move, step, repair);
-      if (!genome) {
-        continue;
-      }
-      const key = keyOf(genome);
-      if (seen.has(key)) {
-        continue;
-      }
-      const fresh = !results.has(key) && !requested.has(key);
-      if (fresh && room <= 0) {
-        continue;
-      }
-      if (fresh) {
-        room -= 1;
-      }
-      seen.add(key);
-      candidates.push({ move, genome, key });
-    }
-    if (candidates.length === 0 && budgetLeft() <= reserve) {
-      stoppedBy = 'budget';
-      break;
-    }
-    emit({ type: 'scan', round, step, count: candidates.length, current });
-    const scanned = await evaluateMany(candidates.map((candidate) => candidate.genome));
-    const scan = [];
-    candidates.forEach((candidate, index) => {
-      const result = scanned[index];
-      if (!result) {
-        return;
-      }
-      const change = delta(result, current);
-      scan.push({ ...candidate, result, delta: change });
-      if (candidate.move.kind === 'step') {
-        moveState.set(candidate.move.id, { tested: true, delta: change });
-      } else if (better(result, current)) {
-        const list = rememberedChoices.get(candidate.move.dimId) ?? [];
-        rememberedChoices.set(candidate.move.dimId, [...new Set([...list, candidate.move.choice])]);
-      }
-    });
-    if (round === 1) {
-      sensitivity = scan.map((item) => ({ move: item.move, genome: item.genome, result: item.result, delta: item.delta }));
-    }
-    emit({ type: 'scanned', round, step, scan, current });
-    if (shouldStop()) {
-      stoppedBy = 'stop';
-      break;
-    }
-
-    // 2. Climb: combine improving moves, then follow each accepted direction.
-    const improving = scan
-      .filter((item) => better(item.result, current))
-      .sort((a, b) => b.result.score - a.result.score || compareText(a.move.id, b.move.id));
-    const chosen = [];
-    for (const item of improving) {
-      const clash = chosen.some(
-        (other) =>
-          (item.move.kind === 'choice' && other.move.kind === 'choice' && other.move.dimId === item.move.dimId) ||
-          (item.move.kind === 'step' &&
-            other.move.kind === 'step' &&
-            other.move.id.slice(0, -1) === item.move.id.slice(0, -1)),
-      );
-      if (!clash) {
-        chosen.push(item);
-      }
-    }
-    let accepted = [];
-    if (chosen.length >= 2 && budgetLeft() > 0) {
-      let genome = current.genome;
-      for (const item of chosen) {
-        genome = psApplyMove(space, genome, item.move, step, repair) ?? genome;
-      }
-      const [combined] = await evaluateMany([genome]);
-      if (combined && better(combined, chosen[0].result)) {
-        current = combined;
-        accepted = chosen.map((item) => item.move);
-        emit({ type: 'accept', how: 'combined', round, moves: accepted, result: combined });
-      } else if (combined) {
-        emit({ type: 'reject', how: 'combined', round, moves: chosen.map((item) => item.move), result: combined });
-      }
-    }
-    if (accepted.length === 0) {
-      for (const item of chosen) {
-        if (shouldStop() || budgetLeft() <= 0) {
-          break;
-        }
-        const genome = psApplyMove(space, current.genome, item.move, step, repair);
+      // 1. Scan.
+      const moves = [
+        ...stepMoves.filter(planned),
+        ...psChoiceMoves(space, current.genome, rng, localRound === 1 ? options.choiceSamples : 0, rememberedChoices),
+      ].sort((a, b) => a.priority - b.priority || compareText(a.id, b.id));
+      const reserve = localRound === 1 ? Math.max(first ? 4 : 2, Math.ceil(cap * options.reserveShare)) : 2;
+      let room = Math.max(0, capLeft() - reserve);
+      const candidates = [];
+      const seen = new Set([current.key]);
+      for (const move of moves) {
+        const genome = psApplyMove(space, current.genome, move, step, repair);
         if (!genome) {
           continue;
         }
-        const [result] = await evaluateMany([genome]);
-        if (!result) {
-          break;
+        const key = keyOf(genome);
+        if (seen.has(key)) {
+          continue;
         }
-        if (better(result, current)) {
-          current = result;
-          accepted.push(item.move);
-          emit({ type: 'accept', how: 'greedy', round, moves: [item.move], result });
-        } else {
-          emit({ type: 'reject', how: 'greedy', round, moves: [item.move], result });
+        const fresh = !results.has(key) && !requested.has(key);
+        if (fresh && room <= 0) {
+          continue;
+        }
+        if (fresh) {
+          room -= 1;
+        }
+        seen.add(key);
+        candidates.push({ move, genome, key });
+      }
+      if (candidates.length === 0 && capLeft() <= reserve) {
+        stoppedBy = 'budget';
+        break;
+      }
+      emit({ type: 'scan', round, step, count: candidates.length, current });
+      const scanned = await evaluateMany(candidates.map((candidate) => candidate.genome));
+      const scan = [];
+      candidates.forEach((candidate, index) => {
+        const result = scanned[index];
+        if (!result) {
+          return;
+        }
+        const change = delta(result, current);
+        scan.push({ ...candidate, result, delta: change });
+        if (candidate.move.kind === 'step') {
+          moveState.set(candidate.move.id, { tested: true, delta: change });
+        } else if (better(result, current)) {
+          const list = rememberedChoices.get(candidate.move.dimId) ?? [];
+          rememberedChoices.set(candidate.move.dimId, [...new Set([...list, candidate.move.choice])]);
+        }
+      });
+      if (round === 1 && first) {
+        sensitivity = scan.map((item) => ({ move: item.move, genome: item.genome, result: item.result, delta: item.delta }));
+      }
+      emit({ type: 'scanned', round, step, scan, current });
+      if (shouldStop()) {
+        stoppedBy = 'stop';
+        break;
+      }
+
+      // 2. Climb: combine improving moves, then follow each accepted direction.
+      const improving = scan
+        .filter((item) => better(item.result, current))
+        .sort((a, b) => b.result.score - a.result.score || compareText(a.move.id, b.move.id));
+      const chosen = [];
+      for (const item of improving) {
+        const clash = chosen.some(
+          (other) =>
+            (item.move.kind === 'choice' && other.move.kind === 'choice' && other.move.dimId === item.move.dimId) ||
+            (item.move.kind === 'step' &&
+              other.move.kind === 'step' &&
+              other.move.id.slice(0, -1) === item.move.id.slice(0, -1)),
+        );
+        if (!clash) {
+          chosen.push(item);
         }
       }
-    }
-    for (const move of accepted) {
-      if (move.kind !== 'step') {
+      let accepted = [];
+      if (chosen.length >= 2 && capLeft() > 0) {
+        let genome = current.genome;
+        for (const item of chosen) {
+          genome = psApplyMove(space, genome, item.move, step, repair) ?? genome;
+        }
+        const [combined] = await evaluateMany([genome]);
+        if (combined && better(combined, chosen[0].result)) {
+          current = combined;
+          accepted = chosen.map((item) => item.move);
+          emit({ type: 'accept', how: 'combined', round, moves: accepted, result: combined });
+        } else if (combined) {
+          emit({ type: 'reject', how: 'combined', round, moves: chosen.map((item) => item.move), result: combined });
+        }
+      }
+      if (accepted.length === 0) {
+        for (const item of chosen) {
+          if (shouldStop() || capLeft() <= 0) {
+            break;
+          }
+          const genome = psApplyMove(space, current.genome, item.move, step, repair);
+          if (!genome) {
+            continue;
+          }
+          const [result] = await evaluateMany([genome]);
+          if (!result) {
+            break;
+          }
+          if (better(result, current)) {
+            current = result;
+            accepted.push(item.move);
+            emit({ type: 'accept', how: 'greedy', round, moves: [item.move], result });
+          } else {
+            emit({ type: 'reject', how: 'greedy', round, moves: [item.move], result });
+          }
+        }
+      }
+      for (const move of accepted) {
+        if (move.kind !== 'step') {
+          continue;
+        }
+        for (let i = 0; i < options.maxLineSteps; i++) {
+          if (shouldStop() || capLeft() <= 0) {
+            break;
+          }
+          const genome = psApplyMove(space, current.genome, move, step, repair);
+          if (!genome) {
+            emit({ type: 'bound', round, move });
+            break;
+          }
+          const [result] = await evaluateMany([genome]);
+          if (!(result && better(result, current))) {
+            break;
+          }
+          current = result;
+          emit({ type: 'accept', how: 'line', round, moves: [move], result });
+        }
+      }
+
+      // 3. Pattern move.
+      if (current.key !== roundStart.key && !shouldStop() && capLeft() > 0) {
+        const genome = psPatternPoint(space, roundStart.genome, current.genome, repair);
+        if (genome) {
+          const [result] = await evaluateMany([genome]);
+          if (result && better(result, current)) {
+            current = result;
+            emit({ type: 'accept', how: 'pattern', round, moves: [], result });
+          }
+        }
+      }
+
+      const improved = current.key !== roundStart.key;
+      if (improved) {
+        for (const move of accepted) {
+          for (const dimId of move.dimIds) {
+            touchedDims.add(dimId);
+          }
+        }
+        if (better(current, best)) {
+          best = current;
+          path.push({ key: current.key, genome: current.genome, score: current.score, round, moves: accepted, restart: restartNo });
+        }
+      }
+      const scores = scan.filter((item) => item.result.valid).map((item) => item.result.score);
+      const info = {
+        round,
+        step,
+        improved,
+        best: better(current, best) ? current : best,
+        current,
+        restart: restartNo,
+        start: roundStart,
+        evaluated: requested.size - before,
+        scanned: scan.length,
+        medianScore: scores.length > 0 ? psMedian(scores) : current.score,
+        validCount: scores.length,
+        accepted,
+      };
+      rounds.push({
+        round,
+        step,
+        improved,
+        bestScore: (better(current, best) ? current : best).score,
+        restart: restartNo,
+        medianScore: info.medianScore,
+        evaluated: info.evaluated,
+        validCount: info.validCount,
+      });
+      context.onRound?.(info);
+      if (improved) {
+        stall = 0;
         continue;
       }
-      for (let i = 0; i < options.maxLineSteps; i++) {
-        if (shouldStop() || budgetLeft() <= 0) {
-          break;
-        }
-        const genome = psApplyMove(space, current.genome, move, step, repair);
-        if (!genome) {
-          emit({ type: 'bound', round, move });
-          break;
-        }
-        const [result] = await evaluateMany([genome]);
-        if (!(result && better(result, current))) {
-          break;
-        }
-        current = result;
-        emit({ type: 'accept', how: 'line', round, moves: [move], result });
+      // A flat round (most steps change nothing) says the steps are too small to reach another
+      // behaviour of the bot: widen them (up to half the range) before refining.
+      const steps = scan.filter((item) => item.move.kind === 'step' && item.result.valid);
+      const flat = steps.filter((item) => Math.abs(item.delta) < options.insensitive).length;
+      if (
+        steps.length > 0 &&
+        flat / steps.length >= options.flatShare &&
+        expansions < options.maxExpansions &&
+        step * 2 <= options.maxStep + 1e-12
+      ) {
+        step *= 2;
+        expansions += 1;
+        emit({ type: 'expand', round, step, flat, scanned: steps.length });
+        continue;
       }
-    }
-
-    // 3. Pattern move.
-    if (current.key !== roundStart.key && !shouldStop() && budgetLeft() > 0) {
-      const genome = psPatternPoint(space, roundStart.genome, current.genome, repair);
-      if (genome) {
-        const [result] = await evaluateMany([genome]);
-        if (result && better(result, current)) {
-          current = result;
-          emit({ type: 'accept', how: 'pattern', round, moves: [], result });
-        }
-      }
-    }
-
-    const improved = current.key !== roundStart.key;
-    if (improved) {
-      for (const move of accepted) {
-        for (const dimId of move.dimIds) {
-          touchedDims.add(dimId);
-        }
-      }
-      path.push({ key: current.key, genome: current.genome, score: current.score, round, moves: accepted });
-    }
-    const scores = scan.filter((item) => item.result.valid).map((item) => item.result.score);
-    const info = {
-      round,
-      step,
-      improved,
-      best: current,
-      start: roundStart,
-      evaluated: requested.size - before,
-      scanned: scan.length,
-      medianScore: scores.length > 0 ? psMedian(scores) : current.score,
-      validCount: scores.length,
-      accepted,
-    };
-    rounds.push({
-      round,
-      step,
-      improved,
-      bestScore: current.score,
-      medianScore: info.medianScore,
-      evaluated: info.evaluated,
-      validCount: info.validCount,
-    });
-    context.onRound?.(info);
-    if (improved) {
-      stall = 0;
-    } else {
       stall += 1;
       step /= 2;
       if (stall >= options.stallRounds) {
         break;
       }
     }
+    return current;
+  };
+
+  await climb(base, budget, true);
+
+  // Exploration: the step-by-step climb only sees the neighbourhood of the bot. When it stops with
+  // budget left, the rest goes to points spread evenly over the whole allowed ranges (a Latin
+  // hypercube), then to climbs from the best of them — another, possibly better optimum.
+  const leftover = budgetLeft();
+  if (
+    options.explore &&
+    stoppedBy === 'converged' &&
+    !shouldStop() &&
+    leftover >= Math.max(options.exploreMin, Math.ceil(budget * options.exploreMinShare))
+  ) {
+    const count = Math.max(4, Math.floor(leftover * options.exploreShare));
+    const samples = psLatinSamples(space, base.genome, count, rng).map((genome) => repair(genome));
+    emit({ type: 'explore', count: samples.length, budgetLeft: leftover, best });
+    const explored = (await evaluateMany(samples)).filter(Boolean);
+    const ranked = [...new Map(explored.map((item) => [item.key, item])).values()]
+      .filter((item) => item.valid && item.key !== best.key)
+      .sort((a, b) => b.score - a.score || compareText(a.key, b.key));
+    for (const item of ranked.slice(0, 1)) {
+      if (better(item, best)) {
+        best = item;
+        path.push({ key: item.key, genome: item.genome, score: item.score, round, moves: [], explored: true });
+      }
+    }
+    emit({ type: 'explored', count: explored.length, valid: ranked.length, top: ranked.slice(0, 3), best });
+    const starts = ranked.slice(0, options.restarts);
+    for (let index = 0; index < starts.length; index++) {
+      if (shouldStop() || budgetLeft() <= 1) {
+        break;
+      }
+      restartNo = index + 1;
+      const share = Math.floor(budgetLeft() / (starts.length - index));
+      emit({ type: 'restart', restart: restartNo, of: starts.length, from: starts[index], budget: share });
+      const reached = await climb(starts[index], requested.size + share, false);
+      emit({ type: 'restarted', restart: restartNo, result: reached, best });
+    }
+    if (stoppedBy !== 'stop') {
+      stoppedBy = 'explored';
+    }
   }
   if (stoppedBy === 'converged' && budgetLeft() <= 0) {
     stoppedBy = 'budget';
   }
-  return { best: current, base, path, sensitivity, rounds, evaluations: requested.size, stoppedBy };
+  return { best, base, path, sensitivity, rounds, evaluations: requested.size, stoppedBy };
 };
 
 // ---------------------------------------------------------------------------------------------

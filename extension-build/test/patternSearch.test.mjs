@@ -20,6 +20,7 @@ import {
   psRescale,
   psRunGrid,
   psRunSearch,
+  psLatinSamples,
   psScaleEntries,
   psSliceEntries,
   psTimeFolds,
@@ -480,7 +481,88 @@ describe('psRunSearch', () => {
     });
     expect(outcome.best.key).toBe(outcome.base.key);
     expect(outcome.path).toHaveLength(1);
-    expect(outcome.stoppedBy).toBe('converged');
+    // the climb converged at once; the rest of the budget went to exploring the whole ranges
+    expect(outcome.stoppedBy).toBe('explored');
+    expect(outcome.evaluations).toBeGreaterThan(40);
+  });
+
+  it('gets off a flat neighbourhood: wider steps, then exploration of the whole ranges', async () => {
+    const { space, repair, baseGenome } = makeSpace();
+    const tp = space.dimensions.find((dim) => dim.id === 'tp');
+    // nothing changes near the bot; a clearly better region lies far from it (TP near its maximum)
+    const objective = (genome) => (genome.tp > tp.baseValue + 0.7 * (tp.max - tp.baseValue) ? 1.4 : 1);
+    const events = [];
+    const cache = new Map();
+    const run = (calls) =>
+      psRunSearch({
+        space,
+        repair,
+        keyOf,
+        baseGenome,
+        budget: 120,
+        rng: psCreateRng(5),
+        evaluate: async (genomes) =>
+          genomes.map((genome) => {
+            const key = keyOf(genome);
+            if (!cache.has(key)) {
+              calls.count += 1;
+              cache.set(key, { score: objective(genome), valid: true, violation: 0 });
+            }
+            return cache.get(key);
+          }),
+        onEvent: (event) => events.push(event),
+      });
+    const first = { count: 0 };
+    const outcome = await run(first);
+    expect(events.some((event) => event.type === 'expand')).toBe(true);
+    expect(outcome.best.score).toBeCloseTo(1.4, 6);
+    expect(outcome.evaluations).toBeLessThanOrEqual(120);
+    // deterministic: a rerun replays the same path from the cache without new evaluations
+    const second = { count: 0 };
+    const again = await run(second);
+    expect(second.count).toBe(0);
+    expect(again.best.key).toBe(outcome.best.key);
+  });
+
+  it('explores the whole ranges and restarts from the best point when the climb is stuck', async () => {
+    const { space, repair, baseGenome } = makeSpace();
+    const pull = space.dimensions.find((dim) => dim.id === 'pullUp');
+    // the bot sits on a local peak; a higher one lies at low pull-up values only
+    const tp = space.dimensions.find((dim) => dim.id === 'tp');
+    const objective = (genome) => {
+      const off = Math.abs(genome.tp - tp.baseValue) / (tp.max - tp.min);
+      return genome.pullUp < pull.min + 0.15 * (pull.max - pull.min) ? 1.3 - off : 1 - off;
+    };
+    const events = [];
+    const outcome = await psRunSearch({
+      space,
+      repair,
+      keyOf,
+      baseGenome,
+      budget: 150,
+      rng: psCreateRng(9),
+      evaluate: async (genomes) => genomes.map((genome) => ({ score: objective(genome), valid: true, violation: 0 })),
+      onEvent: (event) => events.push(event),
+    });
+    expect(events.some((event) => event.type === 'explore')).toBe(true);
+    expect(events.some((event) => event.type === 'restart')).toBe(true);
+    expect(outcome.best.score).toBeGreaterThan(1.1);
+    expect(outcome.best.genome.pullUp).toBeLessThan(pull.min + 0.15 * (pull.max - pull.min));
+  });
+});
+
+describe('psLatinSamples', () => {
+  it('takes every slice of every range once, on the step grid', () => {
+    const { space, baseGenome } = makeSpace();
+    const count = 10;
+    const samples = psLatinSamples(space, baseGenome, count, psCreateRng(3));
+    expect(samples).toHaveLength(count);
+    for (const dim of space.dimensions) {
+      const values = psGridValues(dim);
+      const distinct = new Set(samples.map((genome) => genome[dim.id]));
+      expect(samples.every((genome) => values.includes(genome[dim.id]))).toBe(true);
+      expect(distinct.size).toBe(Math.min(count, values.length));
+    }
   });
 });
 
