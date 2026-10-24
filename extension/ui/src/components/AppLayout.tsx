@@ -6,6 +6,7 @@ import {
   ControlOutlined,
   ExclamationCircleOutlined,
   ExperimentOutlined,
+  FundProjectionScreenOutlined,
   HeartFilled,
   HomeOutlined,
   MoonOutlined,
@@ -123,6 +124,11 @@ const AppLayout = ({ children, extensionReady, connectionStatus, onPing, onOpenV
       key: '/optimizer',
       label: 'AI Оптимизатор',
       icon: <AimOutlined />,
+    },
+    {
+      key: '/optimizer/portfolio',
+      label: 'Портфельный оптимизатор',
+      icon: <FundProjectionScreenOutlined />,
     },
     {
       key: '/settings',

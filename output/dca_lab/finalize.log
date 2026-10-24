@@ -1,0 +1,12 @@
+LONG_top1 {'IS': (np.float64(0.0919), np.float64(7.83), np.float64(85.21)), 'OOS': (np.float64(0.2075), np.float64(6.84), np.float64(32.95))}
+LONG_top2 {'IS': (np.float64(0.091), np.float64(7.77), np.float64(85.31)), 'OOS': (np.float64(0.2218), np.float64(6.98), np.float64(31.44))}
+LONG_top3 {'IS': (np.float64(0.0871), np.float64(5.94), np.float64(68.23)), 'OOS': (np.float64(0.2536), np.float64(5.5), np.float64(21.68))}
+LONG_top4 {'IS': (np.float64(0.0945), np.float64(7.69), np.float64(81.39)), 'OOS': (np.float64(0.2063), np.float64(6.82), np.float64(33.06))}
+LONG_top5 {'IS': (np.float64(0.0924), np.float64(7.88), np.float64(85.29)), 'OOS': (np.float64(0.2088), np.float64(6.85), np.float64(32.79))}
+CRASH_top1 {'IS': (np.float64(0.1333), np.float64(11.8), np.float64(88.53)), 'OOS': (np.float64(0.071), np.float64(6.33), np.float64(89.13))}
+CRASH_top2 {'IS': (np.float64(0.1333), np.float64(11.8), np.float64(88.53)), 'OOS': (np.float64(0.071), np.float64(6.33), np.float64(89.13))}
+CRASH_top3 {'IS': (np.float64(0.1334), np.float64(11.82), np.float64(88.6)), 'OOS': (np.float64(0.0708), np.float64(6.39), np.float64(90.25))}
+CRASH_top4 {'IS': (np.float64(0.1297), np.float64(11.39), np.float64(87.79)), 'OOS': (np.float64(0.0714), np.float64(5.92), np.float64(82.9))}
+CRASH_top5 {'IS': (np.float64(0.1297), np.float64(11.39), np.float64(87.79)), 'OOS': (np.float64(0.0714), np.float64(5.92), np.float64(82.9))}
+mix IS: [(0.25, np.float64(0.1005)), (0.5, np.float64(0.1061)), (0.75, np.float64(0.1101)), (1.0, np.float64(0.1131))]
+сохранено: output/dca_lab/finalize.json output/dca_lab/configs.json

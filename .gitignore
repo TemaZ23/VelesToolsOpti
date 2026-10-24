@@ -4,3 +4,12 @@ node_modules
 extension/ui/dist
 release-artifacts/
 **/coverage/**
+extension-build/dist/
+extension-build/app/.bundle.test.js
+
+# DCA Lab market data cache
+cache/dca_lab/
+cache/cycle_lab/
+cache/edge_lab/
+output/cycle_lab/grid.json
+__pycache__/

@@ -1,0 +1,896 @@
+{
+ "desc": "\nflow (a): \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430 \u0443\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u043e\u0441\u0442\u0438 IS-\u043b\u0443\u0447\u0448\u0435\u0439 \u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e\u0439 (\u043f\u043e \u043c\u043e\u043d\u0435\u0442\u0435) \u043a\u043e\u043d\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u00ab\u0448\u043e\u043a \u0447\u0438\u0441\u043b\u0430 \u0441\u0434\u0435\u043b\u043e\u043a\u00bb\n(1h-\u0441\u0438\u0433\u043d\u0430\u043b, \u0443\u0434\u0435\u0440\u0436\u0430\u043d\u0438\u0435 24 \u0447, \u043f\u043e\u0440\u043e\u0433 1.0, \u043b\u043e\u043d\u0433 \u043f\u0440\u0438 \u0432\u0441\u043f\u043b\u0435\u0441\u043a\u0435) \u043d\u0430 10 \u043a\u0440\u0443\u043f\u043d\u044b\u0445 \u043c\u043e\u043d\u0435\u0442\u0430\u0445.\n\n    PYTHONPATH=. python3 -m scripts.edge_lab.flow_ts_check     # -> output/edge_lab/flow/ts_check.json\n\n\u0421\u0438\u0433\u043d\u0430\u043b \u043d\u0430 \u0447\u0430\u0441\u043e\u0432\u043e\u043c \u0431\u0430\u0440\u0435 b: trd_shock = log(trades[b]) - mean(log trades \u0437\u0430 168 \u043f\u0440\u043e\u0448\u043b\u044b\u0445 \u0447\u0430\u0441\u043e\u0432).\n\u0420\u0435\u0431\u0430\u043b\u0430\u043d\u0441 \u0440\u0430\u0437 \u0432 24 \u0447 \u043d\u0430 \u0431\u0430\u0440\u0435 b \u2261 offset (mod 24): \u043f\u043e\u0437\u0438\u0446\u0438\u044f +1/10 \u043a\u0430\u043f\u0438\u0442\u0430\u043b\u0430 \u0432 \u043c\u043e\u043d\u0435\u0442\u0435, \u0435\u0441\u043b\u0438 trd_shock > thr,\n\u22121/10 \u0435\u0441\u043b\u0438 < \u2212thr (dir=+1), \u0438\u043d\u0430\u0447\u0435 0; \u0432\u0445\u043e\u0434 open[b+1], \u0432\u044b\u0445\u043e\u0434 close[b+24]; \u0438\u0437\u0434\u0435\u0440\u0436\u043a\u0438 |\u0394w|\u00b7cost_per_side(ADV),\n\u0444\u0430\u043d\u0434\u0438\u043d\u0433 \u043f\u043e \u0444\u0430\u043a\u0442\u0443. \u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c: \u0432\u0441\u0435 24 \u0447\u0430\u0441\u0430 \u0440\u0435\u0431\u0430\u043b\u0430\u043d\u0441\u0430 (offset), \u043f\u043e\u0440\u043e\u0433 \u00b125%, \u0442\u043e\u043b\u044c\u043a\u043e \u043b\u043e\u043d\u0433 / \u0442\u043e\u043b\u044c\u043a\u043e \u0448\u043e\u0440\u0442,\n\u0432\u043a\u043b\u0430\u0434 \u043c\u043e\u043d\u0435\u0442, \u043f\u043e \u0433\u043e\u0434\u0430\u043c, \u00ab\u0434\u0435\u0441\u0435\u0437\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439\u00bb \u0448\u043e\u043a (\u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0442\u043e\u0433\u043e \u0436\u0435 \u0447\u0430\u0441\u0430 \u0441\u0443\u0442\u043e\u043a \u0437\u0430 7 \u043f\u0440\u043e\u0448\u043b\u044b\u0445 \u0434\u043d\u0435\u0439).\n",
+ "base": {
+  "IS": {
+   "sharpe": 1.04,
+   "cagr_pct": 23.23,
+   "max_dd_pct": 32.03,
+   "avg_month_pct": 1.98,
+   "worst_month_pct": -8.71,
+   "pos_months_pct": 54.2
+  },
+  "OOS": {
+   "sharpe": 0.91,
+   "cagr_pct": 12.36,
+   "max_dd_pct": 15.82,
+   "avg_month_pct": 1.07,
+   "worst_month_pct": -5.11,
+   "pos_months_pct": 51.5
+  },
+  "per_year": {
+   "2020": 37.9,
+   "2021": 124.2,
+   "2022": -13.9,
+   "2023": -13.3,
+   "2024": 25.7,
+   "2025": -2.7,
+   "2026": 12.6
+  },
+  "half_years": {
+   "2020H1": 18.96,
+   "2020H2": 15.91,
+   "2021H1": 120.15,
+   "2021H2": 1.85,
+   "2022H1": -14.1,
+   "2022H2": 0.19,
+   "2023H1": -5.91,
+   "2023H2": -7.88,
+   "2024H1": 6.11,
+   "2024H2": 18.46,
+   "2025H1": 5.84,
+   "2025H2": -8.08,
+   "2026H1": 1.49,
+   "2026H2": 10.96
+  },
+  "avg_gross_exposure": 0.0633,
+  "active_days_share": 0.278,
+  "per_coin_net_sum": {
+   "BTCUSDT": 0.0812,
+   "ETHUSDT": 0.0847,
+   "BNBUSDT": 0.0983,
+   "XRPUSDT": 0.0998,
+   "ADAUSDT": 0.1635,
+   "DOGEUSDT": 0.3568,
+   "LINKUSDT": 0.0506,
+   "LTCUSDT": 0.0546,
+   "SOLUSDT": 0.0662,
+   "AVAXUSDT": 0.2234
+  },
+  "trades": 1313,
+  "trades_IS": 772,
+  "trades_OOS": 541,
+  "avg_hold_h": 28.5,
+  "turnover_per_year_x_equity": 39.28,
+  "gross_vs_net_sum": {
+   "gross": 1.4908,
+   "net": 1.2792
+  },
+  "funding_sum": -0.0251
+ },
+ "offsets": {
+  "0": {
+   "IS": {
+    "sharpe": 1.04,
+    "cagr_pct": 23.23,
+    "max_dd_pct": 32.03,
+    "avg_month_pct": 1.98,
+    "worst_month_pct": -8.71,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 0.91,
+    "cagr_pct": 12.36,
+    "max_dd_pct": 15.82,
+    "avg_month_pct": 1.07,
+    "worst_month_pct": -5.11,
+    "pos_months_pct": 51.5
+   }
+  },
+  "1": {
+   "IS": {
+    "sharpe": 0.78,
+    "cagr_pct": 15.16,
+    "max_dd_pct": 30.97,
+    "avg_month_pct": 1.35,
+    "worst_month_pct": -7.34,
+    "pos_months_pct": 37.5
+   },
+   "OOS": {
+    "sharpe": 1.65,
+    "cagr_pct": 35.77,
+    "max_dd_pct": 12.5,
+    "avg_month_pct": 2.77,
+    "worst_month_pct": -5.67,
+    "pos_months_pct": 60.6
+   }
+  },
+  "2": {
+   "IS": {
+    "sharpe": 0.91,
+    "cagr_pct": 16.69,
+    "max_dd_pct": 18.78,
+    "avg_month_pct": 1.44,
+    "worst_month_pct": -8.28,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 0.65,
+    "cagr_pct": 10.82,
+    "max_dd_pct": 22.87,
+    "avg_month_pct": 1.01,
+    "worst_month_pct": -8.3,
+    "pos_months_pct": 51.5
+   }
+  },
+  "3": {
+   "IS": {
+    "sharpe": 0.44,
+    "cagr_pct": 6.81,
+    "max_dd_pct": 22.77,
+    "avg_month_pct": 0.71,
+    "worst_month_pct": -9.04,
+    "pos_months_pct": 50.0
+   },
+   "OOS": {
+    "sharpe": 0.82,
+    "cagr_pct": 12.69,
+    "max_dd_pct": 13.2,
+    "avg_month_pct": 1.03,
+    "worst_month_pct": -4.09,
+    "pos_months_pct": 63.6
+   }
+  },
+  "4": {
+   "IS": {
+    "sharpe": 0.83,
+    "cagr_pct": 23.44,
+    "max_dd_pct": 18.92,
+    "avg_month_pct": 2.07,
+    "worst_month_pct": -5.24,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 0.49,
+    "cagr_pct": 6.57,
+    "max_dd_pct": 20.42,
+    "avg_month_pct": 0.61,
+    "worst_month_pct": -9.46,
+    "pos_months_pct": 54.5
+   }
+  },
+  "5": {
+   "IS": {
+    "sharpe": 0.8,
+    "cagr_pct": 22.75,
+    "max_dd_pct": 15.3,
+    "avg_month_pct": 2.0,
+    "worst_month_pct": -11.48,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 0.24,
+    "cagr_pct": 2.21,
+    "max_dd_pct": 17.09,
+    "avg_month_pct": 0.24,
+    "worst_month_pct": -6.58,
+    "pos_months_pct": 54.5
+   }
+  },
+  "6": {
+   "IS": {
+    "sharpe": 0.79,
+    "cagr_pct": 19.67,
+    "max_dd_pct": 13.28,
+    "avg_month_pct": 1.73,
+    "worst_month_pct": -6.11,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 0.68,
+    "cagr_pct": 9.57,
+    "max_dd_pct": 11.93,
+    "avg_month_pct": 0.87,
+    "worst_month_pct": -7.49,
+    "pos_months_pct": 51.5
+   }
+  },
+  "7": {
+   "IS": {
+    "sharpe": 0.78,
+    "cagr_pct": 19.17,
+    "max_dd_pct": 17.06,
+    "avg_month_pct": 1.71,
+    "worst_month_pct": -6.12,
+    "pos_months_pct": 41.7
+   },
+   "OOS": {
+    "sharpe": 1.09,
+    "cagr_pct": 16.4,
+    "max_dd_pct": 9.23,
+    "avg_month_pct": 1.33,
+    "worst_month_pct": -5.73,
+    "pos_months_pct": 66.7
+   }
+  },
+  "8": {
+   "IS": {
+    "sharpe": 0.92,
+    "cagr_pct": 21.04,
+    "max_dd_pct": 18.69,
+    "avg_month_pct": 1.9,
+    "worst_month_pct": -10.44,
+    "pos_months_pct": 41.7
+   },
+   "OOS": {
+    "sharpe": 1.06,
+    "cagr_pct": 15.33,
+    "max_dd_pct": 10.73,
+    "avg_month_pct": 1.29,
+    "worst_month_pct": -8.33,
+    "pos_months_pct": 60.6
+   }
+  },
+  "9": {
+   "IS": {
+    "sharpe": 1.48,
+    "cagr_pct": 32.58,
+    "max_dd_pct": 12.13,
+    "avg_month_pct": 2.7,
+    "worst_month_pct": -5.36,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 0.92,
+    "cagr_pct": 10.6,
+    "max_dd_pct": 9.55,
+    "avg_month_pct": 0.91,
+    "worst_month_pct": -7.1,
+    "pos_months_pct": 57.6
+   }
+  },
+  "10": {
+   "IS": {
+    "sharpe": 1.55,
+    "cagr_pct": 37.43,
+    "max_dd_pct": 12.66,
+    "avg_month_pct": 3.05,
+    "worst_month_pct": -4.49,
+    "pos_months_pct": 62.5
+   },
+   "OOS": {
+    "sharpe": 0.83,
+    "cagr_pct": 9.8,
+    "max_dd_pct": 9.32,
+    "avg_month_pct": 0.84,
+    "worst_month_pct": -4.18,
+    "pos_months_pct": 51.5
+   }
+  },
+  "11": {
+   "IS": {
+    "sharpe": 1.17,
+    "cagr_pct": 27.5,
+    "max_dd_pct": 15.67,
+    "avg_month_pct": 2.4,
+    "worst_month_pct": -11.45,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 0.79,
+    "cagr_pct": 11.09,
+    "max_dd_pct": 12.22,
+    "avg_month_pct": 0.97,
+    "worst_month_pct": -4.86,
+    "pos_months_pct": 36.4
+   }
+  },
+  "12": {
+   "IS": {
+    "sharpe": 1.04,
+    "cagr_pct": 34.91,
+    "max_dd_pct": 23.18,
+    "avg_month_pct": 3.04,
+    "worst_month_pct": -8.99,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 1.17,
+    "cagr_pct": 18.49,
+    "max_dd_pct": 11.87,
+    "avg_month_pct": 1.52,
+    "worst_month_pct": -7.19,
+    "pos_months_pct": 60.6
+   }
+  },
+  "13": {
+   "IS": {
+    "sharpe": 1.23,
+    "cagr_pct": 34.56,
+    "max_dd_pct": 31.8,
+    "avg_month_pct": 2.87,
+    "worst_month_pct": -23.04,
+    "pos_months_pct": 68.8
+   },
+   "OOS": {
+    "sharpe": 0.83,
+    "cagr_pct": 13.8,
+    "max_dd_pct": 31.94,
+    "avg_month_pct": 1.27,
+    "worst_month_pct": -8.33,
+    "pos_months_pct": 51.5
+   }
+  },
+  "14": {
+   "IS": {
+    "sharpe": 0.86,
+    "cagr_pct": 20.83,
+    "max_dd_pct": 44.54,
+    "avg_month_pct": 2.08,
+    "worst_month_pct": -22.42,
+    "pos_months_pct": 58.3
+   },
+   "OOS": {
+    "sharpe": 0.77,
+    "cagr_pct": 15.22,
+    "max_dd_pct": 27.75,
+    "avg_month_pct": 1.38,
+    "worst_month_pct": -10.49,
+    "pos_months_pct": 54.5
+   }
+  },
+  "15": {
+   "IS": {
+    "sharpe": 1.07,
+    "cagr_pct": 25.66,
+    "max_dd_pct": 25.52,
+    "avg_month_pct": 2.17,
+    "worst_month_pct": -12.29,
+    "pos_months_pct": 60.4
+   },
+   "OOS": {
+    "sharpe": -0.24,
+    "cagr_pct": -7.37,
+    "max_dd_pct": 35.8,
+    "avg_month_pct": -0.43,
+    "worst_month_pct": -16.18,
+    "pos_months_pct": 45.5
+   }
+  },
+  "16": {
+   "IS": {
+    "sharpe": 1.26,
+    "cagr_pct": 37.21,
+    "max_dd_pct": 35.37,
+    "avg_month_pct": 3.03,
+    "worst_month_pct": -13.8,
+    "pos_months_pct": 66.7
+   },
+   "OOS": {
+    "sharpe": -0.2,
+    "cagr_pct": -5.46,
+    "max_dd_pct": 34.79,
+    "avg_month_pct": -0.31,
+    "worst_month_pct": -10.28,
+    "pos_months_pct": 45.5
+   }
+  },
+  "17": {
+   "IS": {
+    "sharpe": 1.33,
+    "cagr_pct": 30.57,
+    "max_dd_pct": 23.35,
+    "avg_month_pct": 2.52,
+    "worst_month_pct": -16.27,
+    "pos_months_pct": 58.3
+   },
+   "OOS": {
+    "sharpe": -0.03,
+    "cagr_pct": -1.86,
+    "max_dd_pct": 22.47,
+    "avg_month_pct": -0.06,
+    "worst_month_pct": -12.37,
+    "pos_months_pct": 45.5
+   }
+  },
+  "18": {
+   "IS": {
+    "sharpe": 1.2,
+    "cagr_pct": 27.42,
+    "max_dd_pct": 17.43,
+    "avg_month_pct": 2.18,
+    "worst_month_pct": -4.34,
+    "pos_months_pct": 58.3
+   },
+   "OOS": {
+    "sharpe": 0.2,
+    "cagr_pct": 2.0,
+    "max_dd_pct": 23.72,
+    "avg_month_pct": 0.29,
+    "worst_month_pct": -10.1,
+    "pos_months_pct": 60.6
+   }
+  },
+  "19": {
+   "IS": {
+    "sharpe": 0.98,
+    "cagr_pct": 20.23,
+    "max_dd_pct": 27.78,
+    "avg_month_pct": 1.7,
+    "worst_month_pct": -7.56,
+    "pos_months_pct": 60.4
+   },
+   "OOS": {
+    "sharpe": -0.19,
+    "cagr_pct": -5.08,
+    "max_dd_pct": 36.98,
+    "avg_month_pct": -0.25,
+    "worst_month_pct": -19.03,
+    "pos_months_pct": 51.5
+   }
+  },
+  "20": {
+   "IS": {
+    "sharpe": 1.23,
+    "cagr_pct": 25.43,
+    "max_dd_pct": 18.53,
+    "avg_month_pct": 2.09,
+    "worst_month_pct": -9.83,
+    "pos_months_pct": 64.6
+   },
+   "OOS": {
+    "sharpe": 0.55,
+    "cagr_pct": 9.61,
+    "max_dd_pct": 15.13,
+    "avg_month_pct": 0.85,
+    "worst_month_pct": -8.22,
+    "pos_months_pct": 54.5
+   }
+  },
+  "21": {
+   "IS": {
+    "sharpe": 0.64,
+    "cagr_pct": 13.82,
+    "max_dd_pct": 29.57,
+    "avg_month_pct": 1.23,
+    "worst_month_pct": -18.76,
+    "pos_months_pct": 62.5
+   },
+   "OOS": {
+    "sharpe": 1.41,
+    "cagr_pct": 22.85,
+    "max_dd_pct": 9.53,
+    "avg_month_pct": 1.79,
+    "worst_month_pct": -4.17,
+    "pos_months_pct": 63.6
+   }
+  },
+  "22": {
+   "IS": {
+    "sharpe": 0.18,
+    "cagr_pct": 1.62,
+    "max_dd_pct": 42.47,
+    "avg_month_pct": 0.28,
+    "worst_month_pct": -19.87,
+    "pos_months_pct": 47.9
+   },
+   "OOS": {
+    "sharpe": 1.83,
+    "cagr_pct": 21.11,
+    "max_dd_pct": 11.14,
+    "avg_month_pct": 1.67,
+    "worst_month_pct": -7.62,
+    "pos_months_pct": 63.6
+   }
+  },
+  "23": {
+   "IS": {
+    "sharpe": 0.8,
+    "cagr_pct": 13.92,
+    "max_dd_pct": 14.29,
+    "avg_month_pct": 1.17,
+    "worst_month_pct": -13.81,
+    "pos_months_pct": 66.7
+   },
+   "OOS": {
+    "sharpe": 0.54,
+    "cagr_pct": 4.5,
+    "max_dd_pct": 18.13,
+    "avg_month_pct": 0.42,
+    "worst_month_pct": -8.66,
+    "pos_months_pct": 60.6
+   }
+  }
+ },
+ "thr": {
+  "0.75": {
+   "IS": {
+    "sharpe": 1.12,
+    "cagr_pct": 32.42,
+    "max_dd_pct": 42.36,
+    "avg_month_pct": 2.74,
+    "worst_month_pct": -14.43,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 1.36,
+    "cagr_pct": 26.55,
+    "max_dd_pct": 16.78,
+    "avg_month_pct": 2.16,
+    "worst_month_pct": -7.83,
+    "pos_months_pct": 63.6
+   }
+  },
+  "1.25": {
+   "IS": {
+    "sharpe": 1.19,
+    "cagr_pct": 18.82,
+    "max_dd_pct": 16.07,
+    "avg_month_pct": 1.54,
+    "worst_month_pct": -5.0,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 0.89,
+    "cagr_pct": 9.71,
+    "max_dd_pct": 10.58,
+    "avg_month_pct": 0.82,
+    "worst_month_pct": -4.71,
+    "pos_months_pct": 63.6
+   }
+  },
+  "1.5": {
+   "IS": {
+    "sharpe": 1.33,
+    "cagr_pct": 15.88,
+    "max_dd_pct": 10.38,
+    "avg_month_pct": 1.29,
+    "worst_month_pct": -3.44,
+    "pos_months_pct": 50.0
+   },
+   "OOS": {
+    "sharpe": 0.86,
+    "cagr_pct": 7.54,
+    "max_dd_pct": 7.35,
+    "avg_month_pct": 0.64,
+    "worst_month_pct": -4.18,
+    "pos_months_pct": 63.6
+   }
+  }
+ },
+ "side": {
+  "long": {
+   "IS": {
+    "sharpe": 1.06,
+    "cagr_pct": 23.93,
+    "max_dd_pct": 31.91,
+    "avg_month_pct": 2.03,
+    "worst_month_pct": -8.71,
+    "pos_months_pct": 52.1
+   },
+   "OOS": {
+    "sharpe": 0.87,
+    "cagr_pct": 11.71,
+    "max_dd_pct": 15.63,
+    "avg_month_pct": 1.01,
+    "worst_month_pct": -4.92,
+    "pos_months_pct": 51.5
+   }
+  },
+  "short": {
+   "IS": {
+    "sharpe": -0.38,
+    "cagr_pct": -0.56,
+    "max_dd_pct": 2.47,
+    "avg_month_pct": -0.05,
+    "worst_month_pct": -1.79,
+    "pos_months_pct": 16.7
+   },
+   "OOS": {
+    "sharpe": 0.45,
+    "cagr_pct": 0.59,
+    "max_dd_pct": 1.79,
+    "avg_month_pct": 0.05,
+    "worst_month_pct": -1.05,
+    "pos_months_pct": 36.4
+   }
+  }
+ },
+ "hold": {
+  "12": {
+   "IS": {
+    "sharpe": 1.36,
+    "cagr_pct": 39.93,
+    "max_dd_pct": 27.58,
+    "avg_month_pct": 3.36,
+    "worst_month_pct": -14.62,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 1.17,
+    "cagr_pct": 16.94,
+    "max_dd_pct": 19.68,
+    "avg_month_pct": 1.42,
+    "worst_month_pct": -7.21,
+    "pos_months_pct": 57.6
+   }
+  },
+  "18": {
+   "IS": {
+    "sharpe": 1.29,
+    "cagr_pct": 33.15,
+    "max_dd_pct": 23.14,
+    "avg_month_pct": 2.72,
+    "worst_month_pct": -8.23,
+    "pos_months_pct": 56.2
+   },
+   "OOS": {
+    "sharpe": 1.01,
+    "cagr_pct": 16.1,
+    "max_dd_pct": 13.71,
+    "avg_month_pct": 1.31,
+    "worst_month_pct": -5.31,
+    "pos_months_pct": 51.5
+   }
+  },
+  "30": {
+   "IS": {
+    "sharpe": 1.93,
+    "cagr_pct": 37.89,
+    "max_dd_pct": 9.05,
+    "avg_month_pct": 2.92,
+    "worst_month_pct": -7.12,
+    "pos_months_pct": 66.7
+   },
+   "OOS": {
+    "sharpe": 1.09,
+    "cagr_pct": 13.59,
+    "max_dd_pct": 12.86,
+    "avg_month_pct": 1.16,
+    "worst_month_pct": -5.42,
+    "pos_months_pct": 54.5
+   }
+  },
+  "48": {
+   "IS": {
+    "sharpe": 1.36,
+    "cagr_pct": 17.44,
+    "max_dd_pct": 29.39,
+    "avg_month_pct": 1.53,
+    "worst_month_pct": -13.08,
+    "pos_months_pct": 54.2
+   },
+   "OOS": {
+    "sharpe": 1.39,
+    "cagr_pct": 14.63,
+    "max_dd_pct": 11.19,
+    "avg_month_pct": 1.24,
+    "worst_month_pct": -8.73,
+    "pos_months_pct": 48.5
+   }
+  }
+ },
+ "deseason": {
+  "0.75": [
+   {
+    "IS": {
+     "sharpe": 0.8,
+     "cagr_pct": 19.97,
+     "max_dd_pct": 45.63,
+     "avg_month_pct": 1.9,
+     "worst_month_pct": -14.85,
+     "pos_months_pct": 43.8
+    },
+    "OOS": {
+     "sharpe": 1.17,
+     "cagr_pct": 22.49,
+     "max_dd_pct": 20.6,
+     "avg_month_pct": 1.89,
+     "worst_month_pct": -8.72,
+     "pos_months_pct": 57.6
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 0.58,
+     "cagr_pct": 15.61,
+     "max_dd_pct": 27.3,
+     "avg_month_pct": 1.56,
+     "worst_month_pct": -12.24,
+     "pos_months_pct": 54.2
+    },
+    "OOS": {
+     "sharpe": 0.74,
+     "cagr_pct": 15.67,
+     "max_dd_pct": 28.76,
+     "avg_month_pct": 1.44,
+     "worst_month_pct": -12.99,
+     "pos_months_pct": 72.7
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 1.07,
+     "cagr_pct": 40.95,
+     "max_dd_pct": 27.65,
+     "avg_month_pct": 3.48,
+     "worst_month_pct": -12.18,
+     "pos_months_pct": 62.5
+    },
+    "OOS": {
+     "sharpe": 0.53,
+     "cagr_pct": 9.24,
+     "max_dd_pct": 28.9,
+     "avg_month_pct": 0.94,
+     "worst_month_pct": -16.03,
+     "pos_months_pct": 48.5
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 1.26,
+     "cagr_pct": 38.1,
+     "max_dd_pct": 30.23,
+     "avg_month_pct": 3.06,
+     "worst_month_pct": -21.64,
+     "pos_months_pct": 64.6
+    },
+    "OOS": {
+     "sharpe": 0.29,
+     "cagr_pct": 4.19,
+     "max_dd_pct": 26.93,
+     "avg_month_pct": 0.62,
+     "worst_month_pct": -12.29,
+     "pos_months_pct": 51.5
+    }
+   }
+  ],
+  "1.0": [
+   {
+    "IS": {
+     "sharpe": 1.01,
+     "cagr_pct": 19.0,
+     "max_dd_pct": 28.83,
+     "avg_month_pct": 1.62,
+     "worst_month_pct": -8.3,
+     "pos_months_pct": 58.3
+    },
+    "OOS": {
+     "sharpe": 0.93,
+     "cagr_pct": 12.81,
+     "max_dd_pct": 16.74,
+     "avg_month_pct": 1.1,
+     "worst_month_pct": -5.87,
+     "pos_months_pct": 54.5
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 0.67,
+     "cagr_pct": 17.3,
+     "max_dd_pct": 23.57,
+     "avg_month_pct": 1.62,
+     "worst_month_pct": -9.37,
+     "pos_months_pct": 43.8
+    },
+    "OOS": {
+     "sharpe": 0.95,
+     "cagr_pct": 16.31,
+     "max_dd_pct": 13.82,
+     "avg_month_pct": 1.38,
+     "worst_month_pct": -8.52,
+     "pos_months_pct": 60.6
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 0.95,
+     "cagr_pct": 29.78,
+     "max_dd_pct": 18.7,
+     "avg_month_pct": 2.65,
+     "worst_month_pct": -9.16,
+     "pos_months_pct": 56.2
+    },
+    "OOS": {
+     "sharpe": 0.46,
+     "cagr_pct": 5.65,
+     "max_dd_pct": 23.66,
+     "avg_month_pct": 0.54,
+     "worst_month_pct": -11.0,
+     "pos_months_pct": 54.5
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 1.22,
+     "cagr_pct": 28.37,
+     "max_dd_pct": 17.43,
+     "avg_month_pct": 2.27,
+     "worst_month_pct": -6.25,
+     "pos_months_pct": 64.6
+    },
+    "OOS": {
+     "sharpe": 0.52,
+     "cagr_pct": 7.14,
+     "max_dd_pct": 15.0,
+     "avg_month_pct": 0.7,
+     "worst_month_pct": -10.05,
+     "pos_months_pct": 57.6
+    }
+   }
+  ],
+  "1.25": [
+   {
+    "IS": {
+     "sharpe": 1.14,
+     "cagr_pct": 16.88,
+     "max_dd_pct": 14.09,
+     "avg_month_pct": 1.39,
+     "worst_month_pct": -5.22,
+     "pos_months_pct": 54.2
+    },
+    "OOS": {
+     "sharpe": 0.79,
+     "cagr_pct": 8.62,
+     "max_dd_pct": 10.71,
+     "avg_month_pct": 0.73,
+     "worst_month_pct": -5.83,
+     "pos_months_pct": 57.6
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 0.8,
+     "cagr_pct": 19.61,
+     "max_dd_pct": 12.43,
+     "avg_month_pct": 1.72,
+     "worst_month_pct": -5.19,
+     "pos_months_pct": 52.1
+    },
+    "OOS": {
+     "sharpe": 1.04,
+     "cagr_pct": 14.88,
+     "max_dd_pct": 6.29,
+     "avg_month_pct": 1.23,
+     "worst_month_pct": -5.02,
+     "pos_months_pct": 57.6
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 0.8,
+     "cagr_pct": 21.67,
+     "max_dd_pct": 18.48,
+     "avg_month_pct": 2.05,
+     "worst_month_pct": -6.96,
+     "pos_months_pct": 45.8
+    },
+    "OOS": {
+     "sharpe": 0.63,
+     "cagr_pct": 6.37,
+     "max_dd_pct": 10.81,
+     "avg_month_pct": 0.56,
+     "worst_month_pct": -4.39,
+     "pos_months_pct": 63.6
+    }
+   },
+   {
+    "IS": {
+     "sharpe": 1.09,
+     "cagr_pct": 20.49,
+     "max_dd_pct": 17.43,
+     "avg_month_pct": 1.69,
+     "worst_month_pct": -7.93,
+     "pos_months_pct": 54.2
+    },
+    "OOS": {
+     "sharpe": 0.8,
+     "cagr_pct": 8.52,
+     "max_dd_pct": 8.17,
+     "avg_month_pct": 0.74,
+     "worst_month_pct": -8.16,
+     "pos_months_pct": 57.6
+    }
+   }
+  ]
+ }
+}

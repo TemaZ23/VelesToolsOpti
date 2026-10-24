@@ -21,6 +21,7 @@ import DynamicBlocksPage from './pages/DynamicBlocksPage';
 import HomePage from './pages/HomePage';
 import ImportBotsPage from './pages/ImportBotsPage';
 import OptimizerPage from './pages/OptimizerPage';
+import PortfolioOptimizerPage from './pages/PortfolioOptimizerPage';
 import SettingsPage from './pages/SettingsPage';
 import {
   DEFAULT_REQUEST_DELAY_MS,
@@ -238,6 +239,10 @@ const App = () => {
                           />
                           <Route path="/import" element={<ImportBotsPage extensionReady={extensionReady} />} />
                           <Route path="/optimizer" element={<OptimizerPage extensionReady={extensionReady} />} />
+                          <Route
+                            path="/optimizer/portfolio"
+                            element={<PortfolioOptimizerPage extensionReady={extensionReady} />}
+                          />
                           <Route path="/settings" element={<SettingsPage />} />
                           <Route
                             path="/dynamic-blocks"

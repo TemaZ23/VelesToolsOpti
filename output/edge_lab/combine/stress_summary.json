@@ -1,0 +1,194 @@
+{
+ "xsec_base_check": {
+  "IS": {
+   "final_x": 5.3093,
+   "cagr_pct": 51.8,
+   "avg_month_pct": 4.03,
+   "median_month_pct": 0.82,
+   "sharpe": 1.78,
+   "max_dd_pct": 28.34,
+   "worst_month_pct": -19.67,
+   "pos_months_pct": 56.2,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.843,
+   "cagr_pct": 24.91,
+   "avg_month_pct": 2.16,
+   "median_month_pct": -0.78,
+   "sharpe": 1.07,
+   "max_dd_pct": 27.09,
+   "worst_month_pct": -8.99,
+   "pos_months_pct": 48.5,
+   "months": 33
+  }
+ },
+ "xsec_cost2": {
+  "IS": {
+   "final_x": 4.6162,
+   "cagr_pct": 46.58,
+   "avg_month_pct": 3.72,
+   "median_month_pct": 0.5,
+   "sharpe": 1.64,
+   "max_dd_pct": 29.04,
+   "worst_month_pct": -20.02,
+   "pos_months_pct": 54.2,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.5675,
+   "cagr_pct": 17.76,
+   "avg_month_pct": 1.65,
+   "median_month_pct": -1.22,
+   "sharpe": 0.82,
+   "max_dd_pct": 30.83,
+   "worst_month_pct": -9.53,
+   "pos_months_pct": 48.5,
+   "months": 33
+  }
+ },
+ "xsec_cost2_pess50": {
+  "IS": {
+   "final_x": 4.302,
+   "cagr_pct": 44.02,
+   "avg_month_pct": 3.57,
+   "median_month_pct": 0.5,
+   "sharpe": 1.57,
+   "max_dd_pct": 29.04,
+   "worst_month_pct": -20.02,
+   "pos_months_pct": 54.2,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.1123,
+   "cagr_pct": 3.95,
+   "avg_month_pct": 0.61,
+   "median_month_pct": -1.82,
+   "sharpe": 0.28,
+   "max_dd_pct": 40.77,
+   "worst_month_pct": -11.45,
+   "pos_months_pct": 45.5,
+   "months": 33
+  }
+ },
+ "lst_base_check": {
+  "IS": {
+   "final_x": 1.7442,
+   "cagr_pct": 14.92,
+   "avg_month_pct": 1.2,
+   "median_month_pct": 0.72,
+   "sharpe": 1.59,
+   "max_dd_pct": 7.1,
+   "worst_month_pct": -2.84,
+   "pos_months_pct": 64.6,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.711,
+   "cagr_pct": 21.58,
+   "avg_month_pct": 1.79,
+   "median_month_pct": 1.8,
+   "sharpe": 1.25,
+   "max_dd_pct": 25.32,
+   "worst_month_pct": -11.61,
+   "pos_months_pct": 63.6,
+   "months": 33
+  }
+ },
+ "lst_cost2": {
+  "IS": {
+   "final_x": 1.6419,
+   "cagr_pct": 13.2,
+   "avg_month_pct": 1.07,
+   "median_month_pct": 0.57,
+   "sharpe": 1.42,
+   "max_dd_pct": 7.36,
+   "worst_month_pct": -2.97,
+   "pos_months_pct": 62.5,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.5592,
+   "cagr_pct": 17.54,
+   "avg_month_pct": 1.5,
+   "median_month_pct": 1.61,
+   "sharpe": 1.05,
+   "max_dd_pct": 26.14,
+   "worst_month_pct": -12.22,
+   "pos_months_pct": 63.6,
+   "months": 33
+  }
+ },
+ "lst_pess_combo": {
+  "IS": {
+   "final_x": 1.5593,
+   "cagr_pct": 11.75,
+   "avg_month_pct": 0.96,
+   "median_month_pct": 0.53,
+   "sharpe": 1.26,
+   "max_dd_pct": 7.63,
+   "worst_month_pct": -3.19,
+   "pos_months_pct": 62.5,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.2817,
+   "cagr_pct": 9.45,
+   "avg_month_pct": 0.91,
+   "median_month_pct": 1.37,
+   "sharpe": 0.6,
+   "max_dd_pct": 28.8,
+   "worst_month_pct": -13.94,
+   "pos_months_pct": 63.6,
+   "months": 33
+  }
+ },
+ "lst_nohedge": {
+  "IS": {
+   "final_x": 1.6609,
+   "cagr_pct": 13.52,
+   "avg_month_pct": 1.1,
+   "median_month_pct": 0.91,
+   "sharpe": 1.28,
+   "max_dd_pct": 6.8,
+   "worst_month_pct": -2.73,
+   "pos_months_pct": 60.4,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.5997,
+   "cagr_pct": 18.64,
+   "avg_month_pct": 1.58,
+   "median_month_pct": 1.0,
+   "sharpe": 1.06,
+   "max_dd_pct": 25.27,
+   "worst_month_pct": -12.1,
+   "pos_months_pct": 63.6,
+   "months": 33
+  }
+ },
+ "lst_nohedge_pess": {
+  "IS": {
+   "final_x": 1.5113,
+   "cagr_pct": 10.88,
+   "avg_month_pct": 0.9,
+   "median_month_pct": 0.8,
+   "sharpe": 1.03,
+   "max_dd_pct": 7.41,
+   "worst_month_pct": -3.03,
+   "pos_months_pct": 58.3,
+   "months": 48
+  },
+  "OOS": {
+   "final_x": 1.234,
+   "cagr_pct": 7.95,
+   "avg_month_pct": 0.8,
+   "median_month_pct": 0.4,
+   "sharpe": 0.51,
+   "max_dd_pct": 28.14,
+   "worst_month_pct": -14.25,
+   "pos_months_pct": 54.5,
+   "months": 33
+  }
+ }
+}

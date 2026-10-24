@@ -1,0 +1,1255 @@
+{
+ "best_name": "ETH:tom_tom_m2_p2_long:maker",
+ "variants": {
+  "window_last1_first1": {
+   "is_sharpe": 1.36,
+   "is_cagr": 30.21,
+   "oos_sharpe": -1.18,
+   "oos_cagr": -16.91,
+   "oos_dd": 47.51,
+   "oos_pos_halfyears": "0/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 23.9,
+    "2021": 86.0,
+    "2022": 13.3,
+    "2023": 10.1,
+    "2024": -19.1,
+    "2025": -14.9,
+    "2026": -12.7
+   }
+  },
+  "window_last1_first2": {
+   "is_sharpe": 1.37,
+   "is_cagr": 35.21,
+   "oos_sharpe": -0.59,
+   "oos_cagr": -13.98,
+   "oos_dd": 46.23,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 15.5,
+    "2021": 150.3,
+    "2022": 5.9,
+    "2023": 9.2,
+    "2024": -31.5,
+    "2025": 2.4,
+    "2026": -5.8
+   }
+  },
+  "window_last2_first1": {
+   "is_sharpe": 1.75,
+   "is_cagr": 49.57,
+   "oos_sharpe": -1.17,
+   "oos_cagr": -18.47,
+   "oos_dd": 53.42,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 100.2,
+    "2021": 124.2,
+    "2022": 6.6,
+    "2023": 4.6,
+    "2024": -17.4,
+    "2025": -14.8,
+    "2026": -18.9
+   }
+  },
+  "window_last2_first2": {
+   "is_sharpe": 1.74,
+   "is_cagr": 55.31,
+   "oos_sharpe": -0.63,
+   "oos_cagr": -15.6,
+   "oos_dd": 48.76,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 86.5,
+    "2021": 201.7,
+    "2022": -0.4,
+    "2023": 3.8,
+    "2024": -30.0,
+    "2025": 2.5,
+    "2026": -12.5
+   }
+  },
+  "window_last2_first3": {
+   "is_sharpe": 1.69,
+   "is_cagr": 67.75,
+   "oos_sharpe": -0.82,
+   "oos_cagr": -22.55,
+   "oos_dd": 58.54,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 69.9,
+    "2021": 390.5,
+    "2022": -9.8,
+    "2023": 5.3,
+    "2024": -39.9,
+    "2025": -2.7,
+    "2026": -15.3
+   }
+  },
+  "window_last3_first2": {
+   "is_sharpe": 1.97,
+   "is_cagr": 71.46,
+   "oos_sharpe": -0.93,
+   "oos_cagr": -22.28,
+   "oos_dd": 60.34,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 89.6,
+    "2021": 240.8,
+    "2022": 15.0,
+    "2023": 16.4,
+    "2024": -30.7,
+    "2025": -9.5,
+    "2026": -20.2
+   }
+  },
+  "window_last3_first3": {
+   "is_sharpe": 1.91,
+   "is_cagr": 85.2,
+   "oos_sharpe": -1.08,
+   "oos_cagr": -28.68,
+   "oos_dd": 67.7,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 72.7,
+    "2021": 454.2,
+    "2022": 4.1,
+    "2023": 18.1,
+    "2024": -40.5,
+    "2025": -14.1,
+    "2026": -22.7
+   }
+  },
+  "exec_taker": {
+   "is_sharpe": 1.69,
+   "is_cagr": 53.26,
+   "oos_sharpe": -0.68,
+   "oos_cagr": -16.57,
+   "oos_dd": 49.81,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 84.3,
+    "2021": 197.3,
+    "2022": -1.7,
+    "2023": 2.4,
+    "2024": -31.0,
+    "2025": 1.6,
+    "2026": -13.3
+   }
+  },
+  "exec_maker_cost_x1.25": {
+   "is_sharpe": 1.73,
+   "is_cagr": 55.11,
+   "oos_sharpe": -0.64,
+   "oos_cagr": -15.71,
+   "oos_dd": 48.88,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 86.2,
+    "2021": 201.3,
+    "2022": -0.5,
+    "2023": 3.7,
+    "2024": -30.1,
+    "2025": 2.4,
+    "2026": -12.6
+   }
+  },
+  "exec_taker_cost_x1.25": {
+   "is_sharpe": 1.67,
+   "is_cagr": 52.62,
+   "oos_sharpe": -0.7,
+   "oos_cagr": -16.92,
+   "oos_dd": 50.21,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 83.5,
+    "2021": 196.0,
+    "2022": -2.1,
+    "2023": 2.0,
+    "2024": -31.3,
+    "2025": 1.2,
+    "2026": -13.6
+   }
+  },
+  "maker_thr_5bp": {
+   "is_sharpe": 1.7,
+   "is_cagr": 53.88,
+   "oos_sharpe": -0.65,
+   "oos_cagr": -16.02,
+   "oos_dd": 49.03,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 83.2,
+    "2021": 201.7,
+    "2022": -1.0,
+    "2023": 2.5,
+    "2024": -30.3,
+    "2025": 2.3,
+    "2026": -13.2
+   }
+  },
+  "shift_-6h": {
+   "is_sharpe": 1.59,
+   "is_cagr": 50.03,
+   "oos_sharpe": -0.57,
+   "oos_cagr": -13.63,
+   "oos_dd": 46.16,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 67.8,
+    "2021": 191.0,
+    "2022": 2.3,
+    "2023": 1.4,
+    "2024": -31.0,
+    "2025": 8.6,
+    "2026": -10.8
+   }
+  },
+  "shift_+6h": {
+   "is_sharpe": 1.55,
+   "is_cagr": 46.03,
+   "oos_sharpe": -0.96,
+   "oos_cagr": -23.16,
+   "oos_dd": 59.58,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 63.9,
+    "2021": 203.7,
+    "2022": -6.0,
+    "2023": -2.8,
+    "2024": -30.4,
+    "2025": -15.4,
+    "2026": -17.7
+   }
+  },
+  "asset_BTC": {
+   "is_sharpe": 0.87,
+   "is_cagr": 18.15,
+   "oos_sharpe": -0.12,
+   "oos_cagr": -3.36,
+   "oos_dd": 35.96,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 45.0,
+    "2021": 48.3,
+    "2022": -4.5,
+    "2023": -5.1,
+    "2024": -18.3,
+    "2025": 19.4,
+    "2026": -6.7
+   }
+  },
+  "asset_ETH": {
+   "is_sharpe": 1.74,
+   "is_cagr": 55.31,
+   "oos_sharpe": -0.63,
+   "oos_cagr": -15.6,
+   "oos_dd": 48.76,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 86.5,
+    "2021": 201.7,
+    "2022": -0.4,
+    "2023": 3.8,
+    "2024": -30.0,
+    "2025": 2.5,
+    "2026": -12.5
+   }
+  },
+  "asset_ALT": {
+   "is_sharpe": 1.31,
+   "is_cagr": 33.66,
+   "oos_sharpe": -0.73,
+   "oos_cagr": -20.59,
+   "oos_dd": 60.32,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 46,
+   "per_year": {
+    "2020": 19.6,
+    "2021": 174.4,
+    "2022": -4.1,
+    "2023": 1.4,
+    "2024": -29.6,
+    "2025": -27.9,
+    "2026": 4.6
+   }
+  },
+  "asset_ALT30": {
+   "is_sharpe": 0.91,
+   "is_cagr": 20.16,
+   "oos_sharpe": -0.71,
+   "oos_cagr": -22.16,
+   "oos_dd": 58.69,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 41,
+   "per_year": {
+    "2020": -0.8,
+    "2021": 126.4,
+    "2022": -12.1,
+    "2023": 5.6,
+    "2024": -26.4,
+    "2025": -20.0,
+    "2026": -14.7
+   }
+  },
+  "asset_BNB": {
+   "is_sharpe": 1.52,
+   "is_cagr": 44.56,
+   "oos_sharpe": -1.06,
+   "oos_cagr": -18.47,
+   "oos_dd": 48.89,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 47,
+   "per_year": {
+    "2020": 35.4,
+    "2021": 227.1,
+    "2022": -0.0,
+    "2023": -1.4,
+    "2024": -31.1,
+    "2025": -10.2,
+    "2026": -7.8
+   }
+  },
+  "asset_SOL": {
+   "is_sharpe": 1.39,
+   "is_cagr": 56.49,
+   "oos_sharpe": -0.16,
+   "oos_cagr": -8.75,
+   "oos_dd": 45.59,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 40,
+   "per_year": {
+    "2020": -5.8,
+    "2021": 429.8,
+    "2022": -15.9,
+    "2023": 43.0,
+    "2024": -23.2,
+    "2025": 13.6,
+    "2026": -11.0
+   }
+  },
+  "asset_XRP": {
+   "is_sharpe": 0.82,
+   "is_cagr": 29.63,
+   "oos_sharpe": 0.46,
+   "oos_cagr": 11.07,
+   "oos_dd": 29.05,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 28.3,
+    "2021": 163.2,
+    "2022": -16.4,
+    "2023": -0.1,
+    "2024": 37.4,
+    "2025": 8.8,
+    "2026": -10.8
+   }
+  },
+  "asset_DOGE": {
+   "is_sharpe": 0.64,
+   "is_cagr": 26.37,
+   "oos_sharpe": -0.37,
+   "oos_cagr": -16.31,
+   "oos_dd": 63.27,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 42,
+   "per_year": {
+    "2020": -2.4,
+    "2021": 174.9,
+    "2022": -5.1,
+    "2023": 0.1,
+    "2024": -28.8,
+    "2025": -19.4,
+    "2026": 6.8
+   }
+  },
+  "asset_ADA": {
+   "is_sharpe": 0.85,
+   "is_cagr": 24.88,
+   "oos_sharpe": 0.48,
+   "oos_cagr": 15.63,
+   "oos_dd": 38.89,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 30.2,
+    "2021": 74.7,
+    "2022": 1.5,
+    "2023": 5.4,
+    "2024": -14.2,
+    "2025": 41.6,
+    "2026": 22.7
+   }
+  },
+  "asset_LINK": {
+   "is_sharpe": 1.17,
+   "is_cagr": 37.11,
+   "oos_sharpe": -0.0,
+   "oos_cagr": -5.75,
+   "oos_dd": 39.23,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 31.6,
+    "2021": 214.8,
+    "2022": -6.1,
+    "2023": -9.1,
+    "2024": 14.7,
+    "2025": -13.5,
+    "2026": -14.3
+   }
+  },
+  "asset_AVAX": {
+   "is_sharpe": 0.36,
+   "is_cagr": 6.64,
+   "oos_sharpe": -0.4,
+   "oos_cagr": -15.67,
+   "oos_dd": 54.24,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 40,
+   "per_year": {
+    "2020": -0.8,
+    "2021": 94.3,
+    "2022": -27.4,
+    "2023": -7.6,
+    "2024": -18.7,
+    "2025": -25.9,
+    "2026": 3.9
+   }
+  },
+  "asset_LTC": {
+   "is_sharpe": 1.36,
+   "is_cagr": 42.7,
+   "oos_sharpe": 0.26,
+   "oos_cagr": 3.51,
+   "oos_dd": 31.46,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 38.0,
+    "2021": 98.8,
+    "2022": 5.5,
+    "2023": 43.3,
+    "2024": 35.2,
+    "2025": -1.0,
+    "2026": -17.8
+   }
+  },
+  "asset_DOT": {
+   "is_sharpe": 1.26,
+   "is_cagr": 43.76,
+   "oos_sharpe": -0.11,
+   "oos_cagr": -6.69,
+   "oos_dd": 37.15,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 41,
+   "per_year": {
+    "2020": 22.0,
+    "2021": 271.9,
+    "2022": -7.8,
+    "2023": 2.1,
+    "2024": -11.2,
+    "2025": -8.8,
+    "2026": 2.0
+   }
+  },
+  "asset_BCH": {
+   "is_sharpe": 0.63,
+   "is_cagr": 14.87,
+   "oos_sharpe": 0.28,
+   "oos_cagr": 4.55,
+   "oos_dd": 48.42,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 14.9,
+    "2021": 66.5,
+    "2022": -19.7,
+    "2023": 13.4,
+    "2024": 11.5,
+    "2025": 13.4,
+    "2026": -10.6
+   }
+  },
+  "asset_TRX": {
+   "is_sharpe": 1.5,
+   "is_cagr": 53.36,
+   "oos_sharpe": -0.23,
+   "oos_cagr": -3.45,
+   "oos_dd": 18.5,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 48,
+   "per_year": {
+    "2020": 63.2,
+    "2021": 150.4,
+    "2022": 16.2,
+    "2023": 16.5,
+    "2024": -2.3,
+    "2025": 3.2,
+    "2026": -9.9
+   }
+  },
+  "asset_ALT_pess": {
+   "is_sharpe": 1.31,
+   "is_cagr": 33.66,
+   "oos_sharpe": -0.74,
+   "oos_cagr": -20.67,
+   "oos_dd": 60.43,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 46,
+   "per_year": {
+    "2020": 19.6,
+    "2021": 174.4,
+    "2022": -4.1,
+    "2023": 1.4,
+    "2024": -29.8,
+    "2025": -27.9,
+    "2026": 4.6
+   }
+  },
+  "asset_ALT30_pess": {
+   "is_sharpe": 0.91,
+   "is_cagr": 20.16,
+   "oos_sharpe": -0.71,
+   "oos_cagr": -22.16,
+   "oos_dd": 58.69,
+   "oos_pos_halfyears": "1/6",
+   "is_trades": 41,
+   "per_year": {
+    "2020": -0.8,
+    "2021": 126.4,
+    "2022": -12.1,
+    "2023": 5.6,
+    "2024": -26.4,
+    "2025": -20.0,
+    "2026": -14.7
+   }
+  }
+ },
+ "random_dow_subsets_maker": {
+  "BTC_dow_k2": {
+   "n": 21,
+   "is_median": 0.17,
+   "oos_median": 0.12,
+   "oos_max": 1.44,
+   "corr_is_oos": 0.653343204439546
+  },
+  "BTC_dow_k3": {
+   "n": 35,
+   "is_median": 0.33,
+   "oos_median": 0.21,
+   "oos_max": 1.44,
+   "corr_is_oos": 0.6824257217161389
+  },
+  "ETH_dow_k2": {
+   "n": 21,
+   "is_median": 0.43,
+   "oos_median": 0.1,
+   "oos_max": 1.37,
+   "corr_is_oos": 0.8784122980251342
+  },
+  "ETH_dow_k3": {
+   "n": 35,
+   "is_median": 0.5,
+   "oos_median": 0.08,
+   "oos_max": 1.41,
+   "corr_is_oos": 0.8863312134791844
+  }
+ },
+ "tom_placebo_windows": {
+  "windows": [
+   {
+    "first_day": 3,
+    "is_sharpe": 1.13,
+    "oos_sharpe": -0.61
+   },
+   {
+    "first_day": 4,
+    "is_sharpe": 0.78,
+    "oos_sharpe": -0.44
+   },
+   {
+    "first_day": 5,
+    "is_sharpe": 0.41,
+    "oos_sharpe": 0.38
+   },
+   {
+    "first_day": 6,
+    "is_sharpe": 0.16,
+    "oos_sharpe": 1.2
+   },
+   {
+    "first_day": 7,
+    "is_sharpe": -0.64,
+    "oos_sharpe": 1.0
+   },
+   {
+    "first_day": 8,
+    "is_sharpe": -0.78,
+    "oos_sharpe": 1.17
+   },
+   {
+    "first_day": 9,
+    "is_sharpe": -0.9,
+    "oos_sharpe": 0.84
+   },
+   {
+    "first_day": 10,
+    "is_sharpe": -0.39,
+    "oos_sharpe": 0.56
+   },
+   {
+    "first_day": 11,
+    "is_sharpe": 0.27,
+    "oos_sharpe": 0.64
+   },
+   {
+    "first_day": 12,
+    "is_sharpe": 0.32,
+    "oos_sharpe": 0.53
+   },
+   {
+    "first_day": 13,
+    "is_sharpe": 0.49,
+    "oos_sharpe": 0.11
+   },
+   {
+    "first_day": 14,
+    "is_sharpe": -0.05,
+    "oos_sharpe": -0.04
+   },
+   {
+    "first_day": 15,
+    "is_sharpe": -0.59,
+    "oos_sharpe": -0.24
+   },
+   {
+    "first_day": 16,
+    "is_sharpe": -0.45,
+    "oos_sharpe": -0.22
+   },
+   {
+    "first_day": 17,
+    "is_sharpe": -0.21,
+    "oos_sharpe": 0.52
+   },
+   {
+    "first_day": 18,
+    "is_sharpe": -0.67,
+    "oos_sharpe": 0.6
+   },
+   {
+    "first_day": 19,
+    "is_sharpe": -0.4,
+    "oos_sharpe": 0.55
+   },
+   {
+    "first_day": 20,
+    "is_sharpe": 0.11,
+    "oos_sharpe": 0.64
+   },
+   {
+    "first_day": 21,
+    "is_sharpe": 0.22,
+    "oos_sharpe": -0.03
+   },
+   {
+    "first_day": 22,
+    "is_sharpe": 0.89,
+    "oos_sharpe": -0.33
+   },
+   {
+    "first_day": 23,
+    "is_sharpe": 0.47,
+    "oos_sharpe": -0.0
+   },
+   {
+    "first_day": 24,
+    "is_sharpe": 0.11,
+    "oos_sharpe": -0.16
+   },
+   {
+    "first_day": 25,
+    "is_sharpe": 0.35,
+    "oos_sharpe": -0.15
+   }
+  ],
+  "is_median": 0.11,
+  "is_max": 1.13,
+  "oos_median": 0.38,
+  "share_is_above_best": 0.0,
+  "best_oos_rank_pct": 0.0
+ },
+ "posthoc_dow_long_short": {
+  "BTC": {
+   "long_days": [
+    "wed",
+    "mon"
+   ],
+   "short_days": [
+    "sun",
+    "thu"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.6,
+   "is_cagr": 21.29,
+   "oos_sharpe": 1.15,
+   "oos_cagr": 44.06,
+   "oos_dd": 32.91,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 817,
+   "per_year": {
+    "2020": 155.5,
+    "2021": -15.0,
+    "2022": -9.9,
+    "2023": 10.7,
+    "2024": 50.7,
+    "2025": 25.8,
+    "2026": 43.9
+   },
+   "oos_halfyears": {
+    "2024H1": 38.67,
+    "2024H2": 8.66,
+    "2025H1": 37.19,
+    "2025H2": -8.29,
+    "2026H1": 55.27,
+    "2026H2": -7.32
+   },
+   "oos_cost_pct": 24.71,
+   "oos_gross_pct": 143.71
+  },
+  "ETH": {
+   "long_days": [
+    "wed",
+    "mon"
+   ],
+   "short_days": [
+    "tue",
+    "thu"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.38,
+   "is_cagr": 2.04,
+   "oos_sharpe": 1.91,
+   "oos_cagr": 147.84,
+   "oos_dd": 45.11,
+   "oos_pos_halfyears": "6/6",
+   "is_trades": 816,
+   "per_year": {
+    "2020": 87.7,
+    "2021": 14.5,
+    "2022": -24.3,
+    "2023": -33.4,
+    "2024": 234.1,
+    "2025": 32.9,
+    "2026": 172.9
+   },
+   "oos_halfyears": {
+    "2024H1": 127.59,
+    "2024H2": 46.8,
+    "2025H1": 1.04,
+    "2025H2": 31.57,
+    "2026H1": 143.96,
+    "2026H2": 11.85
+   },
+   "oos_cost_pct": 24.13,
+   "oos_gross_pct": 313.16
+  },
+  "ALT": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "taker",
+   "is_sharpe": 0.38,
+   "is_cagr": 2.39,
+   "oos_sharpe": 0.04,
+   "oos_cagr": -15.5,
+   "oos_dd": 63.9,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 586,
+   "per_year": {
+    "2020": 45.1,
+    "2021": -37.7,
+    "2022": -40.2,
+    "2023": 103.4,
+    "2024": -36.0,
+    "2025": 25.4,
+    "2026": -21.5
+   },
+   "oos_halfyears": {
+    "2024H1": -61.65,
+    "2024H2": 66.8,
+    "2025H1": -18.44,
+    "2025H2": 53.74,
+    "2026H1": -30.16,
+    "2026H2": 12.36
+   },
+   "oos_cost_pct": 109.77,
+   "oos_gross_pct": 121.87
+  },
+  "BNB": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.28,
+   "is_cagr": -6.33,
+   "oos_sharpe": 0.4,
+   "oos_cagr": 8.52,
+   "oos_dd": 39.32,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 609,
+   "per_year": {
+    "2020": 18.4,
+    "2021": -48.3,
+    "2022": -5.7,
+    "2023": 33.3,
+    "2024": -20.8,
+    "2025": 45.3,
+    "2026": 8.8
+   },
+   "oos_halfyears": {
+    "2024H1": -28.61,
+    "2024H2": 10.91,
+    "2025H1": -2.24,
+    "2025H2": 48.63,
+    "2026H1": 9.73,
+    "2026H2": -0.82
+   },
+   "oos_cost_pct": 18.78,
+   "oos_gross_pct": 64.61
+  },
+  "SOL": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.39,
+   "is_cagr": -8.8,
+   "oos_sharpe": 0.06,
+   "oos_cagr": -13.51,
+   "oos_dd": 70.25,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 515,
+   "per_year": {
+    "2020": 12.8,
+    "2021": -54.8,
+    "2022": -58.3,
+    "2023": 224.9,
+    "2024": -62.8,
+    "2025": 111.6,
+    "2026": -14.7
+   },
+   "oos_halfyears": {
+    "2024H1": -67.79,
+    "2024H2": 15.35,
+    "2025H1": 77.58,
+    "2025H2": 19.18,
+    "2026H1": -6.45,
+    "2026H2": -8.78
+   },
+   "oos_cost_pct": 18.2,
+   "oos_gross_pct": 30.87
+  },
+  "XRP": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": -0.2,
+   "is_cagr": -44.82,
+   "oos_sharpe": 0.18,
+   "oos_cagr": -7.3,
+   "oos_dd": 66.96,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 612,
+   "per_year": {
+    "2020": -49.0,
+    "2021": -62.8,
+    "2022": -14.7,
+    "2023": -42.7,
+    "2024": -22.5,
+    "2025": 8.5,
+    "2026": -3.4
+   },
+   "oos_halfyears": {
+    "2024H1": -65.42,
+    "2024H2": 124.17,
+    "2025H1": 5.29,
+    "2025H2": 3.01,
+    "2026H1": 0.39,
+    "2026H2": -3.79
+   },
+   "oos_cost_pct": 18.1,
+   "oos_gross_pct": 50.39
+  },
+  "DOGE": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.61,
+   "is_cagr": -13.21,
+   "oos_sharpe": 1.06,
+   "oos_cagr": 64.16,
+   "oos_dd": 59.08,
+   "oos_pos_halfyears": "5/6",
+   "is_trades": 544,
+   "per_year": {
+    "2020": 55.0,
+    "2021": -87.5,
+    "2022": 107.7,
+    "2023": 41.4,
+    "2024": 9.2,
+    "2025": 194.9,
+    "2026": 21.3
+   },
+   "oos_halfyears": {
+    "2024H1": -49.3,
+    "2024H2": 115.37,
+    "2025H1": 57.37,
+    "2025H2": 87.38,
+    "2026H1": 9.36,
+    "2026H2": 10.94
+   },
+   "oos_cost_pct": 17.75,
+   "oos_gross_pct": 222.23
+  },
+  "ADA": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.67,
+   "is_cagr": 25.99,
+   "oos_sharpe": 0.19,
+   "oos_cagr": -8.25,
+   "oos_dd": 67.14,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 613,
+   "per_year": {
+    "2020": 1.7,
+    "2021": 33.7,
+    "2022": 13.1,
+    "2023": 63.8,
+    "2024": -8.1,
+    "2025": -1.9,
+    "2026": -12.4
+   },
+   "oos_halfyears": {
+    "2024H1": -65.65,
+    "2024H2": 167.44,
+    "2025H1": -9.37,
+    "2025H2": 8.26,
+    "2026H1": -17.82,
+    "2026H2": 6.54
+   },
+   "oos_cost_pct": 18.71,
+   "oos_gross_pct": 60.41
+  },
+  "LINK": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.66,
+   "is_cagr": 23.47,
+   "oos_sharpe": -0.32,
+   "oos_cagr": -34.91,
+   "oos_dd": 72.46,
+   "oos_pos_halfyears": "2/6",
+   "is_trades": 613,
+   "per_year": {
+    "2020": 51.7,
+    "2021": 24.0,
+    "2022": -42.1,
+    "2023": 113.2,
+    "2024": -46.1,
+    "2025": -15.2,
+    "2026": -32.8
+   },
+   "oos_halfyears": {
+    "2024H1": -58.06,
+    "2024H2": 28.53,
+    "2025H1": -28.07,
+    "2025H2": 17.95,
+    "2026H1": -25.42,
+    "2026H2": -9.94
+   },
+   "oos_cost_pct": 18.58,
+   "oos_gross_pct": -37.27
+  },
+  "AVAX": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.68,
+   "is_cagr": 25.22,
+   "oos_sharpe": 0.33,
+   "oos_cagr": -0.91,
+   "oos_dd": 62.13,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 512,
+   "per_year": {
+    "2020": -21.4,
+    "2021": 42.0,
+    "2022": -41.2,
+    "2023": 275.0,
+    "2024": -29.7,
+    "2025": 35.6,
+    "2026": 2.2
+   },
+   "oos_halfyears": {
+    "2024H1": -60.86,
+    "2024H2": 79.72,
+    "2025H1": 3.42,
+    "2025H2": 31.16,
+    "2026H1": -20.85,
+    "2026H2": 29.13
+   },
+   "oos_cost_pct": 19.29,
+   "oos_gross_pct": 81.48
+  },
+  "LTC": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.67,
+   "is_cagr": 26.61,
+   "oos_sharpe": 0.8,
+   "oos_cagr": 33.93,
+   "oos_dd": 45.61,
+   "oos_pos_halfyears": "4/6",
+   "is_trades": 612,
+   "per_year": {
+    "2020": 38.8,
+    "2021": -21.0,
+    "2022": 8.0,
+    "2023": 116.9,
+    "2024": -1.5,
+    "2025": 77.0,
+    "2026": 28.0
+   },
+   "oos_halfyears": {
+    "2024H1": -37.5,
+    "2024H2": 57.64,
+    "2025H1": -8.89,
+    "2025H2": 94.23,
+    "2026H1": 23.4,
+    "2026H2": 3.77
+   },
+   "oos_cost_pct": 18.79,
+   "oos_gross_pct": 149.69
+  },
+  "DOT": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.47,
+   "is_cagr": 6.84,
+   "oos_sharpe": 0.63,
+   "oos_cagr": 22.29,
+   "oos_dd": 67.18,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 526,
+   "per_year": {
+    "2020": -45.9,
+    "2021": -31.5,
+    "2022": 53.8,
+    "2023": 128.4,
+    "2024": 26.3,
+    "2025": 104.8,
+    "2026": -32.8
+   },
+   "oos_halfyears": {
+    "2024H1": -65.59,
+    "2024H2": 267.14,
+    "2025H1": 8.59,
+    "2025H2": 88.62,
+    "2026H1": -24.86,
+    "2026H2": -10.57
+   },
+   "oos_cost_pct": 19.13,
+   "oos_gross_pct": 137.14
+  },
+  "BCH": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.31,
+   "is_cagr": -5.35,
+   "oos_sharpe": 0.76,
+   "oos_cagr": 35.47,
+   "oos_dd": 62.29,
+   "oos_pos_halfyears": "5/6",
+   "is_trades": 613,
+   "per_year": {
+    "2020": -22.5,
+    "2021": -9.3,
+    "2022": -19.0,
+    "2023": 41.0,
+    "2024": -22.7,
+    "2025": 70.7,
+    "2026": 74.4
+   },
+   "oos_halfyears": {
+    "2024H1": -23.24,
+    "2024H2": 0.77,
+    "2025H1": 5.56,
+    "2025H2": 61.76,
+    "2026H1": 46.44,
+    "2026H2": 19.1
+   },
+   "oos_cost_pct": 19.14,
+   "oos_gross_pct": 157.54
+  },
+  "TRX": {
+   "long_days": [
+    "fri",
+    "sat"
+   ],
+   "short_days": [
+    "thu",
+    "mon"
+   ],
+   "exec": "maker",
+   "is_sharpe": 0.36,
+   "is_cagr": 1.8,
+   "oos_sharpe": -0.37,
+   "oos_cagr": -13.45,
+   "oos_dd": 54.85,
+   "oos_pos_halfyears": "3/6",
+   "is_trades": 612,
+   "per_year": {
+    "2020": -52.5,
+    "2021": -16.0,
+    "2022": 44.7,
+    "2023": 86.1,
+    "2024": -2.6,
+    "2025": -40.2,
+    "2026": 15.4
+   },
+   "oos_halfyears": {
+    "2024H1": -10.02,
+    "2024H2": 8.29,
+    "2025H1": -32.71,
+    "2025H2": -11.12,
+    "2026H1": 13.91,
+    "2026H2": 1.29
+   },
+   "oos_cost_pct": 22.84,
+   "oos_gross_pct": -6.11
+  }
+ },
+ "presample_spot_rule": {
+  "BTC": {
+   "final_x": 1.5095,
+   "cagr_pct": 18.97,
+   "avg_month_pct": 1.62,
+   "median_month_pct": 2.03,
+   "sharpe": 0.78,
+   "max_dd_pct": 21.34,
+   "worst_month_pct": -13.83,
+   "pos_months_pct": 65.5,
+   "months": 29,
+   "trades": 29,
+   "per_year": {
+    "2017": 21.4,
+    "2018": -6.2,
+    "2019": 32.6
+   }
+  },
+  "ETH": {
+   "final_x": 1.0011,
+   "cagr_pct": 0.04,
+   "avg_month_pct": 0.36,
+   "median_month_pct": 0.69,
+   "sharpe": 0.14,
+   "max_dd_pct": 30.78,
+   "worst_month_pct": -19.48,
+   "pos_months_pct": 51.7,
+   "months": 29,
+   "trades": 29,
+   "per_year": {
+    "2017": -18.7,
+    "2018": -6.5,
+    "2019": 31.7
+   }
+  }
+ }
+}
