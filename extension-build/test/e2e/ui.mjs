@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // UI walk-through of the optimizer page against the simulated veles.finance (fake-chrome.js):
-// opens the page, runs "Найти устойчивые настройки" through the real UI and saves screenshots.
+// opens the page, runs "Найти лучшие настройки" through the real UI and saves screenshots.
 //
 //   node extension-build/build.mjs --test
 //   node extension-build/test/e2e/ui.mjs --shots=/tmp/shots [--theme=dark]
@@ -77,18 +77,15 @@ const shot = async (name, options = {}) => {
 };
 
 await page.goto(`${base}/ui.html#/optimizer`);
-const findButton = page.getByRole('button', { name: /Найти устойчивые настройки/ });
+const findButton = page.getByRole('button', { name: /Найти лучшие настройки/ });
 await findButton.waitFor({ timeout: 30000 });
-await page.waitForFunction(() => document.body.innerText.includes('Монеты стратегии:'), null, { timeout: 30000 });
+await page.waitForFunction(() => /\d+ монет[аы]?: /.test(document.body.innerText), null, { timeout: 30000 });
 await page.waitForTimeout(1500);
 await shot('01-simple');
 
 await findButton.click();
 await page.getByRole('dialog').waitFor({ timeout: 10000 });
 await shot('02-start-modal');
-if (args.months) {
-  await page.getByRole('dialog').getByText(args.months === '0' ? 'весь период' : `${Number(args.months) / 12} год`).click();
-}
 await page.getByRole('dialog').getByRole('button', { name: /Запустить/ }).click();
 
 const started = Date.now();
@@ -120,10 +117,6 @@ await page.waitForTimeout(300);
 await page.keyboard.press('Escape');
 await page.waitForTimeout(500);
 
-await page.getByText('Ручная настройка').first().click();
-await page.waitForTimeout(800);
-await page.setViewportSize({ width: 1440, height: 3000 });
-await shot('08-manual');
 
 const logText = await page.evaluate(() => {
   const nodes = [...document.querySelectorAll('div')].filter((node) => node.innerText?.startsWith('Лог'));

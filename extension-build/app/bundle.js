@@ -133832,6 +133832,22 @@ const Zi = (e, t) => {
         M && a.push(M);
       }
     }
+    // the held-out tail of the period (after the search period): never seen by the search
+    const vtTo = e.searchTo ? Date.parse(e.searchTo) + 1 : Number.NaN,
+      vtEnd = Date.parse(e.period.to);
+    if (Number.isFinite(vtTo) && Number.isFinite(vtEnd) && (vtEnd - vtTo) / phe >= ghe) {
+      const $ = Iv(
+        {
+          key: "holdout",
+          kind: "time",
+          label: `Отложенный период ${new Date(vtTo).toISOString().slice(0, 7)} — ${e.period.to.slice(0, 7)} (поиск его не видел)`,
+        },
+        $v(t, vtTo, vtEnd + 1),
+        $v(r, vtTo, vtEnd + 1),
+        n,
+      );
+      $ && a.push($);
+    }
     const o = e.searchFrom ? Date.parse(e.searchFrom) : Number.NaN,
       s = Date.parse(e.period.from);
     if (Number.isFinite(o) && Number.isFinite(s) && (o - s) / phe >= ghe) {
@@ -136716,6 +136732,16 @@ const { Text: ru } = cr,
   XX = (e) => {
     if (e.mode === "portfolio") {
       const t = { from: e.periodFrom, to: e.periodTo };
+      // 2.19: the last part of the period is held out — the search never sees it, the finalists
+      // and the robustness check do (an honest out-of-sample check, also for a single coin).
+      const vtHold = e.portfolio.vtHoldoutPercent;
+      if (vtHold > 0) {
+        const n = Date.parse(t.from),
+          a = Date.parse(t.to),
+          i = Math.round((a - (a - n) * Math.min(50, vtHold) / 100) / op) * op;
+        if (Number.isFinite(n) && Number.isFinite(a) && i - n >= UX * op && a - i >= UX * op)
+          return { search: { from: t.from, to: new Date(i - 1).toISOString() }, holdout: null, final: t };
+      }
       return { search: Rhe(t, e.portfolio.screeningMonths), holdout: null, final: t };
     }
     return Dft(e.periodFrom, e.periodTo, e.validation);
@@ -137444,8 +137470,20 @@ class Nf {
       i = this.config.constraints.minDealsSharePercent;
     this.log(
       "info",
-      `📐 Сравнение с исходной: «лучше и по прибыли, и по просадке»${t > 0 ? ` при депозите бота, подобранном в пределах ±${Math.round(t * 100)}% (прибыль и просадка пропорциональны депозиту)` : " при том же депозите"}${this.foldConsistency && r.length >= 2 ? `; улучшение должно держаться в большинстве из ${r.length} срезов поиска (${n} периодов, ${a} группы монет)` : ""}${i > 0 ? `; сделок не меньше ${i}% от исходной` : ""}`,
+      t >= 1 - Er
+        ? `📐 Цель — прибыль / МПУ лучше, чем у исходной: вариант сравнивается с ней при депозите, где у них одинаковая просадка (×${_t(1 / (1 + t), 2)}…×${_t(1 + t, 2)}; прибыль и МПУ пропорциональны депозиту), и должен быть лучше и по прибыли, и по МПУ${this.foldConsistency && r.length >= 2 ? `; улучшение — в большинстве из ${r.length} срезов поиска (${n} периодов, ${a} группы монет)` : ""}${i > 0 ? `; сделок не меньше ${i}% от исходной` : ""}`
+        : `📐 Сравнение с исходной: «лучше и по прибыли, и по просадке»${t > 0 ? ` при депозите бота, подобранном в пределах ±${Math.round(t * 100)}% (прибыль и просадка пропорциональны депозиту)` : " при том же депозите"}${this.foldConsistency && r.length >= 2 ? `; улучшение должно держаться в большинстве из ${r.length} срезов поиска (${n} периодов, ${a} группы монет)` : ""}${i > 0 ? `; сделок не меньше ${i}% от исходной` : ""}`,
     );
+    const vtS = this.periods.search,
+      vtF = this.periods.final;
+    vtS &&
+      vtF &&
+      Date.parse(vtS.to) < Date.parse(vtF.to) - op &&
+      Date.parse(vtS.from) <= Date.parse(vtF.from) + op &&
+      this.log(
+        "info",
+        `🔒 Отложенный период ${vtS.to.slice(0, 10)} — ${vtF.to.slice(0, 10)}: поиск его не видит; на нём проверяются финалисты (вердикт «устойчиво» требует, чтобы улучшение держалось и там)`,
+      );
   }
   enterPostSearchPhase() {
     const t = this.config.mode === "portfolio" || !!this.periods.holdout;
@@ -138456,6 +138494,7 @@ class Nf {
         period: i.period,
         screeningSymbols: s,
         searchFrom: this.periods.search.from,
+        searchTo: this.periods.search.to,
         finalBetter: r,
         plateau: n,
         stress: a,
@@ -139253,52 +139292,57 @@ const U1 =
       simpleSearchMonths: typeof t.simpleSearchMonths == "number" ? t.simpleSearchMonths : 0,
       goal: VTMODES.VM_GOAL_IDS.includes(t.goal) ? t.goal : "improve",
       template: t.template ?? null,
-      vtCoinSource: ["bot", "wide", "custom"].includes(t.vtCoinSource)
+      vtCoinSource: ["bot", "plus", "wide", "custom"].includes(t.vtCoinSource)
         ? t.vtCoinSource
         : t.goal === "coins"
           ? "wide"
           : "bot",
+      vtCustomCoins: typeof t.vtCustomCoins == "string" ? t.vtCustomCoins : "",
+      vtDepth: ["fast", "standard", "max", "grid"].includes(t.vtDepth) ? t.vtDepth : "standard",
       vtMinCoins: typeof t.vtMinCoins == "number" && t.vtMinCoins > 0 ? Math.round(t.vtMinCoins) : null,
     };
   },
+  // 2.19 — the only flow: the bot's settings are searched for the best stable profit / МПУ
+  // (portfolio drawdown) on the chosen coins. Everything not chosen in the form is fixed to the
+  // best defaults: step-by-step search, improvement in most half-years and coin groups, finalists
+  // on all coins, held-out tail of the period, robustness check.
+  vtDepths = {
+    fast: { searchMethod: "pattern", searchBudget: 60, vtCertify: !1, earlyStopGenerations: 2 },
+    standard: { searchMethod: "pattern", searchBudget: 150, vtCertify: !1, earlyStopGenerations: 3 },
+    max: { searchMethod: "pattern", searchBudget: 400, vtCertify: !0, earlyStopGenerations: 4 },
+    grid: { searchMethod: "grid", vtCertify: !1 },
+  },
   Fft = (e, t) => {
-    const r = a2("since2020");
+    const n = ["since2020", "3y", "1y"].includes(e.periodPreset) ? e.periodPreset : "since2020",
+      r = a2(n),
+      vtHold = [0, 20, 25, 33].includes(e.portfolio.vtHoldoutPercent) ? e.portfolio.vtHoldoutPercent : 25;
     return {
       ...e,
+      goal: "improve",
       mode: "portfolio",
-      symbolsText: t.length > 0 ? t.join(", ") : e.symbolsText,
-      periodPreset: "since2020",
+      symbolsText: t.join(", "),
+      periodPreset: n,
       periodFrom: r.from,
       periodTo: r.to,
+      // «лучше по прибыли и по МПУ при депозите ×0.5…×2» = максимум прибыль / МПУ при реальном депозите
       portfolioTarget: "improveBoth",
-      genetic: { ...e.genetic, ...z$.portfolio.balanced, searchMethod: "pattern", vtCertify: !1 },
-      scope: {
-        ...e.scope,
-        dcaIndents: !0,
-        dcaVolumes: !0,
-        pullUp: !0,
-        takeProfit: !0,
-        leverage: !1,
-        entryThresholds: !0,
-        orderThresholds: !0,
-        exitThresholds: !0,
-        linkOrderConditions: !0,
-        rangeWidthPercent: 50,
-        structureSwap: !0,
-        structureRemove: !0,
-        structureSimilarOnly: !0,
-      },
-      constraints: { ...e.constraints, minDealsSharePercent: e.constraints.minDealsSharePercent ?? 60 },
+      genetic: { ...e.genetic, ...z$.portfolio.balanced, ...(vtDepths[e.vtDepth] ?? vtDepths.standard) },
+      scope: { ...e.scope, leverage: !1, timeframes: !1, linkOrderConditions: !0, structureSimilarOnly: !0, structureAdd: 0 },
+      constraints: { ...e.constraints, minDealsSharePercent: 60, maxPortfolioDrawdownPercent: null },
       portfolio: {
         ...e.portfolio,
         screeningAuto: !0,
+        screeningText: "",
         screeningCount: 12,
-        screeningMonths: e.simpleSearchMonths ?? 0,
+        screeningMonths: 0,
         finalists: 3,
-        maxDepositChangePercent: e.portfolio.maxDepositChangePercent ?? 30,
+        maxDepositChangePercent: 100,
         foldConsistency: !0,
+        vtHoldoutPercent: vtHold,
       },
-      robustness: { enabled: !0, neighbors: Math.max(4, e.robustness.neighbors) },
+      robustness: { enabled: !0, neighbors: 6 },
+      stressEnabled: !1,
+      stressText: "",
     };
   },
   Hft = (e) => ({ from: `${e.periodFrom}T00:00:00.000Z`, to: `${e.periodTo}T23:59:59.999Z` }),
@@ -139323,6 +139367,7 @@ const U1 =
         dynamicBlockOrder: e.portfolio.dynamicBlockOrder > 0 ? Math.round(e.portfolio.dynamicBlockOrder) : null,
         maxDepositChangePercent: e.portfolio.maxDepositChangePercent ?? 0,
         foldConsistency: e.portfolio.foldConsistency !== !1,
+        vtHoldoutPercent: e.portfolio.vtHoldoutPercent ?? 0,
       },
       botId: t.botId,
       botName: t.botName,
@@ -139665,7 +139710,7 @@ const U1 =
       vtAttached = p.useRef(null),
       de = R === "running" || R === "paused",
       vtIsTpl = VTMODES.vmIsTemplateGoal(vtKind),
-      vtUi = vtKind === "coins" ? "simple" : o.uiMode,
+      vtUi = vtKind === "coins" || vtKind === "improve" ? "simple" : o.uiMode,
       // One run at a time across the optimizer tabs (each tab is its own page instance).
       vtGuard = () =>
         vtRunSession.engine && vtRunSession.engine !== te.current
@@ -140072,19 +140117,28 @@ const U1 =
       gt = p.useCallback(() => rt(o, Wt), [o, rt, Wt]),
       [Kt, Lt] = p.useState(!1),
       vtBotCoins = Ce.length > 1 ? Ce : Ee,
+      vtOwnCoins = Go(o.vtCustomCoins ?? ""),
+      // the coins of the run: the bot's (with your bots on the same settings), the bot's plus your
+      // list, or only your list
+      vtCoreCoins =
+        o.vtCoinSource === "custom"
+          ? vtOwnCoins
+          : o.vtCoinSource === "plus"
+            ? [...new Set([...vtBotCoins, ...vtOwnCoins])]
+            : vtBotCoins,
       vtWideCoins = p.useMemo(() => [...new Set([...vtBotCoins, ...Go(U1)])], [vtBotCoins]),
       vtCoins =
         o.vtCoinSource === "custom" ? Be : o.vtCoinSource === "wide" ? vtWideCoins : vtBotCoins,
       Ve = p.useMemo(
         () =>
           vtKind === "improve"
-            ? Fft(o, Ce.length > 1 ? Ce : [])
+            ? Fft(o, vtCoreCoins)
             : VTMODES.vmSimpleForm(
                 vtKind,
                 { ...o, symbolsText: vtCoins.join(", ") },
                 { presets: z$.portfolio, periodOf: a2 },
               ),
-        [o, Ce, vtCoins],
+        [o, Ce, vtCoins, vtCoreCoins.join(",")],
       ),
       vt = o.stressText.trim() ? o.stressText : U1,
       ct = p.useMemo(() => Go(Ve.symbolsText).map((ce) => Zi(ce, ve)), [ve, Ve.symbolsText]),
@@ -140102,7 +140156,11 @@ const U1 =
             period: { from: `${Ve.periodFrom}T00:00:00.000Z`, to: `${Ve.periodTo}T23:59:59.999Z` },
             listing: M,
             screeningCount: Ve.portfolio.screeningCount,
-            screeningMonths: Ve.portfolio.screeningMonths,
+            // with a held-out tail the search covers the first part of the period
+            screeningMonths:
+              Ve.portfolio.vtHoldoutPercent > 0
+                ? Math.max(1, Math.round(((Date.parse(Ve.periodTo) - Date.parse(Ve.periodFrom)) / 2630016e3) * (1 - Ve.portfolio.vtHoldoutPercent / 100)))
+                : Ve.portfolio.screeningMonths,
             finalists: Ve.portfolio.finalists,
             populationSize: Ve.genetic.populationSize,
             generations: Ve.genetic.generations,
@@ -140129,7 +140187,7 @@ const U1 =
           vtKind === "improve" &&
             g &&
             Tu(g, Ve.scope, C, Ve.precision).dimensions.length === 0 &&
-            ce.push("Нечего оптимизировать: в «Ручной настройке» выключены все параметры"),
+            ce.push("Нечего оптимизировать: в «Что подбираем» выключены все параметры"),
           ce
         );
       }, [o.botId, C, Ve, ct.length, g, S]),
@@ -140144,7 +140202,9 @@ const U1 =
       }, [n, Ye, vtGuard]),
       bt = p.useCallback(() => {
         Lt(!1), s(Ve);
-        const ce = { ...Ve, stressText: o.stressEnabled && vtKind !== "coins" ? vt : "" };
+        // 2.19: no stress test in the single flow (the held-out period and the coins outside the
+        // search are the independent checks)
+        const ce = { ...Ve, stressText: o.stressEnabled && vtKind !== "coins" && vtKind !== "improve" ? vt : "" };
         rt(ce, Ye());
       }, [o.stressEnabled, Ye, Ve, vt, rt]),
       De = p.useCallback(
@@ -140509,7 +140569,7 @@ const U1 =
             justify: "space-between",
             align: "center",
             children: [
-              E.jsx(Ft, { children: "Бот-шаблон" }),
+              E.jsx(Ft, { strong: vtKind === "improve", children: vtKind === "improve" ? "Бот" : "Бот-шаблон" }),
               E.jsx(ar, {
                 title: "Взять бота, открытого во вкладке veles.finance",
                 children: E.jsx(Ge, {
@@ -140708,6 +140768,250 @@ const U1 =
                   : []),
               ],
       vtSetTemplate = (ce) => l("template", { ...(vtTemplate ?? {}), ...ce }),
+      vtCoreSteps = [
+        {
+          title: "Ваш бот — точка отсчёта",
+          description: `${ct.length} ${vtPlural(ct.length, ["монета", "монеты", "монет"])}, ${FX(Ve.periodFrom)} — ${FX(Ve.periodTo)} (каждая с даты листинга); монеты, где Veles не запускает бота, убираются из сравнения`,
+        },
+        {
+          title: Ve.genetic.searchMethod === "grid" ? "Перебор всех комбинаций" : "Поиск",
+          description: `${Ve.genetic.searchMethod === "grid" ? `все комбинации` : `до ${Ve.genetic.searchBudget} вариантов${Ve.genetic.vtCertify ? " + сертификат" : ""}`} на ${Math.min(Ve.portfolio.screeningCount, ct.length)} ключевых ${vtPlural(Math.min(Ve.portfolio.screeningCount, ct.length), ["монете", "монетах", "монетах"])}${Ve.portfolio.vtHoldoutPercent > 0 ? `, без последних ${Ve.portfolio.vtHoldoutPercent}% периода` : ""}. Засчитывается вариант с лучшей прибылью / МПУ, чем у бота, — в большинстве полугодий и групп монет, сделок не меньше 60%`,
+        },
+        {
+          title: "Финал",
+          description: `${Ve.portfolio.finalists} лучших — на всех монетах за весь период${Ve.portfolio.vtHoldoutPercent > 0 ? ", включая отложенный" : ""}`,
+        },
+        {
+          title: "Проверка устойчивости",
+          description: `${Ve.portfolio.vtHoldoutPercent > 0 ? "отложенный период (поиск его не видел), " : ""}каждый год отдельно${ct.length > Ve.portfolio.screeningCount ? ", монеты вне поиска" : ""}, плато (${Ve.robustness.neighbors} сдвинутых настроек)`,
+        },
+      ],
+      vtCombos2 = Se ? VTPS.psGridSize(Se).total : 0,
+      vtCanGrid = !!Se && Se.dimensions.length > 0 && vtCombos2 <= VT_GRID_MAX,
+      vtHoldPct = Ve.portfolio.vtHoldoutPercent ?? 0,
+      vtCut = (() => {
+        const ce = Date.parse(Ve.periodFrom),
+          Ne = Date.parse(Ve.periodTo);
+        return vtHoldPct > 0 ? new Date(Ne - (Ne - ce) * (vtHoldPct / 100)).toISOString().slice(0, 10) : null;
+      })(),
+      vtSection = (ce, Ne, nt) =>
+        E.jsxs("div", {
+          children: [
+            E.jsxs(or, {
+              align: "center",
+              gap: 6,
+              style: { marginBottom: 6 },
+              children: [E.jsx(Ft, { strong: !0, children: ce }), nt ? E.jsx(wn, { text: nt }) : null],
+            }),
+            Ne,
+          ],
+        }),
+      vtCoreCard = E.jsx(Wr, {
+        size: "small",
+        title: "🎯 Лучшая прибыль / МПУ для вашего бота",
+        children: E.jsxs(or, {
+          vertical: !0,
+          gap: 14,
+          children: [
+            Ur,
+            vtSection(
+              "Монеты",
+              E.jsxs(or, {
+                vertical: !0,
+                gap: 6,
+                children: [
+                  E.jsx(pl, {
+                    block: !0,
+                    size: "small",
+                    disabled: mt,
+                    value: ["bot", "plus", "custom"].includes(o.vtCoinSource) ? o.vtCoinSource : "bot",
+                    onChange: (ce) => l("vtCoinSource", ce),
+                    options: [
+                      { value: "bot", label: `Бота (${vtBotCoins.length})` },
+                      { value: "plus", label: "Бота + свои" },
+                      { value: "custom", label: "Только свои" },
+                    ],
+                  }),
+                  o.vtCoinSource === "plus" || o.vtCoinSource === "custom"
+                    ? E.jsx(Nn.TextArea, {
+                        rows: 2,
+                        disabled: mt,
+                        value: o.vtCustomCoins ?? "",
+                        placeholder: "BTC ETH SOL … (через пробел или запятую)",
+                        onChange: (ce) => l("vtCustomCoins", ce.target.value),
+                      })
+                    : null,
+                  E.jsx(Ft, {
+                    type: "secondary",
+                    style: { fontSize: 12 },
+                    children:
+                      ct.length > 0
+                        ? `${ct.length} ${vtPlural(ct.length, ["монета", "монеты", "монет"])}: ${ct.slice(0, 14).map(ec).join(", ")}${ct.length > 14 ? "…" : ""}${o.vtCoinSource !== "custom" && Ce.length > 1 ? " · бот и ваши боты с такими же настройками" : ""}`
+                        : "Нет монет: выберите бота или впишите свои",
+                  }),
+                ],
+              }),
+              "Одна монета тоже подходит (например, только BTC). Чем больше монет, тем надёжнее вывод: поиск идёт на 12 ключевых, остальные — независимая проверка.",
+            ),
+            vtSection(
+              "Период",
+              E.jsxs(or, {
+                vertical: !0,
+                gap: 6,
+                children: [
+                  E.jsx(pl, {
+                    block: !0,
+                    size: "small",
+                    disabled: mt,
+                    value: ["since2020", "3y", "1y"].includes(o.periodPreset) ? o.periodPreset : "since2020",
+                    onChange: (ce) => {
+                      const Ne = a2(ce);
+                      s((nt) => ({ ...nt, periodPreset: ce, periodFrom: Ne.from, periodTo: Ne.to }));
+                    },
+                    options: [
+                      { value: "since2020", label: "С 2020" },
+                      { value: "3y", label: "3 года" },
+                      { value: "1y", label: "1 год" },
+                    ],
+                  }),
+                  E.jsxs(or, {
+                    align: "center",
+                    gap: 8,
+                    wrap: !0,
+                    children: [
+                      E.jsx(Ft, { children: "Отложить для проверки" }),
+                      E.jsx(pl, {
+                        size: "small",
+                        disabled: mt,
+                        value: vtHoldPct,
+                        onChange: (ce) => l("portfolio", { ...o.portfolio, vtHoldoutPercent: ce }),
+                        options: [
+                          { value: 0, label: "нет" },
+                          { value: 20, label: "20%" },
+                          { value: 25, label: "25%" },
+                          { value: 33, label: "33%" },
+                        ],
+                      }),
+                    ],
+                  }),
+                  E.jsx(Ft, {
+                    type: "secondary",
+                    style: { fontSize: 12 },
+                    children: vtCut
+                      ? `Поиск: ${FX(Ve.periodFrom)} — ${FX(vtCut)}. Проверка на ${FX(vtCut)} — ${FX(Ve.periodTo)}: этот отрезок поиск не видит.`
+                      : `${FX(Ve.periodFrom)} — ${FX(Ve.periodTo)}, без отложенного периода`,
+                  }),
+                ],
+              }),
+              "Последняя часть периода не участвует в поиске: на ней проверяется, держится ли улучшение на данных, которых оптимизатор не видел. Это главная защита от подгонки — особенно для одной монеты.",
+            ),
+            vtSection(
+              "Что подбираем",
+              E.jsxs(or, {
+                vertical: !0,
+                gap: 4,
+                children: [
+                  en("dcaIndents", "Отступы ордеров сетки"),
+                  en("dcaVolumes", "Объёмы ордеров (сумма сохраняется)"),
+                  en("takeProfit", "Тейк-профит / мин. P&L тейка"),
+                  en("stopLoss", "Стоп-лосс", {
+                    disabled: !!g && !Mt,
+                    tooltip: g && !Mt ? "У бота нет фиксированного стоп-лосса" : void 0,
+                  }),
+                  en("stopLossConditional", "Мин. отступ стопа по сигналу", {
+                    disabled: !!g && !$t,
+                    tooltip: g && !$t ? "У бота нет стоп-лосса по сигналу" : void 0,
+                  }),
+                  en("pullUp", "Подтяжка сетки"),
+                  en("entryThresholds", "Пороги фильтров входа"),
+                  en("orderThresholds", "Пороги фильтров в ордерах сетки"),
+                  en("exitThresholds", "Пороги фильтров тейка и стопа"),
+                  en("structureSwap", "Заменять фильтры похожими индикаторами"),
+                  en("structureRemove", "Пробовать выключать фильтры"),
+                  E.jsxs(or, {
+                    align: "center",
+                    gap: 8,
+                    wrap: !0,
+                    style: { marginTop: 4 },
+                    children: [
+                      E.jsx(Ft, { children: "Диапазон" }),
+                      E.jsx(pl, {
+                        size: "small",
+                        disabled: mt,
+                        value: [25, 50, 100].includes(o.scope.rangeWidthPercent) ? o.scope.rangeWidthPercent : 50,
+                        onChange: (ce) => l("scope", { ...o.scope, rangeWidthPercent: ce }),
+                        options: [
+                          { value: 25, label: "±25%" },
+                          { value: 50, label: "±50%" },
+                          { value: 100, label: "±100%" },
+                        ],
+                      }),
+                      E.jsx(wn, { text: "Насколько далеко от текущих значений бота искать. Шире — больше шанс найти другое решение, но больше вариантов и бэктестов." }),
+                    ],
+                  }),
+                  Se
+                    ? E.jsx(Ft, {
+                        type: "secondary",
+                        style: { fontSize: 12 },
+                        children: `Параметров: ${Se.dimensions.length} · комбинаций: ${vtFormatCount(vtCombos2)}`,
+                      })
+                    : null,
+                ],
+              }),
+            ),
+            vtSection("Депозит и блокировка", an, "От них считается портфель: все боты на общей шкале времени, с блокировкой — как в «Группах бэктестов». Прибыль и МПУ в % депозита."),
+            vtSection(
+              "Глубина поиска",
+              E.jsxs(or, {
+                vertical: !0,
+                gap: 6,
+                children: [
+                  E.jsx(pl, {
+                    block: !0,
+                    size: "small",
+                    disabled: mt,
+                    value: o.vtDepth === "grid" && !vtCanGrid ? "max" : (o.vtDepth ?? "standard"),
+                    onChange: (ce) => l("vtDepth", ce),
+                    options: [
+                      { value: "fast", label: "Быстро" },
+                      { value: "standard", label: "Стандарт" },
+                      { value: "max", label: "Максимум" },
+                      { value: "grid", label: "Перебор всего", disabled: !vtCanGrid },
+                    ],
+                  }),
+                  E.jsx(Ft, {
+                    type: "secondary",
+                    style: { fontSize: 12 },
+                    children:
+                      (o.vtDepth ?? "standard") === "fast"
+                        ? "до 60 вариантов: каждый параметр по отдельности, затем удачные изменения вместе"
+                        : o.vtDepth === "max"
+                          ? `до 400 вариантов + сертификат: каждый параметр лучшего варианта проверяется по всем значениям, пока ни одно изменение не улучшает результат${Se ? ` (≈${vtFormatCount(vtSearchVariants(Ve.genetic, Se) ?? 0)} вариантов)` : ""}`
+                          : o.vtDepth === "grid" && vtCanGrid
+                            ? `все ${vtFormatCount(vtCombos2)} комбинаций — гарантированно лучшая на монетах и периоде поиска`
+                            : `до 150 вариантов: по отдельности → вместе → уточнение мелким шагом${!vtCanGrid && Se ? ` · «Перебор всего» доступен до ${vtFormatCount(VT_GRID_MAX)} комбинаций — оставьте 2–4 параметра` : ""}`,
+                  }),
+                ],
+              }),
+            ),
+            E.jsx(Ge, {
+              type: "primary",
+              size: "large",
+              block: !0,
+              icon: E.jsx(JH, {}),
+              onClick: wt,
+              disabled: mt || y || o.botId === null || ct.length === 0,
+              children: "Найти лучшие настройки",
+            }),
+            E.jsx(Ft, {
+              type: "secondary",
+              style: { fontSize: 12 },
+              children:
+                "Цель — максимум прибыли на единицу МПУ (суммарной просадки портфеля), устойчиво: улучшение должно держаться в большинстве полугодий и групп монет, на всех монетах, на отложенном периоде и при небольшом сдвиге настроек. Вариант сравнивается с вашим ботом при депозите, где у них одинаковая просадка (в пределах ×0.5–×2), сделок — не меньше 60% от исходных. Перед запуском покажет стоимость. Ваши боты не меняются.",
+            }),
+          ],
+        }),
+      }),
       vtModeCard =
         vtKind === "improve"
           ? null
@@ -140927,7 +141231,7 @@ const U1 =
                 vertical: !0,
                 gap: 16,
                 children: [
-                  vtKind === "coins"
+                  vtKind === "coins" || vtKind === "improve"
                     ? null
                     : E.jsx(pl, {
                     block: !0,
@@ -140943,7 +141247,9 @@ const U1 =
                   vtUi === "simple" && vtKind !== "improve"
                     ? vtModeCard
                     : null,
-                  vtUi === "simple" && vtKind === "improve"
+                  vtKind === "improve"
+                    ? vtCoreCard
+                    : !1
                     ? E.jsx(Wr, {
                         size: "small",
                         title: "🎯 Найти устойчивые настройки стратегии",
@@ -141008,7 +141314,7 @@ const U1 =
                         }),
                       })
                     : null,
-                  vtUi === "manual"
+                  vtUi === "manual" && vtKind !== "improve"
                     ? E.jsxs(E.Fragment, {
                         children: [
                           E.jsx(Wr, {
@@ -142848,19 +143154,19 @@ const U1 =
                           children: [
                             E.jsx(Ft, {
                               children:
-                                "1. Откройте бота на veles.finance — он подставится сам. Монеты берутся из всех ваших ботов с такими же настройками.",
+                                "1. Выберите бота (или откройте его на veles.finance — подставится сам) и монеты: монеты бота (вместе с вашими ботами на таких же настройках), монеты бота плюс свой список или только свой список. Подходит и одна монета, например BTC.",
                             }),
                             E.jsx(Ft, {
                               children:
-                                "2. Нажмите «Найти устойчивые настройки»: исходная стратегия прогоняется на всех монетах с 2020 года (точка отсчёта). Затем на ключевых монетах каждый параметр сдвигается по отдельности — видно, что влияет и в какую сторону; удачные изменения объединяются, продолжаются, пока есть прирост, и уточняются. Лучшие варианты проверяются на всех монетах за весь период.",
+                                "2. Нажмите «Найти лучшие настройки». Ваш бот прогоняется на всех монетах — это точка отсчёта. Затем на ключевых монетах (без отложенной части периода) каждый параметр сдвигается по отдельности, удачные изменения объединяются и уточняются; на «Максимуме» лучший вариант ещё проверяется по всем значениям каждого параметра (сертификат), «Перебор всего» проверяет каждую комбинацию. Цель — прибыль / МПУ лучше, чем у бота, в большинстве полугодий и групп монет.",
                             }),
                             E.jsx(Ft, {
                               children:
-                                "3. Проверка устойчивости: каждый год отдельно, монеты и период, которых поиск не видел, небольшой сдвиг настроек и — по желанию — стресс-тест на широком списке монет. Блокировка — как в стратегии, с динамическим снижением на глубоких ордерах.",
+                                "3. Три лучших проверяются на всех монетах за весь период, затем — устойчивость: отложенный период (его поиск не видел), каждый год отдельно, монеты вне поиска, небольшой сдвиг настроек. Блокировка — как в стратегии, с динамическим снижением на глубоких ордерах.",
                             }),
                             E.jsx(Ft, {
                               children:
-                                "4. Итог — вердикт «✅ устойчиво», «🟡 частично» или «⚠️ похоже на подгонку» и рекомендуемый депозит бота (прибыль и просадка пропорциональны депозиту, поэтому вариант с лучшим соотношением прибыль/просадка сравнивается с исходной при уравновешивающем депозите). Из устойчивого варианта можно создать нового бота; ваши боты не меняются. Всё это можно настроить вручную во вкладке «Ручная настройка».",
+                                "4. Итог — вердикт «✅ устойчиво», «🟡 частично» или «⚠️ похоже на подгонку» и рекомендуемый депозит бота (прибыль и МПУ пропорциональны депозиту, поэтому вариант сравнивается с ботом при депозите, где у них одинаковая просадка). «Сравнить в группах» создаёт группы бэктестов исходной и варианта на одних и тех же монетах; «Создать бота» — нового бота, ваши боты не меняются.",
                             }),
                             E.jsx(Ft, {
                               type: "secondary",
@@ -142966,10 +143272,10 @@ const U1 =
               onCancel: () => Lt(!1),
               onStart: bt,
               searchMonths: Ve.portfolio.screeningMonths,
-              onSearchMonthsChange: vtKind === "improve" ? (ce) => l("simpleSearchMonths", ce) : void 0,
-              vtTitle: vtKind === "improve" ? void 0 : vtGoalInfo.title,
-              vtSteps: vtStartSteps,
-              vtNoStress: vtKind === "coins",
+              onSearchMonthsChange: void 0,
+              vtTitle: vtKind === "improve" ? "🎯 Найти лучшие настройки" : vtGoalInfo.title,
+              vtSteps: vtKind === "improve" ? vtCoreSteps : vtStartSteps,
+              vtNoStress: !0,
             })
           : null,
         E.jsx(jdt, {
@@ -143343,38 +143649,23 @@ const U1 =
         : this.props.children;
     }
   },
+  // 2.19: one optimizer — the selected bot's settings on its coins (or your list), best stable
+  // profit / МПУ. The 2.16 tabs (scalper, SHORT, LONG from scratch, coin selection) are gone.
   vtOptimizerPage = ({ extensionReady: e }) => {
     const t = pd(),
-      r = sS(),
-      n = vtUseRunSession(),
-      a = t.pathname.split("/")[2],
-      i = VTMODES.VM_GOAL_IDS.includes(a)
-        ? a
-        : (VTMODES.VM_GOAL_IDS.find((o) => o === ba(vtTabStoreKey)) ?? "improve");
-    // Every tab has its own URL (#/optimizer/<tab>), so browser Back moves between tabs; the bare
-    // #/optimizer (menu link) opens the last used tab.
+      r = sS();
     p.useEffect(() => {
-      VTMODES.VM_GOAL_IDS.includes(a) ? qa(vtTabStoreKey, a) : r(`/optimizer/${i}`, { replace: !0 });
-    }, [a]);
+      t.pathname !== "/optimizer" && t.pathname.startsWith("/optimizer") && r("/optimizer", { replace: !0 });
+    }, [t.pathname]);
     return E.jsxs("section", {
       className: "page",
       children: [
         E.jsx(ag, {
-          title: "🧬 Оптимизатор стратегий",
+          title: "🧬 Оптимизатор бота",
           description:
-            "Подбирает настройки ботов по бэктестам Veles: улучшает вашу стратегию, ищет с нуля скальпер, SHORT- или LONG DCA-бота и подбирает монеты. Итог считается так же, как «Группы бэктестов»: все сделки на общей шкале времени, с блокировкой и суммарной просадкой.",
+            "Выберите бота и монеты — оптимизатор переберёт настройки на бэктестах Veles и найдёт лучшую устойчивую прибыль на единицу МПУ (суммарной просадки портфеля). Портфель считается так же, как «Группы бэктестов»: все сделки на общей шкале времени, с блокировкой.",
         }),
-        E.jsx(Jb, {
-          activeKey: i,
-          onChange: (o) => {
-            qa(vtTabStoreKey, o), r(`/optimizer/${o}`);
-          },
-          items: VTMODES.VM_GOALS.map((o) => ({
-            key: o.id,
-            label: n.engine && n.kind === o.id ? `${o.tab} ⏳` : o.tab,
-            children: E.jsx(vtTabBoundary, { children: E.jsx(Zft, { extensionReady: e, kind: o.id, embedded: !0 }) }),
-          })),
-        }),
+        E.jsx(vtTabBoundary, { children: E.jsx(Zft, { extensionReady: e, kind: "improve", embedded: !0 }) }),
       ],
     });
   },
